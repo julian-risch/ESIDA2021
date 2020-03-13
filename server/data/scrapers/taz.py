@@ -2,6 +2,7 @@ import re
 from data.scrapers import Scraper
 from datetime import datetime
 import logging
+import data.models as models
 
 logger = logging.getLogger('scraper')
 

@@ -2,10 +2,13 @@ import re
 from data.scrapers import Scraper, NoCommentsWarning, UnknownStructureWarning
 from datetime import datetime
 from collections import defaultdict
+import logging
+import data.models as models
+
+logger = logging.getLogger('scraper')
 
 
 class FAZScraper(Scraper):
-    NAME = "Frankfurter Allgemeine Zeitung"
 
     @staticmethod
     def assert_url(url):
@@ -15,14 +18,15 @@ class FAZScraper(Scraper):
     def _scrape(cls, url):
         query_url = f'{url}?printPagedArticle=true#pageIndex_2'
         bs = Scraper.get_html(query_url)
-        article_data = cls._scrape_article(bs, url)
+        article = cls._scrape_article(bs, url)
         try:
-            article_data['comments'] = cls._scrape_comments(url)
+            comments = cls._scrape_comments(url)
+            if len(comments) == 0:
+                raise IndexError
         except IndexError:
             raise NoCommentsWarning(f'No Comments found at : {query_url}')
-        if len(article_data['comments']) == 0:
-            raise NoCommentsWarning(f'No Comments found at : {query_url}')
-        return article_data
+
+        return article, comments
 
     @staticmethod
     def _scrape_author(bs):
@@ -37,14 +41,15 @@ class FAZScraper(Scraper):
     @classmethod
     def _scrape_article(cls, bs, url):
         try:
-            article = cls.make_article(
+            article = models.ArticleBase(
                 url=url,
                 title=bs.select('span.atc-HeadlineEmphasisText')[0].get_text().strip() + ' - ' +
                       bs.select('span.atc-HeadlineText')[0].get_text().strip(),
                 summary=bs.select('p.atc-IntroText')[0].get_text().strip(),
                 author=cls._scrape_author(bs),
                 text='\n\n'.join([e.get_text().strip() for e in bs.select('div.atc-Text p')]),
-                published=datetime.strptime(bs.select('time.atc-MetaTime')[0]['title'], '%d.%m.%Y %H:%M Uhr')
+                published_time=datetime.strptime(bs.select('time.atc-MetaTime')[0]['title'], '%d.%m.%Y %H:%M Uhr'),
+                scraper=str(cls)
             )
         except IndexError:
             raise UnknownStructureWarning(f'Article structure unknown at {url}')
@@ -90,7 +95,6 @@ class FAZScraper(Scraper):
                         cid = f'{cid}_1_'
 
                 if int(number_of_replies) > 0:
-                    # print(number_of_replies, len(e.select('li.lst-Comments_Item')))
                     for child in e.select('li.lst-Comments_Item'):
                         child_author = child.select('span.lst-Comments_CommentInfoUsernameText')[0].get_text()
                         child_time = child.select('span.lst-Comments_CommentInfoDateText')[0].get_text()
@@ -99,7 +103,6 @@ class FAZScraper(Scraper):
                         parents2childs[cid].append(child_id)
 
             child2parent = cls.revert_parents2childs(parents2childs)
-            # print(child2parent)
             for e in bs.select('li.lst-Comments_Item'):
                 comments.append(cls._parse_comment(e, child2parent))
             comment_page_count += 1
@@ -133,23 +136,19 @@ class FAZScraper(Scraper):
         else:
             number_of_replies = 0
 
-        # print(author)
-        # print(number_of_replies)
-        return cls.make_comment(
-            cid=cid,
-            user=author,
-            published=datetime.strptime(time, '%d.%m.%Y - %H:%M'),
+        return models.CommentBase(
+            comment_id=cid,
+            username=author,
+            timestamp=datetime.strptime(time, '%d.%m.%Y - %H:%M'),
             text=text,
             reply_to=reply_to,
-            number_of_replies=number_of_replies,
-            user_id=
-            e.select('span.lst-Comments_CommentInfoUsernameText')[0].get_text().replace('(', '').replace(')', '')
+            num_replies=number_of_replies,
+            user_id=e.select('span.lst-Comments_CommentInfoUsernameText')[0].get_text().replace('(', '').replace(')',
+                                                                                                                 '')
         )
 
 
 if __name__ == '__main__':
-    Scraper.LOG_REQUESTS = True
-    Scraper.LOG_INFO = True
     FAZScraper.test_scraper(
         [
             'https://www.faz.net/aktuell/gesellschaft/menschen/rapper-fler-im-interview-ueber-bushido-und-arafat-abou-chaker-16518885.html',

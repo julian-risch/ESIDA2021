@@ -1,8 +1,12 @@
-from data.scrapers import Scraper
+from data.scrapers import Scraper, NoCommentsWarning
 import re
 import requests
 from datetime import datetime
 from common import config
+import logging
+import data.models as models
+
+logger = logging.getLogger('scraper')
 
 
 class SueddeutscheScraper(Scraper):
@@ -20,31 +24,33 @@ class SueddeutscheScraper(Scraper):
         discussion_url = [e['href'] for e in bs.select('div.sz-article-body__asset a.sz-teaser--article')
                           if 'leserdiskussion' in e['href']]
         if len(discussion_url) > 0:
-            article['comments'] = cls._scrape_comments_disqus(discussion_url[0])
+            comments = cls._scrape_comments_disqus(discussion_url[0])
         else:
-            raise UserWarning('No Comments found!')
-        return article
+            raise NoCommentsWarning('No Comments found!')
+        return article, comments
 
     @classmethod
     def _scrape_author(cls, bs):
         author = bs.select('a.sz-article-byline__author-link')
         if author:
             return author[0].get_text()
-        cls.info('WARN: no author found!')
+        logger.debug('WARN: no author found!')
         return None
 
     @classmethod
     def _scrape_article(cls, bs, url):
 
         try:
-            data = cls.make_article(
+            data = models.ArticleBase(
                 url=url,
                 author=cls._scrape_author(bs),
                 title=bs.select('h2 span.sz-article-header__title')[0].get_text(),
                 summary='\n\n'.join([e.get_text().strip() for e in bs.select('div.sz-article-intro p')]),
                 text=re.sub(r'\s+', ' ', ' '.join([
                     par.get_text() for par in bs.select('div.sz-article__body.sz-article-body p')])),
-                published=datetime.strptime(bs.select('time.sz-article-header__time')[0]['datetime'], '%Y-%m-%d %H:%M:%S'))
+                published_time=datetime.strptime(bs.select('time.sz-article-header__time')[0]['datetime'],
+                                                 '%Y-%m-%d %H:%M:%S'),
+                scraper=str(cls))
         except IndexError:
             raise UserWarning("Article Layout not known!")
 
@@ -80,19 +86,18 @@ class SueddeutscheScraper(Scraper):
             responses.extend(raw_return['response'])
 
         for comment_data in responses:
-            comment = cls.make_comment(cid=comment_data['id'],
-                                       user=comment_data['author']['username'],
-                                       published=datetime.strptime(comment_data['createdAt'], '%Y-%m-%dT%H:%M:%S'),
-                                       text=comment_data['raw_message'],
-                                       reply_to=comment_data['parent'])
+            comment = models.CommentBase(
+                comment_id=comment_data['id'],
+                username=comment_data['author']['username'],
+                timestamp=datetime.strptime(comment_data['createdAt'], '%Y-%m-%dT%H:%M:%S'),
+                text=comment_data['raw_message'],
+                reply_to=comment_data['parent'])
             comments.append(comment)
         return comments
 
 
 # toDO: fix mistakes, after fixing add urls to stories
 if __name__ == '__main__':
-    Scraper.LOG_REQUESTS = True
-    Scraper.LOG_INFO = True
     SueddeutscheScraper.test_scraper([
         'https://www.sueddeutsche.de/politik/brexit-johnson-unterhaus-neuwahlen-1.4647880',
         'https://www.sueddeutsche.de/politik/groko-csu-spd-einigung-grundrente-1.4676599'

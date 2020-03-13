@@ -4,6 +4,10 @@ import requests
 from requests.exceptions import HTTPError
 from data.scrapers import Scraper
 from datetime import datetime, timedelta
+import logging
+import data.models as models
+
+logger = logging.getLogger('scraper')
 
 
 class SPONScraper(Scraper):
@@ -15,13 +19,13 @@ class SPONScraper(Scraper):
     def _scrape(cls, url):
         bs = Scraper.get_html(url)
 
-        article_data = cls._scrape_article(bs, url)
+        article = cls._scrape_article(bs, url)
         try:
             talk = json.loads(bs.select('div[data-component="Talk"]')[0].get('data-settings'))
-            article_data['comments'] = cls._scrape_comments(talk)
+            comments = cls._scrape_comments(talk)
         except IndexError:
             raise UserWarning('No Comments found!')
-        return article_data
+        return article, comments
 
     @classmethod
     def _scrape_author(cls, bs):
@@ -33,7 +37,7 @@ class SPONScraper(Scraper):
             author = bs.select('meta[name="author"]')[0].get('content').replace(', DER SPIEGEL', '')
 
         if not author:
-            cls.info('WARN: no author found!')
+            logger.debug('WARN: no author found!')
             return None
 
         return author
@@ -47,13 +51,14 @@ class SPONScraper(Scraper):
         else:
             summary = None
         try:
-            article = cls.make_article(
+            article = models.ArticleBase(
                 url=url,
                 title=' - '.join(reversed([span.get_text().strip() for span in header.select('h2>span')])),
                 summary=summary,
                 author=cls._scrape_author(bs),
                 text='\n\n'.join([e.get_text().strip() for e in bs.select('main>article section p')]),
-                published=datetime.strptime(bs.select('time.timeformat')[0]['datetime'], '%Y-%m-%d %H:%M:%S')
+                published_time=datetime.strptime(bs.select('time.timeformat')[0]['datetime'], '%Y-%m-%d %H:%M:%S'),
+                scraper=str(cls)
             )
         except IndexError:
             raise UserWarning("Article Layout not known!")
@@ -74,22 +79,23 @@ class SPONScraper(Scraper):
                 cid = n['id']
                 if n['user'] is not None and n['body'] is not None:
                     comments.append(
-                        cls.make_comment(cid=cid,
-                                         user=n['user']['username'],
-                                         user_id=n['user']['id'],
-                                         published=datetime.strptime(n['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ'),
-                                         text=n['body'],
-                                         reply_to=parent,
-                                         upvotes=actions.get('UpvoteActionSummary', 0),
-                                         downvotes=actions.get('DownvoteActionSummary', 0),
-                                         love=actions.get('LoveActionSummary', 0)))
+                        models.CommentBase(
+                            comment_id=cid,
+                            username=n['user']['username'],
+                            user_id=n['user']['id'],
+                            timestamp=datetime.strptime(n['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ'),
+                            text=n['body'],
+                            reply_to=parent,
+                            upvotes=actions.get('UpvoteActionSummary', 0),
+                            downvotes=actions.get('DownvoteActionSummary', 0),
+                            love=actions.get('LoveActionSummary', 0)))
                 if 'replies' in n:
                     flatten(n['replies'], parent=cid)
 
             if response.get('hasNextPage', False):
                 cursor = response['endCursor']
                 res = cls._load_comments(base_url, asset_id, cursor=cursor, parent_id=parent)
-                Scraper.req_log(f'       > cursor: {cursor} | cnt: {len(comments)}', None)
+                logger.debug(f'       > cursor: {cursor} | cnt: {len(comments)}', None)
                 flatten(res, parent=parent)
 
         init_response = cls._load_comments(base_url, asset_id)
@@ -157,8 +163,6 @@ class SPONScraper(Scraper):
 
 
 if __name__ == '__main__':
-    Scraper.LOG_REQUESTS = False
-    Scraper.LOG_INFO = True
     SPONScraper.test_scraper(
         [
             'https://www.spiegel.de/panorama/leute/harry-und-meghan-wie-reagieren-die-windsors-auf-den-megxit-a-6c96e057-b722-4e76-85a2-0c260bda2013',

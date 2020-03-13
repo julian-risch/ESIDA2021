@@ -16,7 +16,6 @@ class TagesschauScraper(Scraper):
     def _scrape(cls, url):
         bs = cls.get_html(url)
         article = cls._scrape_article(bs, url)
-        comments = []
 
         try:
             meta_url = bs.select('div.modConComments h3.headline a')[0]['href']
@@ -47,7 +46,6 @@ class TagesschauScraper(Scraper):
             text='\n\n'.join([e.get_text().strip() for e in texte[2:]]),
             published_time=datetime.strptime(bs.select('div.meldungHead span.stand')[0].get_text().strip(),
                                              'Stand: %d.%m.%Y %H:%M Uhr'),
-            scrape_time=datetime.now(),
             scraper=str(cls))
 
         return article
@@ -86,8 +84,6 @@ class TagesschauScraper(Scraper):
 
 # todo: run test cases and fix broken url
 if __name__ == '__main__':
-    Scraper.LOG_REQUESTS = True
-    Scraper.LOG_INFO = True
     TagesschauScraper.test_scraper([
         'https://www.tagesschau.de/inland/cdu-parteitag-185.html',
         'https://www.tagesschau.de/ausland/impeachment-schiff-101~_origin-5edd7d7c-309b-445b-8cc1-d98aa2901486.html',

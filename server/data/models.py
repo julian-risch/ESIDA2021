@@ -53,7 +53,7 @@ class ArticleBase(BaseModel):
     author: str = None
     text: str
     published_time: datetime
-    scrape_time: datetime
+    scrape_time: datetime = datetime.now()
     scraper: str
 
 
