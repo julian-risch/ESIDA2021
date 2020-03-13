@@ -1,0 +1,39 @@
+version: 1
+disable_existing_loggers: off
+formatters:
+    default:
+        (): common.ColourFormatter
+        fmt: '%(asctime)s [%(levelnamec)17s] %(name)s: %(message)s'
+        use_colors: on
+    process:
+        format: '%(asctime)s [%(levelname)s] %(processName)-10s %(name)s: %(message)s'
+    access:
+        #(): uvicorn.logging.AccessFormatter
+        (): common.AccessLogFormatter
+        fmt: '%(asctime)s [     REQ] %(name)s: %(client_addr)s - "%(request_line)s" %(status_code)s | time: %(wall_time)s | CPU: %(cpu_time)s'
+        use_colors: on
+handlers:
+    default:
+        level: DEBUG
+        formatter: default
+        class: logging.StreamHandler
+        stream: ext://sys.stdout
+    access:
+        level: DEBUG
+        formatter: access
+        class: logging.StreamHandler
+        stream: ext://sys.stdout
+loggers:
+    uvicorn.error:
+        level: DEBUG
+    uvicorn.access:
+        handlers: [access]
+        level: DEBUG
+        propagate: no
+    comex.api.ping:
+        handlers: [default]
+        level: DEBUG
+        propagate: no
+root:
+    level: DEBUG
+    handlers: [default]

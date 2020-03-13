@@ -1,0 +1,76 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    /*background-color: #41464d;*/
+    color: #41464d;;
+    font-family: "TabletGothic", "Helvetica Neue", Helvetica, Arial, FreeSans, sans-serif;
+    font-size: 1em;
+    line-height: 1.5;
+    padding: 0 0 3rem 0;
+}
+
+
+a {
+    text-decoration: none
+}
+
+#sidebar {
+    position: fixed;
+    width: 300px;
+    background-color: #f1f1f1;
+    height: calc(100vh - 3rem);
+    overflow: hidden;
+}
+
+#main {
+    display: block;
+    margin-left: 300px;
+    width: calc(100vw - 300px);
+    height: calc(100vh - 3rem);
+    overflow: hidden;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    height: 3rem;
+    width: 100%;
+    color: #eeeef0;
+    background-color: #252525;
+    background-image: linear-gradient(to right, #4A4A4A 0%, #2C2A2B 30%, #494A4E 60%, #3B3B3D 80%, #4A4A4A 100%);
+    overflow: hidden;
+    display: flex;
+    flex-flow: row wrap;
+    text-align: right;
+    font-size: 0.875rem;
+}
+footer path {
+
+    fill: currentColor;
+}
+footer > div.left {
+    margin-right: auto;
+
+}
+footer > div {
+    padding-bottom: 1.25rem;
+    padding-top: 1.25rem;
+}
+
+footer > div a {
+    color: #c9c9cb;
+    margin: 0 .4em;
+}
+
+footer > div a:hover,
+footer > div a:active,
+footer > div a:focus {
+    color: #e5e5e5;
+}

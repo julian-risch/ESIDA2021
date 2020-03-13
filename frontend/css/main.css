@@ -1,0 +1,386 @@
+body {
+    background-color: #41464d;
+    color: #fff;
+    font-family: "TabletGothic", "Helvetica Neue", Helvetica, Arial, FreeSans, sans-serif;
+    font-size: 1em;
+    line-height: 1.5;
+    margin: 0;
+    padding: 100px 0 0 0;
+}
+
+body > div:nth-child(1) {
+    display: none;
+}
+
+a {
+    color: #b91109;
+    text-decoration: none
+}
+
+a:hover, a:active, a:focus {
+    color: #ff8600
+}
+
+li {
+    list-style: none;
+}
+
+li::before {
+    content: '>';
+    margin-left: -1.3em;
+    margin-right: 0.3em;
+}
+
+main {
+    background-color: #ffffff;
+    box-shadow: 0 0 0.3125em rgba(65, 70, 77, 0.5);
+    color: #252525;
+    margin: 0 auto;
+    max-width: 62.5rem;
+    min-width: 300px;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+}
+
+header {
+    padding: .625rem 1.25rem 0;
+}
+
+header a {
+    color: #252525;
+}
+
+#header-nav {
+    text-align: right;
+    color: #000;
+    text-transform: uppercase;
+    display: flex;
+    flex-flow: row wrap;
+}
+
+nav {
+    display: block;
+}
+
+nav.nav-left {
+    margin-right: auto;
+}
+
+nav.nav-main {
+    border-bottom: 1px solid #cccccf;
+    font-size: .875rem;
+    line-height: 2.25rem;
+    letter-spacing: 0.05em;
+}
+
+nav.nav-main a {
+    font-size: .875rem;
+    line-height: 2.25rem;
+    padding-right: .6875rem;
+}
+
+#header-nav a {
+    line-height: 2rem;
+    font-size: 0.625rem;
+    letter-spacing: 1px;
+    margin-right: 0.75rem;
+}
+
+.logo {
+    text-shadow: 1px 1px 0 #8D8D8D, 2px 2px 0 #8D8D8D, 3px 3px 0 #8D8D8D, 4px 4px 0 #8D8D8D, 5px 5px 0 #8D8D8D, 6px 6px 0 #8D8D8D; /* , 7px 7px 0 #8D8D8D, 8px 8px 0 #8D8D8D, 9px 9px 0 #8D8D8D, 10px 10px 5px rgba(0, 0, 0, 0.8);*/
+    font-size: 3rem;
+    font-weight: bold;
+    color: white;
+    text-decoration: underline;
+    padding: 0;
+    margin: 0;
+    height: 5.375rem;
+}
+
+section {
+    position: relative;
+}
+
+section.fat-border {
+    margin-top: 2.5rem;
+    margin-left: 1.25rem;
+    margin-right: 1.25rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    color: #252525;
+    position: relative;
+    display: block;
+}
+
+section.fat-border > div {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    border: 6px solid #eeeef0;
+    margin: 1.5rem auto 1.25rem;
+}
+
+section.fat-border > div > h1 {
+    top: -1rem;
+    margin: 0 auto;
+    position: relative;
+    padding: 0;
+    text-align: center;
+    font-size: 1em;
+}
+
+section.fat-border > div > h1 > span {
+    background-color: white;
+    display: inline-block;
+    padding: 0 .75rem;
+    font-size: 0.875rem;
+    letter-spacing: 0.125em;
+    font-weight: normal;
+    max-width: 90%;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+section > div > h2 {
+    font-size: 1.375rem;
+    margin: 0 0 0.4em 0;
+    letter-spacing: .03em;
+    line-height: 1.3;
+    font-weight: 700;
+}
+
+section > div > p {
+    font-size: 1rem;
+    margin: 0;
+    letter-spacing: .03em;
+    padding-bottom: 1.1rem;
+}
+
+section.dark, section.light {
+    margin-top: 2.5rem;
+    color: #252525;
+    position: relative;
+    display: block;
+}
+
+section.dark > div, section.light > div {
+    margin-left: 2.5rem;
+    margin-right: 2.5rem;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    max-width: 55rem;
+}
+
+section.dark > h1 > a, section.light > h1 > a {
+    color: inherit;
+    font-weight: bold;
+    position: absolute;
+    right: 1em;
+}
+
+section.dark > h1 > a > svg,
+section.light > h1 > a > svg {
+    transform: rotate(-90deg);
+    fill: currentColor;
+}
+
+section.dark > h1, section.light > h1 {
+    padding: .9375rem 1.25rem;
+    line-height: 1.875rem;
+    letter-spacing: .03em;
+
+    font-size: 1.375rem;
+    background-color: #33333c;
+    color: #fff;
+    display: flex;
+    text-rendering: optimizeLegibility;
+}
+
+section.light > h1 {
+    background-color: #eeeef0;
+    color: #252525;
+}
+
+#sect-publications li {
+    margin-bottom: 0.375em;
+}
+
+a.small {
+    font-size: 0.8em;
+}
+
+#sect-examples div {
+    display: flex;
+    flex-grow: 1;
+    flex-basis: 0;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    max-width: none;
+}
+
+#sect-examples figure {
+    margin: 0 0 0 1.5rem;
+    padding: 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    max-height: 10rem;
+    flex: 1;
+}
+
+#sect-examples figure:last-child {
+    margin-right: 1.5rem;
+}
+
+#sect-examples figure > img {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    transition: all 0.3s cubic-bezier(.17, .67, .63, .99);
+    display: block;
+    height: auto !important;
+}
+
+#sect-examples figure:hover {
+    /*overflow: visible;*/
+}
+
+#sect-examples figure:hover > img {
+    transform: scale(1.2);
+    filter: brightness(35%);
+}
+
+#sect-examples figure:hover a,
+#sect-examples figure:hover figcaption {
+    opacity: 1;
+}
+
+#sect-examples figure figcaption {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, 0);
+    color: #eeeef0;
+    font-size: 1.1em;
+    letter-spacing: 0.1em;
+    width: 100%;
+    opacity: 0;
+}
+
+#sect-examples figure a {
+    position: absolute;
+    bottom: 0.5em;
+    left: 50%;
+    transform: translate(-50%, 0);
+    text-transform: uppercase;
+    color: #fff;
+    font-weight: bold;
+    border: 1px solid #fff;
+    transition: all 0.4s ease;
+    margin: 0;
+    padding: 0.3em 0.5em;
+    opacity: 0;
+}
+
+#sect-examples figure a:hover {
+    box-shadow: 0 0 5px #fff;
+}
+
+.explore-button {
+    display: inline-block;
+    background-color: #b91109;
+    border-radius: 5px;
+    color: #fff;
+    font-size: .8125rem;
+    font-weight: bold;
+    letter-spacing: .08em;
+    line-height: 1.125rem;
+    margin: 0;
+    padding: .625rem 1rem;
+    text-align: center;
+    text-transform: uppercase;
+    transition: all 0.15s ease-in-out;
+    text-rendering: optimizeLegibility;
+    position: absolute;
+    right: 3em;
+    bottom: 1.3rem;
+}
+
+.explore-button:hover {
+    background-color: #880d07;
+    color: #fff;
+    cursor: pointer;
+}
+
+footer {
+    font-size: .875rem;
+    margin-top: 2.75rem;
+    text-align: center;
+}
+
+footer > div.foot-sep {
+    background-color: #33333c;
+    background-image: linear-gradient(to right, #4A4A4A 0%, #2C2A2B 30%, #494A4E 60%, #3B3B3D 80%, #4A4A4A 100%);
+    padding: 3.5rem 0;
+    display: block;
+    margin: 1.25rem 0 3.75rem 0;
+    /*border-bottom: 1px solid #cccccf;
+    margin: .625rem 1.25rem 3.75rem 1.25rem;*/
+}
+
+footer > div.linkdump {
+    background-color: #eeeef0;
+    padding-bottom: 1.25rem;
+    padding-top: 1.25rem;
+    font-weight: bold;
+}
+
+footer > div.linkdump a {
+    color: #252525;
+    margin: 0 .4em;
+    font-size: 0.875rem;
+}
+
+footer > div.linkdump a:hover,
+footer > div.linkdump a:active,
+footer > div.linkdump a:focus {
+    color: #000;
+}
+
+footer > div.foot {
+    background-color: #252525;
+    padding-bottom: 1.25rem;
+    padding-top: 1.25rem;
+    border: none;
+    color: #cccccf;
+}
+
+footer > div.foot > div {
+    text-align: center;
+    padding-bottom: 3.5rem;
+    padding-top: 0.75rem;
+}
+
+footer > div.foot svg g {
+    fill: #a1a1a3;
+}
+
+footer > div.foot:hover svg g,
+footer > div.foot:active svg g,
+footer > div.foot:focus svg g {
+    fill: #fff;
+}
+
+footer > div.foot a {
+    color: #a1a1a3;
+}
+
+footer > div.foot a:hover,
+footer > div.foot a:active,
+footer > div.foot a:focus {
+    color: #fff;
+}
