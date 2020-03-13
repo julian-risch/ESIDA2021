@@ -2,7 +2,7 @@ import re
 import json
 import requests
 from requests.exceptions import HTTPError
-from data.platforms import Scraper
+from data.scrapers import Scraper
 from datetime import datetime, timedelta
 
 

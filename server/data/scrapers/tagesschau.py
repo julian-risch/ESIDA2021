@@ -1,7 +1,8 @@
 import re
-from data.platforms import Scraper
+from data.scrapers import Scraper, NoCommentsWarning
 from datetime import datetime
 import logging
+import data.models as models
 
 logger = logging.getLogger('scraper')
 
@@ -14,15 +15,16 @@ class TagesschauScraper(Scraper):
     @classmethod
     def _scrape(cls, url):
         bs = cls.get_html(url)
-        article_data = cls._scrape_article(bs, url)
+        article = cls._scrape_article(bs, url)
+        comments = []
 
         try:
             meta_url = bs.select('div.modConComments h3.headline a')[0]['href']
-            article_data['comments'] = cls._scrape_comments(meta_url)
+            comments = cls._scrape_comments(meta_url)
         except IndexError:
-            raise UserWarning('No Comments found!')
+            raise NoCommentsWarning('No Comments found!')
 
-        return article_data
+        return article, comments
 
     @classmethod
     def _scrape_author(cls, bs):
@@ -36,16 +38,17 @@ class TagesschauScraper(Scraper):
     def _scrape_article(cls, bs, url):
         texte = bs.select('div.sectionZ div.modParagraph>p, div.sectionZ div.modParagraph>h2')
 
-        article = cls.make_article(
+        article = models.ArticleBase(
             url=url,
             title=bs.select('div.meldungHead h1 span.headline')[0].get_text().strip(),
             subtitle=bs.select('div.meldungHead h1 span.dachzeile')[0].get_text().strip(),
             summary=texte[0].get_text().strip(),
             author=cls._scrape_author(bs),
             text='\n\n'.join([e.get_text().strip() for e in texte[2:]]),
-            published=datetime.strptime(bs.select('div.meldungHead span.stand')[0].get_text().strip(),
-                                        'Stand: %d.%m.%Y %H:%M Uhr')
-        )
+            published_time=datetime.strptime(bs.select('div.meldungHead span.stand')[0].get_text().strip(),
+                                             'Stand: %d.%m.%Y %H:%M Uhr'),
+            scrape_time=datetime.now(),
+            scraper=str(cls))
 
         return article
 
@@ -64,15 +67,11 @@ class TagesschauScraper(Scraper):
         author_time = e.select('div.commentheader div.submitted')[0]
         author_time = re.match(r'Am (.+) um (.+) von (.+)', author_time.get_text().strip())
 
-        return cls.make_comment(
-            cid=e.select('div.commentheader h3.title a')[0]['id'],
-            title=e.select('div.commentheader h3.title')[0].get_text().strip(),
-            user=author_time.group(3),
-            published=cls._parse_date(f'{author_time.group(1)} {author_time.group(2)}'),
-            text=e.select('div.content')[0].get_text().strip(),
-            reply_to=None,
-            user_id=None
-        )
+        return models.CommentBase(username=author_time.group(3),
+                                  comment_id=e.select('div.commentheader h3.title a')[0]['id'],
+                                  timestamp=cls._parse_date(f'{author_time.group(1)} {author_time.group(2)}'),
+                                  text=e.select('div.content')[0].get_text().strip(),
+                                  title=e.select('div.commentheader h3.title')[0].get_text().strip())
 
     @staticmethod
     def _parse_date(s):

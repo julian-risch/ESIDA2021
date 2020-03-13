@@ -1,5 +1,5 @@
 import re
-from data.platforms import Scraper
+from data.scrapers import Scraper, NoCommentsWarning, UnknownStructureWarning
 from datetime import datetime
 from collections import defaultdict
 
@@ -13,14 +13,15 @@ class FAZScraper(Scraper):
 
     @classmethod
     def _scrape(cls, url):
-        bs = Scraper.get_html(f'{url}?printPagedArticle=true#pageIndex_2')
+        query_url = f'{url}?printPagedArticle=true#pageIndex_2'
+        bs = Scraper.get_html(query_url)
         article_data = cls._scrape_article(bs, url)
         try:
             article_data['comments'] = cls._scrape_comments(url)
         except IndexError:
-            raise UserWarning('No Comments found!')
+            raise NoCommentsWarning(f'No Comments found at : {query_url}')
         if len(article_data['comments']) == 0:
-            raise UserWarning('No Comments found!')
+            raise NoCommentsWarning(f'No Comments found at : {query_url}')
         return article_data
 
     @staticmethod
@@ -46,7 +47,7 @@ class FAZScraper(Scraper):
                 published=datetime.strptime(bs.select('time.atc-MetaTime')[0]['title'], '%d.%m.%Y %H:%M Uhr')
             )
         except IndexError:
-            raise UserWarning("Article structure unknown!")
+            raise UnknownStructureWarning(f'Article structure unknown at {url}')
         return article
 
     @classmethod

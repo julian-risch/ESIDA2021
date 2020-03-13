@@ -1,4 +1,4 @@
-from data.platforms import Scraper
+from data.scrapers import Scraper
 import re
 import requests
 from datetime import datetime

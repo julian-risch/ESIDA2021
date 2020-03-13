@@ -1,50 +1,36 @@
-import sqlite3 as sqlite
 from common import config
+import data.database as db
+import data.models as models
+from fastapi import Depends
+from typing import Union, Optional, Tuple, List
+from data.scrapers import get_matching_scraper, NoScraperException, ScraperWarning, NoCommentsWarning
+import logging
+
+logger = logging.getLogger('data.cache')
 
 
-def ensure_connection(f):
-    def wrapper(self, *args, **kwargs):
-        self.connection = sqlite.connect(self.DB_FILE)
-        self.cursor = self.connection.cursor()
-        f(self, *args, **kwargs)
-        self.connection.commit()
-        self.connection.close()
-
-    return wrapper
+def create_comment(_db: db.Session):
+    pass
 
 
-class Cache:
-    """
-    # connector to a sqlite database used to cache already queried comments
-    # also stores the generated model
-    # must have capability to reset for a story
-    """
+async def get_article(url: str, override_cache=False, ignore_cache=False):
+    # try cache if not ignored or overridden
+    try:
+        if not override_cache and not ignore_cache:
+            article = await db.get_article_with_comments(url=url)
+            logger.debug(f'Found cache entry id:{article.id} for {url}')
+            return article
+    except AssertionError:
+        # nothing cached for given URL
+        logger.debug(f'No cache entry for {url}')
 
-    def __init__(self):
-        self.connection = None
-        self.cursor = None
+    scraper = get_matching_scraper(url)
+    article, comments = scraper.scrape(url)
 
-    @property
-    def DB_FILE(self):
-        return config['cache']['db_file']
+    # check if scraping was successful
+    assert article and comments
 
-    def tmp(self):
-        pass
+    article_id = await db.insert_article(article)
+    await db.insert_comments(comments, article_id)
 
-    @ensure_connection
-    def _ensure_db(self):
-        try:
-            # tables exists, nothing to do
-            self.cursor.execute('SELECT * FROM articles')
-        except sqlite.Error:
-            # tables do not exist, create them
-            self.cursor.execute('CREATE TABLE cars (\
-                    id text,\
-                    make text,\
-                    model text,\
-                    year text,\
-                    trans text,\
-                    color text)')
-
-
-__all__ = ['Cache']
+    return await db.get_article_with_comments(url=url)

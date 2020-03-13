@@ -1,5 +1,5 @@
 import re
-from data.platforms import Scraper
+from data.scrapers import Scraper
 from datetime import datetime, timedelta
 
 

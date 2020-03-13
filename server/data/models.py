@@ -5,15 +5,15 @@ from enum import Enum
 import re
 
 
-class Comment(BaseModel):
-    user: str
-    id: str
+class CommentBase(BaseModel):
+    username: str
+    comment_id: str
     timestamp: datetime
     text: str
     reply_to: Optional[str] = None
 
     # Optional details from FAZ and TAZ
-    number_of_replies: Optional[int] = None
+    num_replies: Optional[int] = None
     user_id: Optional[str] = None
 
     # Optional details from SPON
@@ -29,33 +29,59 @@ class Comment(BaseModel):
     # Optional details from ZON
     leseempfehlungen: Optional[int] = None
 
-    # @validator('timestamp')
-    # def dt2str(self, v):
-    #    if type(v) == str and re.match(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}", v):
-    #        return v
-    #    if type(v) == datetime:
-    #        return v.strftime('%Y-%m-%d %H:%M:%S')
-    #    raise ValueError('must be string of the form of timestamp or datetime object')
+    # Optional details from Tagesschau
+    title: Optional[str] = None
 
 
-class Article(BaseModel):
+class CommentCreate(CommentBase):
+    pass
+
+
+class Comment(CommentBase):
+    id: int
+    article_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class ArticleBase(BaseModel):
     url: AnyHttpUrl
     title: str
+    subtitle: str = None
     summary: str = None
     author: str = None
     text: str
     published_time: datetime
     scrape_time: datetime
     scraper: str
+
+
+class ArticleCreate(ArticleBase):
+    pass
+
+
+class Article(ArticleBase):
+    id: int
     comments: List[Comment] = []
+
+    class Config:
+        orm_mode = True
 
 
 class ScrapeResultStatus(str, Enum):
-    NO_COMMENTS = 'NO_COMMENTS'
     OK = 'OK'
     ERROR = 'ERROR'
+    NO_COMMENTS = 'NO_COMMENTS'
+    NO_SCRAPER = 'NO_SCRAPER'
+    SCRAPER_ERROR = 'SCRAPER_ERROR'
+
+
+class ScrapeResultDetails(BaseModel):
+    status: ScrapeResultStatus = ScrapeResultStatus.OK
+    error: str = None
 
 
 class ScrapeResult(BaseModel):
-    payload: Article = None,
-    detail: ScrapeResultStatus = ScrapeResultStatus.OK
+    detail: ScrapeResultDetails = ScrapeResultDetails()
+    payload: Article = None
