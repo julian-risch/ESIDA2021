@@ -1,6 +1,11 @@
 * {
     margin: 0;
     padding: 0;
+    border: 0;
+    font-weight: inherit;
+    font-style: inherit;
+    vertical-align: baseline;
+    outline: none;
 }
 
 html {
@@ -12,13 +17,18 @@ body {
     color: #41464d;;
     font-family: "TabletGothic", "Helvetica Neue", Helvetica, Arial, FreeSans, sans-serif;
     font-size: 1em;
-    line-height: 1.5;
+    line-height: 1;
     padding: 0 0 3rem 0;
 }
 
 
 a {
     text-decoration: none
+}
+
+h1, h2, h3, h4 {
+    font-weight: normal;
+    font-size: 1em;
 }
 
 #sidebar {
@@ -63,8 +73,9 @@ footer > div.left {
 }
 
 footer > div {
-    padding-bottom: 1.25rem;
-    padding-top: 1.25rem;
+    /*padding-bottom: 1.25rem;
+    padding-top: 1.25rem;*/
+    margin: auto 1rem;
 }
 
 footer > div a {
@@ -78,6 +89,98 @@ footer > div a:focus {
     color: #e5e5e5;
 }
 
+.comex-logo {
+    text-shadow: 1px 1px 0 #8D8D8D, 2px 2px 0 #8D8D8D, 3px 3px 0 #8D8D8D, 4px 4px 0 #8D8D8D; /*, 5px 5px 0 #8D8D8D, 6px 6px 0 #8D8D8D , 7px 7px 0 #8D8D8D, 8px 8px 0 #8D8D8D, 9px 9px 0 #8D8D8D, 10px 10px 5px rgba(0, 0, 0, 0.8);*/
+    font-size: 2rem;
+    font-weight: bold;
+    color: white;
+    text-decoration: underline;
+    padding: 0;
+    margin: 0;
+}
+
+#sidebar .comex-logo {
+    margin: 0.5rem 1rem;
+    line-height: 1.5;
+}
+
+#sidebar .source {
+    position: relative;
+    margin-top: 2.5rem;
+    margin-left: 1.5rem;
+    margin-right: 1.5rem;
+    color: #252525;
+    display: block;
+}
+
+#sidebar .source h1 {
+    border-bottom: 1px solid #dcd9d9;
+    font-variant: small-caps;
+    letter-spacing: 0.2em;
+    margin-bottom: 0.8rem;
+    padding-left: 0.5em;
+    margin-left: -0.5em;
+    line-height: 1.5;
+}
+
+#sidebar .source .platform {
+    height: 1.3em;
+    font-size: 0.8em;
+    color: #808080;
+}
+
+#sidebar .source .platform img {
+    height: 100%;
+    vertical-align: middle;
+    filter: grayscale(1);
+    opacity: 0.5;
+}
+
+#sidebar .source h2 {
+    margin: 0.3em 0 0.2em 0;
+    line-height: 1.25rem;
+    font-size: 1.05rem;
+    letter-spacing: 0.03em;
+    color: #252525;
+    font-weight: bold;
+}
+
+#sidebar .source h2 a {
+    color: #252525;
+}
+
+#sidebar .source .info {
+    font-size: 0.75em;
+    color: #808080;
+}
+
+#sidebar .source .info time::after {
+    color: rgba(105, 105, 108, 0.5);
+    content: " / ";
+    margin: 0 .15em;
+    vertical-align: middle;
+    font-size: 1.4em;
+}
+
+#sidebar .source .add {
+    /*font-weight: bold; */
+    font-size: 3rem;
+    color: #8c8c8c;
+    padding: 1rem;
+    /*margin: 1rem auto;*/
+    width: 1em;
+    text-align: center;
+    border-width: 0.1rem;
+    border-radius: 1rem;
+    border-style: dashed;
+    background-color: #e1e1e1;
+    cursor: pointer;
+}
+
+#sidebar .source .add:hover {
+    background-color: #dcd9d9;
+}
+
 #add-source-modal {
     position: fixed;
     z-index: 1;
@@ -88,18 +191,20 @@ footer > div a:focus {
     overflow: hidden;
     background-color: rgb(0, 0, 0);
     background-color: rgba(0, 0, 0, 0.4);
+    display: none;
 }
 
 #add-source-modal > div {
     position: relative;
     background-color: #fefefe;
-    margin: 15% auto;
-    padding: 20px;
+    margin: 8% auto;
+    padding: 2rem;
     border: 1px solid #888;
     width: 50%;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
     animation-name: animatetop;
-    animation-duration: 0.4s
+    animation-duration: 0.4s;
+    box-sizing: border-box;
 }
 
 /* Add Animation */
@@ -117,7 +222,7 @@ footer > div a:focus {
 #add-source-modal .close {
     color: #aaa;
     position: absolute;
-    top: 1rem;
+    top: .1rem;
     right: 1rem;
     font-size: 28px;
     font-weight: bold;
@@ -130,10 +235,16 @@ footer > div a:focus {
     cursor: pointer;
 }
 
+#add-source-modal h1 {
+    font-weight: bold;
+    font-size: 1.4em;
+    letter-spacing: 0.1em;
+}
+
 #add-source-modal input {
     width: 100%;
     padding: 12px 20px;
-    margin: 8px 0;
+    margin: 8px 0 0 0;
     display: inline-block;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -141,16 +252,151 @@ footer > div a:focus {
     box-shadow: inset 0 1px 3px #ddd;
 }
 
-#add-source-modal .logo {
-    height: 1.2em;
+#add-source-modal input:focus,
+#add-source-modal input:active {
+    box-shadow: none;
+    outline: none;
 }
 
-#add-source-modal a::after {
-    content: '•';
+#add-source-modal input:invalid {
+    border-color: #900;
+    background-color: #FDD;
+}
+
+#add-source-modal .error {
+    display: none;
+}
+
+#add-source-modal input:valid {
+    margin-bottom: 1em;
+}
+
+#add-source-modal input:invalid + .error {
+    width: 100%;
+    display: block;
+    padding: calc(0.3em + 4px) 1em 0.3em 1em;
+    font-size: 0.8em;
+    color: white;
+    background-color: #900;
+    border-radius: 0 0 5px 5px;
+    box-sizing: border-box;
+    margin-top: -4px;
+    margin-bottom: 1em;
+}
+
+#add-source-modal div.sources {
+    text-align: center;
+    padding: 3rem 1rem;
+    width: 30em;
+    margin: 0 auto;
+}
+
+#add-source-modal div.sources h2 {
+    letter-spacing: 0.2em;
+    font-variant: small-caps;
+}
+
+#add-source-modal div.sources > div {
+    margin-top: 1rem;
+}
+
+#add-source-modal a.logo::after {
+    /*content: '•';*/
+}
+
+#add-source-modal a.logo {
+    color: #808080;
+    height: 1.2em;
+    line-height: 2.5;
     margin-left: 1em;
     margin-right: 1em;
 }
 
-#add-source-modal a:last-of-type::after {
+#add-source-modal a.logo:hover {
+    color: #000;
+}
+
+#add-source-modal a.logo img {
+    height: 1em;
+    filter: invert(.5);
+    transition: all 0.15s ease-in-out;
+}
+
+#add-source-modal a.logo img:hover {
+    filter: invert(0);
+}
+
+
+#add-source-modal a.logo:last-of-type:after {
     content: none;
+}
+
+
+.loading {
+    display: -webkit-box;
+    display: flex;
+    -webkit-box-pack: center;
+    justify-content: center;
+    font-size: 0.5rem;
+}
+
+.loading div {
+    width: 1em;
+    height: 1em;
+    margin: 2em 0.3em;
+    background: #808080;
+    border-radius: 50%;
+    -webkit-animation: 0.9s bounce infinite alternate;
+    animation: 0.9s bounce infinite alternate;
+}
+
+.loading div:nth-child(2) {
+    -webkit-animation-delay: 0.3s;
+    animation-delay: 0.3s;
+}
+
+.loading div:nth-child(3) {
+    -webkit-animation-delay: 0.6s;
+    animation-delay: 0.6s;
+}
+
+@-webkit-keyframes bounce {
+    to {
+        opacity: 0.3;
+        -webkit-transform: translate3d(0, -1rem, 0);
+        transform: translate3d(0, -1rem, 0);
+    }
+}
+
+@keyframes bounce {
+    to {
+        opacity: 0.3;
+        -webkit-transform: translate3d(0, -1rem, 0);
+        transform: translate3d(0, -1rem, 0);
+    }
+}
+
+.button {
+    display: block;
+    background-color: #b91109;
+    border-radius: 5px;
+    color: #fff;
+    font-size: .8125rem;
+    font-weight: bold;
+    letter-spacing: .08em;
+    line-height: 1.125rem;
+    margin: 0 0 0 auto;
+    padding: .625rem 1rem;
+    text-align: center;
+    text-transform: uppercase;
+    transition: all 0.15s ease-in-out;
+    text-rendering: optimizeLegibility;
+    bottom: 1.3rem;
+    border: none;
+}
+
+.button:hover {
+    background-color: #880d07;
+    color: #fff;
+    cursor: pointer;
 }

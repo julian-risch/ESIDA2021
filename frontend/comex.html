@@ -6,9 +6,38 @@
     <link rel="stylesheet" href="css/comex.css" />
 </head>
 <body>
-<div id="sidebar">asd</div>
+<div id="sidebar">
+    <div class="comex-logo">COM.EX</div>
+
+    <div id="sources">
+        <div class="source">
+            <h1>Quelle 1</h1>
+            <div class="platform"><img src="img/platform_icons/tagesschau.png" alt="" /> Tagesschau</div>
+            <h2><a href="https://www.tagesschau.de/investigativ/ndr-wdr-beatmungsgeraete-101.html">Bundesweite Datenbank
+                für
+                Beatmungsplätze</a></h2>
+            <span class="info">
+            <time datetime="2020-03-15 20:25">15.03.2020 20:25 Uhr</time> 54 Kommentare
+        </span>
+        </div>
+
+        <div class="source">
+            <h1>Quelle 2</h1>
+            <div class="platform"><img src="img/platform_icons/zeit.png" alt="" /> Zeit Online</div>
+            <h2><a href="https://www.zeit.de/digital/internet/2020-03/fake-news-coronavirus-falschnachrichten-luegen-panikmache">So erkennen Sie, welche Nachrichten zum Coronavirus stimmen</a></h2>
+            <span class="info">
+            <time datetime="2020-03-16 13:32">16.03.2020 13:32 Uhr</time> 175 Kommentare
+        </span>
+        </div>
+
+        <div class="source">
+            <h1>Quelle 3</h1>
+            <div class="add">+</div>
+        </div>
+    </div>
+</div>
 <footer>
-    <div class="left"><a href="">
+    <div class="left"><a href="https://github.com/TimRepke/comex-web">
         <svg style="height: 1.4em; margin-bottom: -0.2em;" viewBox="0 0 256 250" version="1.1"
              xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
              preserveAspectRatio="xMidYMid">
@@ -18,43 +47,55 @@
             </g>
         </svg>
         GitHub
-    </a></div>
+    </a> •
+        <a href="docs">API</a>
+    </div>
     <div class="right">
-        <a href="index.html">Com_Ex Projekt</a> •
-        <a href="https://hpi.de/naumann/projects/web-science.html">Research@HPI</a> •
-        <a href="https://hpi.de/en/data-privacy.html">Data Privacy</a> •
+        <a href="index.html"><span style="font-variant: small-caps">Com.Ex</span> Projekt</a> •
+        <a href="https://hpi.de/naumann/projects/web-science.html">Forschung@HPI</a> •
+        <a href="https://hpi.de/en/data-privacy.html">Datenschutz</a> •
         <a href="https://hpi.de/en/imprint.html">Impressum</a>
     </div>
 </footer>
-<div id="main">asd</div>
+<div id="main">
+    <div class="loading">
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+
+</div>
 
 <div id="add-source-modal">
-     <!-- Modal content -->
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <h1>Add Newsarticle</h1>
-    <div class="sources">
-        Available Sources:
-        <div>
-            <a href=""><img class="logo" src="img/platform_icons/sz.png" alt="SZ" /> Süddeutsche Zeitung</a>
-            <a href=""><img class="logo" src="img/platform_icons/faz.svg" alt="FAZ" /> FAZ</a>
-            <a href=""><img class="logo" src="img/platform_icons/spiegel.png" alt="SPON" /> Spiegel Online</a>
-            <a href=""><img class="logo" src="img/platform_icons/tagesschau.png" alt="Tagesschau" /> Tagesschau</a>
-            <a href=""><img class="logo" src="img/platform_icons/taz.png" alt="TAZ" /> TAZ</a>
-            <a href=""><img class="logo" src="img/platform_icons/welt.png" alt="Welt" /> Welt</a>
-            <a href=""><img class="logo" src="img/platform_icons/zeit.png" alt="ZON" /> Zeit</a>
+    <!-- Modal content -->
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h1>Kommentarspalte hinzufügen</h1>
+        <div class="sources">
+            <h2>Unterstützte Quellen:</h2>
+            <div>
+                <a href="https://sz.de/" class="logo"><img src="img/platform_logos/sz.svg" alt="Süddeutsche Zeitung" />
+                </a>
+                <a href="https://faz.de/" class="logo"><img src="img/platform_logos/faz.svg"
+                                                            alt="Frankfurter Allgemeine Zeitung" /></a>
+                <a href="https://spiegel.de" class="logo"><img src="img/platform_logos/spiegel.svg"
+                                                               alt="Spiegel Online" /></a>
+                <a href="https://www.tagesschau.de/" class="logo"><img src="img/platform_logos/tagesschau.svg"
+                                                                       alt="Tagesschau.de" /></a>
+                <a href="https://taz.de/" class="logo"><img src="img/platform_logos/taz.svg" alt="TAZ" /></a>
+                <a href="https://welt.de/" class="logo"><img src="img/platform_logos/welt.svg" alt="Welt" /></a>
+                <a href="https://zeit.de/" class="logo"><img src="img/platform_logos/zeit.svg" alt="Zeit Online" /></a>
+            </div>
         </div>
+        <label>
+            <input type="url" pattern="^https?://(zeit|sz|faz|spiegel|tagesschau|welt|taz)\.de/.*"
+                   placeholder="https://...">
+            <span class="error">Diese URL passt zu keiner unterstützten Quelle!</span>
+        </label>
+        <button class="button">Hinzufügen</button>
     </div>
-    <label>
-        <input type="text" placeholder="https://...">
-    </label>
-  </div>
-
 </div>
 
-<div id="loading">
-    <div class="loading-spinner"></div>
-</div>
 
 <script type="module" src="js/main.js"></script>
 </body>
