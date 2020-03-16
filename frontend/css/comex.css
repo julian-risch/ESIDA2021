@@ -148,7 +148,9 @@ footer > div a:focus {
 #sidebar .source h2 a {
     color: #252525;
 }
-
+#sidebar .source h2 a:hover {
+    color: #686868;
+}
 #sidebar .source .info {
     font-size: 0.75em;
     color: #808080;
@@ -160,6 +162,24 @@ footer > div a:focus {
     margin: 0 .15em;
     vertical-align: middle;
     font-size: 1.4em;
+}
+#sidebar .source .info .comments {
+    position: relative;
+    cursor: pointer;
+}
+#sidebar .source .info .comments::after {
+    border-top: 1px solid currentColor;
+    bottom: -1px;
+    content: "";
+    height: 1px;
+    left: 0;
+    opacity: .4;
+    position: absolute;
+    width: 100%;
+}
+
+#sidebar .source .info .comments:hover::after {
+    opacity: 1;
 }
 
 #sidebar .source .add {
