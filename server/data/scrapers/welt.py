@@ -1,5 +1,5 @@
 import re
-from data.scrapers import Scraper
+from data.scrapers import Scraper, UnknownStructureWarning
 from datetime import datetime
 import logging
 import data.models as models
@@ -15,31 +15,26 @@ class WeltScraper(Scraper):
     @classmethod
     def _scrape(cls, url):
         bs = Scraper.get_html(url)
-        article_data = WeltScraper.scrape_article(bs, url)
-        article_data['url'] = url
-        article_data['comments'] = WeltScraper.scrape_comments(cls, bs, url)
+        article = cls._scrape_article(bs, url)
+        comments = cls._scrape_comments(url)
 
-        if len(article_data['comments']) == 0:
-            raise UserWarning('No Comments found!')
-
-        return article_data
+        return article, comments
 
     @classmethod
-    def scrape_article(cls, bs, url):
-
+    def _scrape_article(cls, bs, url):
         article_parts = bs.select('.c-article-text p')
-
         try:
-            article = cls.make_article(
+            article = models.ArticleScraped(
                 url=url,
                 title=bs.select('.c-headline')[0].get_text().strip(),
                 summary=bs.select('.c-summary__intro')[0].get_text().strip(),
                 author=cls._scrape_author(bs),
                 text='\n\n'.join([e.get_text().strip() for e in article_parts]),
-                published=datetime.strptime(bs.select('.c-publish-date')[0]['datetime'], '%Y-%m-%dT%H:%M:%S%z')
+                published_time=datetime.strptime(bs.select('.c-publish-date')[0]['datetime'], '%Y-%m-%dT%H:%M:%S%z'),
+                scraper=str(cls)
             )
         except IndexError:
-            raise UserWarning("Article Layout not known!")
+            raise UnknownStructureWarning(f'Scraper {cls} can\'t deal with the article layout for {url}')
 
         return article
 
@@ -54,8 +49,8 @@ class WeltScraper(Scraper):
             logger.debug('WARN: no author found!')
             return None
 
-    @staticmethod
-    def scrape_comments(cls, bs, url):
+    @classmethod
+    def _scrape_comments(cls, url):
         comments = {}
         doc_id = re.search(r'/(?:article|plus|live)(\d+)/', url).group(1)
         base_url = f'https://api-co.la.welt.de/api/comments?document-id={doc_id}&sort=NEWEST&limit=100'
@@ -74,36 +69,33 @@ class WeltScraper(Scraper):
                     break
                 cursor = raw_comments[-1]['created']
                 for c in raw_comments:
-                    comment = cls.parse_comment(c)
-                    comments[comment['id']] = comment
-                    if comment['child_count'] > 0:
-                        parents.append(comment['id'])
+                    comment = cls._parse_comment(c)
+                    comments[comment.comment_id] = comment
+                    if c['child_count'] > 0:
+                        parents.append(comment.comment_id)
             else:
                 break
 
         for parent_id in parents:
             raw_comments = cls.get_json(f'{base_url}&parent-id={parent_id}')['comments']
             for c in raw_comments:
-                comment = cls.parse_comment(c)
-                comments[comment['id']] = comment
+                comment = cls._parse_comment(c)
+                comments[comment.comment_id] = comment
 
         return comments.values()
 
     @classmethod
-    def parse_comment(cls, e):
-        parsed = cls.make_comment(
-            cid=e['id'],
-            user=e['user']['displayName'],
-            published=cls._get_comment_created(e),
+    def _parse_comment(cls, e):
+        return models.CommentScraped(
+            comment_id=e['id'],
+            username=e['user']['displayName'],
+            timestamp=cls._get_comment_created(e),
             text=e['contents'],
             reply_to=e.get('parentId', None),
             user_id=e['user']['id'],
             likes=e['likes'],
-            recommended=e['recommended'],
-            child_count=e['childCount']
+            recommended=e['recommended']
         )
-
-        return parsed
 
     @staticmethod
     def _get_comment_created(e):
@@ -114,8 +106,6 @@ class WeltScraper(Scraper):
 
 
 if __name__ == '__main__':
-    Scraper.LOG_REQUESTS = True
-    Scraper.LOG_INFO = True
     WeltScraper.test_scraper([
         'https://www.welt.de/politik/deutschland/article203182606/Aus-Syrien-Deutschland-muss-mutmassliche-IS-Anhaengerin-zurueckholen.html',
         'https://www.welt.de/politik/deutschland/article203346702/Grundrente-FDP-Chef-Lindner-tadelt-Willkuerrente.html',

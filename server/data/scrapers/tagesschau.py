@@ -37,7 +37,7 @@ class TagesschauScraper(Scraper):
     def _scrape_article(cls, bs, url):
         texte = bs.select('div.sectionZ div.modParagraph>p, div.sectionZ div.modParagraph>h2')
 
-        article = models.ArticleBase(
+        article = models.ArticleScraped(
             url=url,
             title=bs.select('div.meldungHead h1 span.headline')[0].get_text().strip(),
             subtitle=bs.select('div.meldungHead h1 span.dachzeile')[0].get_text().strip(),
@@ -65,11 +65,11 @@ class TagesschauScraper(Scraper):
         author_time = e.select('div.commentheader div.submitted')[0]
         author_time = re.match(r'Am (.+) um (.+) von (.+)', author_time.get_text().strip())
 
-        return models.CommentBase(username=author_time.group(3),
-                                  comment_id=e.select('div.commentheader h3.title a')[0]['id'],
-                                  timestamp=cls._parse_date(f'{author_time.group(1)} {author_time.group(2)}'),
-                                  text=e.select('div.content')[0].get_text().strip(),
-                                  title=e.select('div.commentheader h3.title')[0].get_text().strip())
+        return models.CommentScraped(username=author_time.group(3),
+                                     comment_id=e.select('div.commentheader h3.title a')[0]['id'],
+                                     timestamp=cls._parse_date(f'{author_time.group(1)} {author_time.group(2)}'),
+                                     text=e.select('div.content')[0].get_text().strip(),
+                                     title=e.select('div.commentheader h3.title')[0].get_text().strip())
 
     @staticmethod
     def _parse_date(s):
@@ -82,7 +82,6 @@ class TagesschauScraper(Scraper):
         return datetime.strptime(s, '%d. %B %Y %H:%M')
 
 
-# todo: run test cases and fix broken url
 if __name__ == '__main__':
     TagesschauScraper.test_scraper([
         'https://www.tagesschau.de/inland/cdu-parteitag-185.html',

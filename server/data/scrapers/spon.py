@@ -2,7 +2,7 @@ import re
 import json
 import requests
 from requests.exceptions import HTTPError
-from data.scrapers import Scraper
+from data.scrapers import Scraper, NoCommentsWarning
 from datetime import datetime, timedelta
 import logging
 import data.models as models
@@ -24,7 +24,7 @@ class SPONScraper(Scraper):
             talk = json.loads(bs.select('div[data-component="Talk"]')[0].get('data-settings'))
             comments = cls._scrape_comments(talk)
         except IndexError:
-            raise UserWarning('No Comments found!')
+            raise NoCommentsWarning('No Comments found!')
         return article, comments
 
     @classmethod
@@ -51,7 +51,7 @@ class SPONScraper(Scraper):
         else:
             summary = None
         try:
-            article = models.ArticleBase(
+            article = models.ArticleScraped(
                 url=url,
                 title=' - '.join(reversed([span.get_text().strip() for span in header.select('h2>span')])),
                 summary=summary,
@@ -79,7 +79,7 @@ class SPONScraper(Scraper):
                 cid = n['id']
                 if n['user'] is not None and n['body'] is not None:
                     comments.append(
-                        models.CommentBase(
+                        models.CommentScraped(
                             comment_id=cid,
                             username=n['user']['username'],
                             user_id=n['user']['id'],

@@ -15,25 +15,24 @@ class ZONScraper(Scraper):
     @classmethod
     def _scrape(cls, url):
         bs = cls.get_html(url + '?sort=desc')
-        article_data = cls.scrape_article(bs, url)
-        article_data['comments'] = cls.scrape_comments(bs, url)
-        if len(article_data['comments']) == 0:
-            raise UserWarning('No Comments found!')
-        return article_data
+        article = cls._scrape_article(bs, url)
+        comments = cls._scrape_comments(bs, url)
+        return article, comments
 
     @classmethod
-    def scrape_article(cls, bs, url):
+    def _scrape_article(cls, bs, url):
         article_parts = bs.select('article section h2, article section p')
         if not article_parts:
             article_parts = bs.select('article p.paragraph')
 
-        return cls.make_article(
+        return models.ArticleScraped(
             url=url,
             title=bs.select('article header h1')[0].get_text().strip(),
             summary=bs.select('article header div.summary')[0].get_text().strip(),
             author=cls._scrape_author(bs),
             text='\n\n'.join([e.get_text().strip() for e in article_parts]),
-            published=datetime.strptime(bs.select('article header time')[0]['datetime'], '%Y-%m-%dT%H:%M:%S%z')
+            published_time=datetime.strptime(bs.select('article header time')[0]['datetime'], '%Y-%m-%dT%H:%M:%S%z'),
+            scraper=str(cls)
         )
 
     @staticmethod
@@ -51,7 +50,7 @@ class ZONScraper(Scraper):
         return author
 
     @classmethod
-    def scrape_comments(cls, bs, url):
+    def _scrape_comments(cls, bs, url):
         page_url_stack = set()
         resolved_urls = [url + '?sort=desc#comments']
         resolved_urls = set(resolved_urls)
@@ -60,13 +59,13 @@ class ZONScraper(Scraper):
         while True:
             # get direct comments
             for e in bs.select('#comments article'):
-                comments.append(cls.parse_comment(e))
+                comments.append(cls._parse_comment(e))
 
             # get async load comments
             for nested in bs.select('#comments div.comment-section__body > div.comment__container a'):
                 bss = Scraper.get_html(nested['data-url'])
                 for e in bss.select('article'):
-                    comments.append(cls.parse_comment(e))
+                    comments.append(cls._parse_comment(e))
 
             # get pagination
             for e in bs.select('ul.pager__pages li a'):
@@ -85,7 +84,7 @@ class ZONScraper(Scraper):
         return comments
 
     @classmethod
-    def parse_comment(cls, e):
+    def _parse_comment(cls, e):
         user_name = None
         try:
             author = e.select('div.comment-meta__name a')[0]
@@ -105,10 +104,10 @@ class ZONScraper(Scraper):
         else:
             reply_to = None
 
-        return cls.make_comment(
-            cid=e['id'],
-            user=user_name,
-            published=cls.parse_date(e.select('.comment-meta__date')[0].get_text()),
+        return models.CommentScraped(
+            comment_id=e['id'],
+            username=user_name,
+            timestamp=cls._parse_date(e.select('.comment-meta__date')[0].get_text()),
             text='\n\n'.join([ei.get_text().strip() for ei in e.select('div.comment__body p')]),
             reply_to=reply_to,
             user_id=user_id,
@@ -116,7 +115,7 @@ class ZONScraper(Scraper):
         )
 
     @classmethod
-    def parse_date(cls, s):
+    def _parse_date(cls, s):
         try:
             # Example: "#1  —  20. November 2017, 9:51 Uhr"
 
@@ -146,8 +145,6 @@ class ZONScraper(Scraper):
 
 
 if __name__ == '__main__':
-    Scraper.LOG_REQUESTS = True
-    Scraper.LOG_INFO = True
     ZONScraper.test_scraper([
         'https://www.zeit.de/wissen/2020-01/buschfeuer-australien-waldbraende-buschbraende-region-duerre-3',
         'https://www.zeit.de/wirtschaft/2017-11/weltklimakonferenz-bonn-naivitaet-politik-5vor8',

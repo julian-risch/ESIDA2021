@@ -19,12 +19,7 @@ class FAZScraper(Scraper):
         query_url = f'{url}?printPagedArticle=true#pageIndex_2'
         bs = Scraper.get_html(query_url)
         article = cls._scrape_article(bs, url)
-        try:
-            comments = cls._scrape_comments(url)
-            if len(comments) == 0:
-                raise IndexError
-        except IndexError:
-            raise NoCommentsWarning(f'No Comments found at : {query_url}')
+        comments = cls._scrape_comments(url)
 
         return article, comments
 
@@ -41,7 +36,7 @@ class FAZScraper(Scraper):
     @classmethod
     def _scrape_article(cls, bs, url):
         try:
-            article = models.ArticleBase(
+            article = models.ArticleScraped(
                 url=url,
                 title=bs.select('span.atc-HeadlineEmphasisText')[0].get_text().strip() + ' - ' +
                       bs.select('span.atc-HeadlineText')[0].get_text().strip(),
@@ -136,7 +131,7 @@ class FAZScraper(Scraper):
         else:
             number_of_replies = 0
 
-        return models.CommentBase(
+        return models.CommentScraped(
             comment_id=cid,
             username=author,
             timestamp=datetime.strptime(time, '%d.%m.%Y - %H:%M'),

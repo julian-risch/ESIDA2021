@@ -53,9 +53,6 @@ class Server:
 
 
 class TimingMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app):
-        super().__init__(app)
-        self.logger = logging.getLogger('uvicorn.stats')
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         start_time = time.time()
@@ -73,8 +70,6 @@ class TimingMiddleware(BaseHTTPMiddleware):
             'cpu_time': f'{used_cpu_time:.8f}s',
             'wall_time': f'{used_time:.8f}s'
         }
-        # self.logger.info(f'"{request.method} {request.url.path} {response.status_code}"'
-        #                 f' - time: {used_time:.5f}s | cpu: {used_cpu_time:.5f}s')
 
         return response
 

@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker, relationship, Session
 from sqlalchemy.types import DateTime, Boolean, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 import databases
-from typing import List
+from typing import List, Optional, Mapping
 import logging
 
 import data.models as models
@@ -152,23 +152,23 @@ comments_table = Table(
 Base.metadata.create_all(bind=engine)
 
 
-async def insert_article(article: models.ArticleCreate):
+async def insert_article(article: models.ArticleScraped):
     last_record_id = await database.execute(articles_table.insert().values(**article.dict()))
     return last_record_id
 
 
-async def insert_comment(comment: models.CommentCreate, article_id: int) -> int:
+async def insert_comment(comment: models.CommentScraped, article_id: int) -> int:
     last_record_id = await database.execute(
         comments_table.insert().values(article_id=article_id, **comment.dict()))
     return last_record_id
 
 
-async def insert_comments(comments: List[models.CommentCreate], article_id: int):
+async def insert_comments(comments: List[models.CommentScraped], article_id: int):
     values = [{**comment.dict(), 'article_id': article_id} for comment in comments]
     await database.execute_many(comments_table.insert(), values=values)
 
 
-async def get_article(url=None, article_id=None):
+async def get_article(url: str = None, article_id: int = None) -> Mapping:
     assert url or article_id
     if url is not None:
         query = 'SELECT * FROM articles WHERE url = :url'
@@ -178,14 +178,14 @@ async def get_article(url=None, article_id=None):
     return await database.fetch_one(query, {'article_id': article_id})
 
 
-async def get_article_with_comments(url=None, article_id=None):
+async def get_article_with_comments(url: str = None, article_id: int = None) -> models.ArticleCached:
     article = await get_article(url, article_id)
     assert bool(article)
-    article = models.Article(**article)
+    article = models.ArticleCached(**article)
 
     query = 'SELECT * FROM comments WHERE article_id = :article_id'
     comments = await database.fetch_all(query, {'article_id': article.id})
-    comments = [models.Comment(**comment) for comment in comments]
+    comments = [models.CommentCached(**comment) for comment in comments]
 
     article.comments = comments
 

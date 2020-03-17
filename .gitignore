@@ -6,3 +6,4 @@ server/store.db
 server/configs/example.ini
 venv/**
 **/__pycache__/**
+**/.pytest_cache/**

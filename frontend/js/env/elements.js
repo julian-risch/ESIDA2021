@@ -33,7 +33,13 @@ class AddSourceModalElements {
         this._initStaticListeners()
     }
 
-    hide() {
+    hide(e) {
+        if (!!e)
+            e.stopPropagation();
+        // prevent bubbling
+        // if (!!e && !(e.target === this.ROOT || e.target === this.CLOSE_BUTTON))
+        //  return;
+
         this.ROOT.style.display = 'none';
     }
 
@@ -42,8 +48,14 @@ class AddSourceModalElements {
     }
 
     _initStaticListeners() {
-        this.ROOT.onclick = this.hide.bind(this);
-        this.CLOSE_BUTTON.onclick = this.hide.bind(this);
+        let hide = this.hide.bind(this);
+        this.ROOT.addEventListener('click', (e) => {
+            if (e.target === this.ROOT) {
+                e.stopPropagation();
+                hide();
+            }
+        });
+        this.CLOSE_BUTTON.addEventListener('click', hide);
     }
 }
 
@@ -99,7 +111,7 @@ class SidebarSourceElement {
         this.ROOT.innerHTML = `
             <h1>${LANG.SOURCE.s} ${num}</h1>
             <div class="add">+</div>`;
-        this.ROOT.querySelector('div.add').onclick = () => openModalFunc();
+        this.ROOT.querySelector('div.add').addEventListener('click', openModalFunc);
     }
 
     update(num, src, url, title, date, num_comments) {
@@ -122,7 +134,7 @@ class SidebarElements {
         this.SOURCES = [];
     }
 
-    _addSource(srcElem){
+    _addSource(srcElem) {
         this.SOURCES.push(srcElem);
         this.ROOT.appendChild(srcElem.ROOT);
 

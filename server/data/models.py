@@ -5,7 +5,7 @@ from enum import Enum
 import re
 
 
-class CommentBase(BaseModel):
+class CommentScraped(BaseModel):
     username: str
     comment_id: str
     timestamp: datetime
@@ -24,7 +24,6 @@ class CommentBase(BaseModel):
     # Optional details from Welt
     likes: Optional[int] = None
     recommended: Optional[int] = None
-    child_count: Optional[int] = None
 
     # Optional details from ZON
     leseempfehlungen: Optional[int] = None
@@ -33,19 +32,12 @@ class CommentBase(BaseModel):
     title: Optional[str] = None
 
 
-class CommentCreate(CommentBase):
-    pass
-
-
-class Comment(CommentBase):
+class CommentCached(CommentScraped):
     id: int
     article_id: int
 
-    class Config:
-        orm_mode = True
 
-
-class ArticleBase(BaseModel):
+class ArticleScraped(BaseModel):
     url: AnyHttpUrl
     title: str
     subtitle: str = None
@@ -57,16 +49,13 @@ class ArticleBase(BaseModel):
     scraper: str
 
 
-class ArticleCreate(ArticleBase):
-    pass
+class CommentedArticle(ArticleScraped):
+    comments: List[CommentScraped] = []
 
 
-class Article(ArticleBase):
+class ArticleCached(ArticleScraped):
     id: int
-    comments: List[Comment] = []
-
-    class Config:
-        orm_mode = True
+    comments: List[CommentCached] = []
 
 
 class ScrapeResultStatus(str, Enum):
@@ -84,4 +73,9 @@ class ScrapeResultDetails(BaseModel):
 
 class ScrapeResult(BaseModel):
     detail: ScrapeResultDetails = ScrapeResultDetails()
-    payload: Article = None
+    payload: CommentedArticle = None
+
+
+class CacheResult(BaseModel):
+    detail: ScrapeResultDetails = ScrapeResultDetails()
+    payload: ArticleCached = None

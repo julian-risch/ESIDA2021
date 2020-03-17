@@ -1,10 +1,10 @@
-from data.scrapers import Scraper, NoCommentsWarning
+from data.scrapers import Scraper, NoCommentsWarning, UnknownStructureWarning
 import re
-import requests
 from datetime import datetime
 from common import config
 import logging
 import data.models as models
+import json
 
 logger = logging.getLogger('scraper')
 
@@ -20,41 +20,81 @@ class SueddeutscheScraper(Scraper):
     def _scrape(cls, url):
         bs = cls.get_html(url)
         article = cls._scrape_article(bs, url)
+        comments = cls._scrape_comments(bs, url)
 
-        discussion_url = [e['href'] for e in bs.select('div.sz-article-body__asset a.sz-teaser--article')
-                          if 'leserdiskussion' in e['href']]
-        if len(discussion_url) > 0:
-            comments = cls._scrape_comments_disqus(discussion_url[0])
-        else:
-            raise NoCommentsWarning('No Comments found!')
         return article, comments
 
     @classmethod
-    def _scrape_author(cls, bs):
+    def _author(cls, bs):
         author = bs.select('a.sz-article-byline__author-link')
         if author:
             return author[0].get_text()
-        logger.debug('WARN: no author found!')
+        logger.debug('no author found!')
         return None
 
     @classmethod
-    def _scrape_article(cls, bs, url):
-
+    def _title(cls, bs):
         try:
-            data = models.ArticleBase(
+            return bs.select('h2 span.sz-article-header__title')[0].get_text()
+        except IndexError:
+            pass
+        try:
+            return bs.select('article > header > h2')[0].get_text()
+        except IndexError:
+            pass
+        raise UnknownStructureWarning(f'Article Layout not known; couldn\'t find title!')
+
+    @classmethod
+    def _summary(cls, bs):
+        try:
+            return '\n\n'.join([e.get_text().strip() for e in bs.select('div.sz-article-intro p')])
+        except IndexError:
+            pass
+        try:
+            return '\n\n'.join([e.get_text().strip() for e in bs.select('div.sz-article__intro p')])
+        except IndexError:
+            pass
+
+    @classmethod
+    def _published_time(cls, bs):
+        try:
+            return datetime.strptime(bs.select('time.sz-article-header__time')[0]['datetime'],
+                                     '%Y-%m-%d %H:%M:%S')
+        except IndexError:
+            pass
+        try:
+            return datetime.strptime(bs.select('.sz-article__header time')[0]['datetime'],
+                                     '%Y-%m-%d %H:%M:%S')
+        except IndexError:
+            pass
+        raise UnknownStructureWarning(f'Article Layout not known; couldn\'t find published_time!')
+
+    @classmethod
+    def _scrape_article(cls, bs, url):
+        try:
+            data = models.ArticleScraped(
                 url=url,
-                author=cls._scrape_author(bs),
-                title=bs.select('h2 span.sz-article-header__title')[0].get_text(),
-                summary='\n\n'.join([e.get_text().strip() for e in bs.select('div.sz-article-intro p')]),
+                author=cls._author(bs),
+                title=cls._title(bs),
+                summary=cls._summary(bs),
                 text=re.sub(r'\s+', ' ', ' '.join([
                     par.get_text() for par in bs.select('div.sz-article__body.sz-article-body p')])),
-                published_time=datetime.strptime(bs.select('time.sz-article-header__time')[0]['datetime'],
-                                                 '%Y-%m-%d %H:%M:%S'),
+                published_time=cls._published_time(bs),
                 scraper=str(cls))
-        except IndexError:
-            raise UserWarning("Article Layout not known!")
+        except IndexError as e:
+            raise UnknownStructureWarning(f'Article Layout not known; caused by error: "{e}"')
 
         return data
+
+    @classmethod
+    def _scrape_comments(cls, bs, url):
+        discussion_url = [e['href'] for e in bs.select('div.sz-article-body__asset a.sz-teaser--article')
+                          if 'leserdiskussion' in e['href']]
+        if len(discussion_url) > 0:
+            return cls._scrape_comments_disqus(discussion_url[0])
+
+        conf = json.loads(bs.select_one('#szde-article-config').get_text())
+        print(conf)
 
     @classmethod
     def _scrape_comments_disqus(cls, url):
@@ -72,7 +112,7 @@ class SueddeutscheScraper(Scraper):
         responses = []
 
         # raw return includes metadata about the page of comments (e.g.if any more pages)
-        raw_return = requests.get('https://disqus.com/api/3.0/posts/list.json', params=parameters).json()
+        raw_return = cls.get_json('https://disqus.com/api/3.0/posts/list.json', params=parameters)
         responses.extend(raw_return['response'])
 
         # pagination: keep adding comments from next pages.
@@ -82,11 +122,11 @@ class SueddeutscheScraper(Scraper):
         # scrape all next pages, but do not go into infinite loop
         while raw_return['cursor']['hasNext'] and counter < max_counter:
             parameters['cursor'] = raw_return['cursor']['next']
-            raw_return = requests.get('https://disqus.com/api/3.0/posts/list.json', params=parameters).json()
+            raw_return = cls.get_json('https://disqus.com/api/3.0/posts/list.json', params=parameters)
             responses.extend(raw_return['response'])
 
         for comment_data in responses:
-            comment = models.CommentBase(
+            comment = models.CommentScraped(
                 comment_id=comment_data['id'],
                 username=comment_data['author']['username'],
                 timestamp=datetime.strptime(comment_data['createdAt'], '%Y-%m-%dT%H:%M:%S'),

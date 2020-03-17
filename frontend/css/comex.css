@@ -242,7 +242,7 @@ footer > div a:focus {
 #add-source-modal .close {
     color: #aaa;
     position: absolute;
-    top: .1rem;
+    top: .6rem;
     right: 1rem;
     font-size: 28px;
     font-weight: bold;

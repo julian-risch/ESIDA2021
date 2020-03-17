@@ -3,7 +3,7 @@ import data.database as db
 import data.models as models
 from fastapi import Depends
 from typing import Union, Optional, Tuple, List
-from data.scrapers import get_matching_scraper, NoScraperException, ScraperWarning, NoCommentsWarning
+from data.scrapers import scrape, get_matching_scraper, NoScraperException, ScraperWarning, NoCommentsWarning
 import logging
 
 logger = logging.getLogger('data.cache')
@@ -24,8 +24,7 @@ async def get_article(url: str, override_cache=False, ignore_cache=False):
         # nothing cached for given URL
         logger.debug(f'No cache entry for {url}')
 
-    scraper = get_matching_scraper(url)
-    article, comments = scraper.scrape(url)
+    article, comments = scrape(url)
 
     # check if scraping was successful
     assert article and comments

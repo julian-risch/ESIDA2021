@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 
-from api import Server
-from common import init_logging
-from data.database import init_db
-import logging
+from common import init_logging, init_config
 
-logger = logging.getLogger('main')
 
-if __name__ == '__main__':
+def run(args=None):
+    init_config(args)
+
+    from data.database import init_db
+    from api import Server
+
     init_logging()
     server = Server()
     init_db(server.app)
+
+    return server
+
+
+if __name__ == '__main__':
+    run()

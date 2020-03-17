@@ -5,16 +5,21 @@ import logging.config
 import yaml
 from uvicorn.logging import AccessFormatter, DefaultFormatter
 
-parser = argparse.ArgumentParser(description='ComEx web server')
-parser.add_argument('--config', type=str, default='configs/example.ini',
-                    help='Path to the config file to use')
-args = parser.parse_args()
+config = None
 
-config = configparser.ConfigParser()
-# init config with defaults
-config.read('configs/DEFAULT.ini')
-# override with user defined config
-config.read(args.config)
+
+def init_config(override_args=None):
+    global config
+    parser = argparse.ArgumentParser(description='ComEx web server')
+    parser.add_argument('--config', type=str, default='configs/example.ini',
+                        help='Path to the config file to use')
+    args = parser.parse_args(override_args)
+
+    config = configparser.ConfigParser()
+    # init config with defaults
+    config.read('configs/DEFAULT.ini')
+    # override with user defined config
+    config.read(args.config)
 
 
 def get_logger_config() -> dict:
@@ -56,4 +61,4 @@ class ColourFormatter(DefaultFormatter):
         return super().formatMessage(record)
 
 
-__all__ = ['get_logger_config', 'config', 'init_logging']
+__all__ = ['get_logger_config', 'config', 'init_logging', 'init_config']

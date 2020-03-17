@@ -2,8 +2,9 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import PlainTextResponse
 from common import init_logging
 from pydantic import HttpUrl
-from data.models import Article, Comment, ScrapeResultStatus, ScrapeResult, ScrapeResultDetails
-from data.scrapers import get_matching_scraper, NoScraperException, ScraperWarning, NoCommentsWarning
+from data.models import ArticleCached, CommentCached, ArticleScraped, CommentScraped, CommentedArticle, \
+    ScrapeResultStatus, ScrapeResult, ScrapeResultDetails, CacheResult
+from data.scrapers import get_matching_scraper, scrape, NoScraperException, ScraperWarning, NoCommentsWarning
 from fastapi.responses import JSONResponse
 from typing import Union
 import data.database as db
@@ -45,17 +46,20 @@ def catch_scrape_errors(func):
     return wrapper
 
 
-@router.get('/')
+@router.get('/scrape', response_model=ScrapeResult)
 @catch_scrape_errors
-async def scrape(url: HttpUrl) -> ScrapeResult:
-    from_cache, article = cache.get_article(url)
+async def direct_scrape(url: HttpUrl):
+    article, comments = scrape(url)
+    article = CommentedArticle(**article.dict(), comments=comments)
     return ScrapeResult(payload=article)
 
 
-@router.get('/article', response_class=ScrapeResult)
+@router.get('/article', response_model=CacheResult,
+            description='Try to get the article from the cache, '
+                        'otherwise scrape, cache, and return article including comments.')
 @catch_scrape_errors
-async def get_article(url: HttpUrl):
-    article = await cache.get_article(url)
-    result = ScrapeResult(payload=article)
-    print(1)
+# FIXME cache override and ignoring shouldn't be exposed!
+async def get_article(url: HttpUrl, override_cache: bool = False, ignore_cache: bool = False):
+    article = await cache.get_article(url, override_cache, ignore_cache)
+    result = CacheResult(payload=article)
     return result
