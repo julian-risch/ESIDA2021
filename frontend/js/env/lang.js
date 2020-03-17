@@ -23,7 +23,8 @@ const LANG = {
     DATETIME: new T(
         (d) => `${d.getDate()}.${d.getMonth()}.${d.getFullYear()} ${d.getHours()}:${d.getMinutes()} Uhr`,
         (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}`),
-    COMMENTS: new T('Kommentare', 'Comments')
+    COMMENTS: new T('Kommentare', 'Comments'),
+    EMPTY_EXAMPLE: new T('Benutzerdefiniert', 'User defined')
 };
 
 export { LANG };

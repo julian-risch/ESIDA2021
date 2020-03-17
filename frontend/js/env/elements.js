@@ -1,5 +1,6 @@
 import { LANG } from './lang.js';
-
+import { EXAMPLE_STORIES } from "./examples.js";
+import {emitter} from "../libs/tinyemitter.js"
 
 function nElem({ tag, cls = null, attribs = null, id = null, text = null, children = null }) {
     let elem = document.createElement(tag);
@@ -33,7 +34,7 @@ class AddSourceModalElements {
         this._initStaticListeners()
     }
 
-    hide(e) {
+    _hide(e) {
         if (!!e)
             e.stopPropagation();
         // prevent bubbling
@@ -43,12 +44,20 @@ class AddSourceModalElements {
         this.ROOT.style.display = 'none';
     }
 
-    show() {
+    get hide() {
+        return this._hide.bind(this);
+    }
+
+    _show() {
         this.ROOT.style.display = 'block';
     }
 
+    get show() {
+        return this._show.bind(this);
+    }
+
     _initStaticListeners() {
-        let hide = this.hide.bind(this);
+        let hide = this.hide;
         this.ROOT.addEventListener('click', (e) => {
             if (e.target === this.ROOT) {
                 e.stopPropagation();
@@ -119,7 +128,7 @@ class SidebarSourceElement {
         <h1>Quelle ${num}</h1>
             <div class="platform"><img src="${SOURCES[src].icon}" alt="" /> ${SOURCES[src].name}</div>
             <h2>
-                <a href="${url}">${title}</a></h2>
+                <a target="_blank" href="${url}">${title}</a></h2>
             <div class="info">
                 <time datetime="${LANG.DATETIME.en(date)}">${LANG.DATETIME.s(date)}</time>
                 <span class="comments">${num_comments} ${LANG.COMMENTS.s}</span>
@@ -127,10 +136,37 @@ class SidebarSourceElement {
     }
 }
 
+class SidebarExampleElement {
+    constructor() {
+        this.ROOT = document.getElementById('example-selection');
+
+        EXAMPLE_STORIES.forEach(
+            (story, i) => {
+                // <input name="selectors" type="radio" id="example-selection-1" checked>
+                // <label for="example-selection-1">Pick Example!</label>
+                let id = `example-selection-${i}`;
+                let attribs = [['type', 'radio'], ['name', 'example-selection-selectors']];
+                if (i === 0)
+                    attribs.push(['checked', '']);
+
+                let elem = nElem({ tag: 'input', id: id, attribs: attribs });
+                elem.addEventListener('change', (e) => {
+                    emitter.emit('selectexample', story)
+                });
+                this.ROOT.appendChild(elem);
+
+                elem = nElem({ tag: 'label', text: story.title, attribs: [['for', id]] });
+                this.ROOT.appendChild(elem);
+                return elem;
+            })
+    }
+}
+
 class SidebarElements {
     constructor(openModalFunc) {
         this.openModalFunc = openModalFunc;
         this.ROOT = document.getElementById('sources');
+        this.EXAMPLE_PICKER = new SidebarExampleElement();
         this.SOURCES = [];
     }
 
@@ -152,17 +188,7 @@ class SidebarElements {
 class Elements {
     constructor() {
         this.ADD_SOURCE_MODAL = new AddSourceModalElements();
-        this.SIDEBAR = new SidebarElements(this.ADD_SOURCE_MODAL.show.bind(this.ADD_SOURCE_MODAL));
-
-        this.SIDEBAR.addSource('zeit',
-            'https://www.zeit.de/digital/internet/2020-03/fake-news-coronavirus-falschnachrichten-luegen-panikmache',
-            'So erkennen Sie, welche Nachrichten zum Coronavirus stimmen',
-            new Date(2020, 3, 16, 13, 32), 175);
-        this.SIDEBAR.addEmptySource()
-    }
-
-    get tmp() {
-        return 'ads'
+        this.SIDEBAR = new SidebarElements(this.ADD_SOURCE_MODAL.show);
     }
 }
 

@@ -95,7 +95,7 @@ class SPONScraper(Scraper):
             if response.get('hasNextPage', False):
                 cursor = response['endCursor']
                 res = cls._load_comments(base_url, asset_id, cursor=cursor, parent_id=parent)
-                logger.debug(f'       > cursor: {cursor} | cnt: {len(comments)}', None)
+                logger.debug(f'       > cursor: {cursor} | cnt: {len(comments)}')
                 flatten(res, parent=parent)
 
         init_response = cls._load_comments(base_url, asset_id)

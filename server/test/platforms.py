@@ -24,13 +24,15 @@ def test_faz():
 
 def test_spon():
     _test_platform([
-
+        'https://www.spiegel.de/panorama/schleswig-holstein-untersagt-touristen-zutritt-a-3ed8bc38-f81d-42fa-8b19-4ce585e9fae9#kommentare'
     ])
 
 
 def test_sz():
     _test_platform([
-        'https://www.sueddeutsche.de/bayern/kommunalwahl-bayern-diskussion-leserdiskussion-meinung-1.4845541'
+        'https://www.sueddeutsche.de/bayern/kommunalwahl-bayern-diskussion-leserdiskussion-meinung-1.4845541',
+        'https://www.spiegel.de/wirtschaft/unternehmen/corona-krise-daimler-setzt-produktion-in-europaeischen-werken-aus-a-29204fd5-0424-4a22-a06d-e351fc407d8c',
+        'https://www.spiegel.de/wissenschaft/medizin/coronavirus-warum-landen-noch-flugzeuge-aus-iran-in-deutschland-a-cc762322-1533-4bdb-9bfe-f4a9e59dd7ac'
     ])
 
 
