@@ -18,13 +18,21 @@ class T {
     }
 }
 
+const zeroPad = (num) => ((num < 10) ? '0' : '') + num;
+const FORMAT_DATE = {
+    'dd.mm.YYYY HH:MM': (d) =>
+        `${zeroPad(d.getDate())}.${zeroPad(d.getMonth() + 1)}.${d.getFullYear()} ${zeroPad(d.getHours())}:${zeroPad(d.getMinutes())}`,
+    'YYYY-mm-dd HH:MM': (d) =>
+        `${d.getFullYear()}-${zeroPad(d.getMonth() + 1)}-${zeroPad(d.getDate())} ${zeroPad(d.getHours())}:${zeroPad(d.getMinutes())}`
+};
+
 const LANG = {
     SOURCE: new T('Quelle', 'Source'),
     DATETIME: new T(
-        (d) => `${d.getDate()}.${d.getMonth()}.${d.getFullYear()} ${d.getHours()}:${d.getMinutes()} Uhr`,
-        (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}`),
+        (d) => `${FORMAT_DATE["dd.mm.YYYY HH:MM"](d)} Uhr`,
+        FORMAT_DATE["YYYY-mm-dd HH:MM"]),
     COMMENTS: new T('Kommentare', 'Comments'),
     EMPTY_EXAMPLE: new T('Benutzerdefiniert', 'User defined')
 };
 
-export { LANG };
+export { LANG, FORMAT_DATE };

@@ -1,6 +1,7 @@
-import { LANG } from './lang.js';
+import { LANG, FORMAT_DATE } from './lang.js';
 import { EXAMPLE_STORIES } from "./examples.js";
-import {emitter} from "../libs/tinyemitter.js"
+import { emitter } from "../libs/tinyemitter.js"
+import { SCRAPERS } from "../api.js";
 
 function nElem({ tag, cls = null, attribs = null, id = null, text = null, children = null }) {
     let elem = document.createElement(tag);
@@ -23,6 +24,26 @@ function nElem({ tag, cls = null, attribs = null, id = null, text = null, childr
     return elem;
 }
 
+function getNodes(str) {
+    return new DOMParser().parseFromString(str, 'text/html').body.children;
+}
+
+function getNode(str) {
+    return getNodes(str)[0];
+}
+
+Node.prototype.appendChildren = function (nodeList, replace = false) {
+    if (replace)
+        this.innerHTML = '';
+    Array.from(nodeList).forEach(node => this.appendChild(node));
+};
+
+const LOADER = `
+    <div class="loading">
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>`;
 
 class AddSourceModalElements {
     constructor() {
@@ -37,10 +58,6 @@ class AddSourceModalElements {
     _hide(e) {
         if (!!e)
             e.stopPropagation();
-        // prevent bubbling
-        // if (!!e && !(e.target === this.ROOT || e.target === this.CLOSE_BUTTON))
-        //  return;
-
         this.ROOT.style.display = 'none';
     }
 
@@ -49,22 +66,40 @@ class AddSourceModalElements {
     }
 
     _show() {
+        // FIXME: remove comment in following line!
+        //this.resetURL();
         this.ROOT.style.display = 'block';
+    }
+
+    resetURL() {
+        this.URL.value = '';
+        this.URL.setCustomValidity('');
     }
 
     get show() {
         return this._show.bind(this);
     }
 
+    get url() {
+        return this.URL.value;
+    }
+
     _initStaticListeners() {
-        let hide = this.hide;
         this.ROOT.addEventListener('click', (e) => {
             if (e.target === this.ROOT) {
                 e.stopPropagation();
-                hide();
+                this._hide();
             }
         });
-        this.CLOSE_BUTTON.addEventListener('click', hide);
+        this.CLOSE_BUTTON.addEventListener('click', this.hide);
+        this.SUBMIT.addEventListener('click', () => {
+            if (SCRAPERS.isValidURL(this.url)) {
+                emitter.emit('newSourceURL', this.url);
+                this._hide();
+            } else {
+                this.URL.setCustomValidity('No source matched.')
+            }
+        });
     }
 }
 
@@ -108,31 +143,47 @@ const SOURCES = {
 
 class SidebarSourceElement {
     constructor(num, openModalFunc, src, url, title, date, comments) {
-        this.ROOT = nElem({ tag: 'div', cls: 'source' });
+        this.ROOT = getNode(`
+            <div class="source">
+                <h1>${LANG.SOURCE.s} ${num}</h1>
+                <div class="content">
+                
+                </div>
+            </div>`);
+        this.CONTENT = this.ROOT.querySelector('div.content');
+
         if (!src && !url && !title && !date && !comments) {
-            this._initEmpty(num, openModalFunc);
+            this._initEmpty(openModalFunc);
         } else {
-            this.update(num, src, url, title, date, comments);
+            this.update(src, url, title, date, comments);
         }
     }
 
-    _initEmpty(num, openModalFunc) {
-        this.ROOT.innerHTML = `
-            <h1>${LANG.SOURCE.s} ${num}</h1>
-            <div class="add">+</div>`;
-        this.ROOT.querySelector('div.add').addEventListener('click', openModalFunc);
+    _initEmpty(openModalFunc) {
+        let button = getNode('<div class="add">+</div>');
+        this.CONTENT.appendChild(button);
+        button.addEventListener('click', openModalFunc);
+        emitter.once('newSourceURL', (data) => {
+            button.innerHTML = LOADER;
+        });
+        emitter.once('receivedArticle', (d) => {
+            this.update(d.payload.source, d.payload.url, d.payload.title, d.payload.dateObj, d.payload.comments.length);
+        })
     }
 
-    update(num, src, url, title, date, num_comments) {
-        this.ROOT.innerHTML = `
-        <h1>Quelle ${num}</h1>
-            <div class="platform"><img src="${SOURCES[src].icon}" alt="" /> ${SOURCES[src].name}</div>
+    update(src, url, title, date, num_comments) {
+        let info = getNodes(`
+            <div class="platform">
+                <img src="${SOURCES[src].icon}" alt="" /> ${SOURCES[src].name}
+            </div>
             <h2>
-                <a target="_blank" href="${url}">${title}</a></h2>
+                <a target="_blank" href="${url}">${title}</a>
+            </h2>
             <div class="info">
-                <time datetime="${LANG.DATETIME.en(date)}">${LANG.DATETIME.s(date)}</time>
+                <time datetime="${FORMAT_DATE["YYYY-mm-dd HH:MM"](date)}">${LANG.DATETIME.s(date)}</time>
                 <span class="comments">${num_comments} ${LANG.COMMENTS.s}</span>
-            </div>`;
+            </div>`);
+        this.CONTENT.appendChildren(info, true);
     }
 }
 

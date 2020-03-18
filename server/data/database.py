@@ -154,6 +154,7 @@ Base.metadata.create_all(bind=engine)
 
 async def insert_article(article: models.ArticleScraped):
     last_record_id = await database.execute(articles_table.insert().values(**article.dict()))
+    logger.debug(f'INSERTed article to DB with ID: {last_record_id}!')
     return last_record_id
 
 
@@ -166,6 +167,7 @@ async def insert_comment(comment: models.CommentScraped, article_id: int) -> int
 async def insert_comments(comments: List[models.CommentScraped], article_id: int):
     values = [{**comment.dict(), 'article_id': article_id} for comment in comments]
     await database.execute_many(comments_table.insert(), values=values)
+    logger.debug(f'INSERTed {len(comments)} into DB!')
 
 
 async def get_article(url: str = None, article_id: int = None) -> Mapping:

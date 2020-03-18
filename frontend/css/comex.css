@@ -185,7 +185,9 @@ footer > div a:focus {
 #sidebar .source .info .comments:hover::after {
     opacity: 1;
 }
-
+#sidebar .source .add .loading {
+    margin-top: 0.5rem;
+}
 #sidebar .source .add {
     /*font-weight: bold; */
     font-size: 3rem;
@@ -362,12 +364,14 @@ footer > div a:focus {
     -webkit-box-pack: center;
     justify-content: center;
     font-size: 0.5rem;
+    padding-top: 1em;
+    margin-top: -1em;
 }
 
 .loading div {
     width: 1em;
     height: 1em;
-    margin: 2em 0.3em;
+    margin: 1em 0.3em;
     background: #808080;
     border-radius: 50%;
     -webkit-animation: 0.9s bounce infinite alternate;

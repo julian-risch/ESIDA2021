@@ -71,7 +71,7 @@ class WeltScraper(Scraper):
                 for c in raw_comments:
                     comment = cls._parse_comment(c)
                     comments[comment.comment_id] = comment
-                    if c['child_count'] > 0:
+                    if c['childCount'] > 0:
                         parents.append(comment.comment_id)
             else:
                 break
