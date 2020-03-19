@@ -32,12 +32,13 @@ class UnknownStructureWarning(ScraperWarning):
 class Scraper(ABC):
     @classmethod
     def scrape(cls, url) -> Tuple[models.ArticleScraped, List[models.CommentScraped]]:
+        url = cls.prepare_url(url)
         article, comments = cls._scrape(url)
         comments = list(sorted(comments, key=lambda c: c.timestamp))
 
         logger.debug(f'Scraped: "{article.title}" using "{article.scraper}" for {article.url}')
-        logger.debug(
-            f'  - Length: {len(article.text)} | num comments: {len(comments)} | Date: {article.published_time} | Author: {article.author}\n')
+        logger.debug(f'- Length: {len(article.text)} | num comments: {len(comments)} | '
+                     f'Date: {article.published_time} | Author: {article.author}\n')
 
         if len(comments) == 0:
             raise NoCommentsWarning(f'No Comments found at {url}!')
@@ -88,6 +89,10 @@ class Scraper(ABC):
         for test_url in test_urls:
             logger.debug(f' TESTING: {test_url}')
             cls.scrape(test_url)
+
+    @staticmethod
+    def prepare_url(url):
+        return url
 
     @staticmethod
     @abstractmethod
@@ -157,11 +162,16 @@ def get_matching_scraper(url):
     raise NoScraperException(f'No matching scraper for: {url}')
 
 
+def prepare_url(url):
+    scraper = get_matching_scraper(url)
+    return scraper.prepare_url(url)
+
+
 def scrape(url: str) -> Tuple[models.ArticleScraped, List[models.CommentScraped]]:
     scraper = get_matching_scraper(url)
     article, comments = scraper.scrape(url)
     return article, comments
 
 
-__all__ = ['Scraper', 'SCRAPERS', 'scrape', 'get_matching_scraper', 'NoScraperException',
-           'ScraperWarning', 'NoCommentsWarning', 'UnknownStructureWarning']
+__all__ = ['Scraper', 'SCRAPERS', 'scrape', 'get_matching_scraper', 'prepare_url',
+           'NoScraperException', 'ScraperWarning', 'NoCommentsWarning', 'UnknownStructureWarning']

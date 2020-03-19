@@ -7,3 +7,4 @@ server/configs/example.ini
 venv/**
 **/__pycache__/**
 **/.pytest_cache/**
+backfill.log

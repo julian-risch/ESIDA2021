@@ -3,7 +3,8 @@ import data.database as db
 import data.models as models
 from fastapi import Depends
 from typing import Union, Optional, Tuple, List
-from data.scrapers import scrape, get_matching_scraper, NoScraperException, ScraperWarning, NoCommentsWarning
+from data.scrapers import scrape, prepare_url, get_matching_scraper, \
+    NoScraperException, ScraperWarning, NoCommentsWarning
 import logging
 
 logger = logging.getLogger('data.cache')
@@ -14,6 +15,7 @@ def create_comment(_db: db.Session):
 
 
 async def get_article(url: str, override_cache=False, ignore_cache=False):
+    url = prepare_url(url)
     # try cache if not ignored or overridden
     try:
         if not override_cache and not ignore_cache:

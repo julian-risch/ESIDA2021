@@ -12,14 +12,20 @@ class FAZScraper(Scraper):
 
     @staticmethod
     def assert_url(url):
-        return re.match(r'(https?://)?(www\.)?faz\.net/.*', url)
+        return re.match(r'(https?://)?(www\.)?(m\.)?faz\.net/.*', url)
+
+    @staticmethod
+    def prepare_url(url):
+        url = url.replace('https://m.', 'https://')
+        url, _, _ = url.partition('#')
+        return url
 
     @classmethod
     def _scrape(cls, url):
         query_url = f'{url}?printPagedArticle=true#pageIndex_2'
         bs = Scraper.get_html(query_url)
         article = cls._scrape_article(bs, url)
-        comments = cls._scrape_comments(url)
+        comments = cls._scrape_comments(bs)
 
         return article, comments
 
@@ -38,12 +44,12 @@ class FAZScraper(Scraper):
         try:
             article = models.ArticleScraped(
                 url=url,
-                title=bs.select('span.atc-HeadlineEmphasisText')[0].get_text().strip() + ' - ' +
-                      bs.select('span.atc-HeadlineText')[0].get_text().strip(),
-                summary=bs.select('p.atc-IntroText')[0].get_text().strip(),
+                title=bs.select_one('span.atc-HeadlineEmphasisText').get_text().strip() + ' - ' +
+                      bs.select_one('span.atc-HeadlineText').get_text().strip(),
+                summary=bs.select_one('p.atc-IntroText').get_text().strip(),
                 author=cls._scrape_author(bs),
                 text='\n\n'.join([e.get_text().strip() for e in bs.select('div.atc-Text p')]),
-                published_time=datetime.strptime(bs.select('time.atc-MetaTime')[0]['title'], '%d.%m.%Y %H:%M Uhr'),
+                published_time=datetime.strptime(bs.select_one('time.atc-MetaTime')['title'], '%d.%m.%Y %H:%M Uhr'),
                 scraper=str(cls)
             )
         except IndexError:
@@ -51,101 +57,61 @@ class FAZScraper(Scraper):
         return article
 
     @classmethod
-    def generate_id(cls, author, time):
-        return f'{author}"-"{time.replace(" ", "")}'
+    def _scrape_comments(cls, bs):
+        clean_url = bs.select_one('[data-customsharelink]')['data-customsharelink']
 
-    # todo: walk all comment pages
-    @classmethod
-    def _scrape_comments(cls, url):
-
-        url = f'{url}?ot=de.faz.ArticleCommentsElement.comments.ajax.ot&action=commentList'
-
+        page = 1
         comments = []
-        comment_page_count = 1
-        parents2childs = defaultdict(list)
+        MAX_PAGE = 100
         while True:
-            # am I done?
-            this_page_url = f'{url}&page={comment_page_count}'
-            bs = cls.get_html(this_page_url)
-            if bs is None:
-                break
-            if len(bs) == 0:
+            cbs = Scraper.get_html(
+                f'{clean_url}?ot=de.faz.ArticleCommentsElement.comments.ajax.ot&action=commentList&page={page}&onlyTopArguments=false')
+            if not cbs or len(cbs) == 0:
                 break
 
-            for e in bs.select('li.lst-Comments_Item'):
-                number_of_replies = e.select('p.lst-Comments_CommentNumberOfReplies')
-                if number_of_replies:
-                    number_of_replies = number_of_replies[0].get_text().split()[0]
-                else:
-                    number_of_replies = 0
-                author = e.select('span.lst-Comments_CommentInfoUsernameText')[0].get_text()
-                time = e.select('span.lst-Comments_CommentInfoDateText')[0].get_text()
-                cid = cls.generate_id(author, time)
-                if cid in parents2childs.keys():
-                    print("Duplicate id!")
-                    if cid.endswith('_'):
-                        splitt = cid.split('_')
-                        cid = f'{"".join(splitt[:-2])}_{int(splitt[-2]) + 1}_'
-                    else:
-                        cid = f'{cid}_1_'
+            for comment_bs in cbs.select('li.lst-Comments_Item-level1'):
+                comment = cls._parse_comment(comment_bs.select_one('div.lst-Comments_CommentTextContainer'))
+                comments.append(comment)
+                for reply_bs in comment_bs.select('li.lst-Comments_Item-level2'):
+                    reply = cls._parse_comment(reply_bs.select_one('div.lst-Comments_CommentTextContainer'),
+                                               parent_id=comment.comment_id)
+                    comments.append(reply)
 
-                if int(number_of_replies) > 0:
-                    for child in e.select('li.lst-Comments_Item'):
-                        child_author = child.select('span.lst-Comments_CommentInfoUsernameText')[0].get_text()
-                        child_time = child.select('span.lst-Comments_CommentInfoDateText')[0].get_text()
-                        child_id = cls.generate_id(child_author, child_time)
-
-                        parents2childs[cid].append(child_id)
-
-            child2parent = cls.revert_parents2childs(parents2childs)
-            for e in bs.select('li.lst-Comments_Item'):
-                comments.append(cls._parse_comment(e, child2parent))
-            comment_page_count += 1
+            page = cbs.select_one('[data-next-page-count]')
+            if not page:
+                break
+            page = page.get('data-next-page-count', None)
+            if not page or int(page) > MAX_PAGE:
+                break
 
         return comments
 
     @classmethod
-    def revert_parents2childs(cls, parents2childs):
-        child2parents = {}
-        for parent, childs in parents2childs.items():
-            for child in childs:
-                child2parents[child] = parent
-        return child2parents
-
-    @classmethod
-    def _parse_comment(cls, e, child2parent):
-
-        user_id = e.select('span.lst-Comments_CommentInfoUsernameText')[0].get_text()
-        author = e.select('span.lst-Comments_CommentInfoNameText')[0].get_text()
-
-        time = e.select('span.lst-Comments_CommentInfoDateText')[0].get_text()
-        text = e.select('p.js-lst-Comments_CommentTitle')[0].get_text().strip() + ' ' + \
-               e.select('p.lst-Comments_CommentText')[0].get_text().strip()
-
-        cid = cls.generate_id(user_id, time)
-
-        reply_to = child2parent.get(cid)
-        number_of_replies = e.select('p.lst-Comments_CommentNumberOfReplies')
-        if number_of_replies:
-            number_of_replies = number_of_replies[0].get_text().split()[0]
-        else:
-            number_of_replies = 0
+    def _parse_comment(cls, c, parent_id=None):
+        text = ' '.join([t.get_text()
+                         for t in c.select('p.lst-Comments_CommentTitle, p.lst-Comments_CommentText')])
+        author = c.select_one('a[data-author-name]')
+        username = author['data-author-name']
+        user_id = author['data-author-login']
+        comment_id = c.select_one('ul[data-content-id]')['data-content-id']
+        recommended = int(c.select_one('ul[data-empfehlen-value]')['data-empfehlen-value'])
+        time = c.select_one('span.lst-Comments_CommentInfoDateText').get_text()
 
         return models.CommentScraped(
-            comment_id=cid,
-            username=author,
+            comment_id=comment_id,
+            username=username,
             timestamp=datetime.strptime(time, '%d.%m.%Y - %H:%M'),
             text=text,
-            reply_to=reply_to,
-            num_replies=number_of_replies,
-            user_id=e.select('span.lst-Comments_CommentInfoUsernameText')[0].get_text().replace('(', '').replace(')',
-                                                                                                                 '')
+            reply_to=parent_id,
+            recommended=recommended,
+            user_id=user_id
         )
 
 
 if __name__ == '__main__':
     FAZScraper.test_scraper(
         [
+            'https://www.faz.net/aktuell/politik/trumps-praesidentschaft/coronavirus-donald-trump-verhaengt-nationalen-notstand-in-usa-16678564.html#lesermeinungen',
             'https://www.faz.net/aktuell/gesellschaft/menschen/rapper-fler-im-interview-ueber-bushido-und-arafat-abou-chaker-16518885.html',
             'https://www.faz.net/aktuell/technik-motor/sicherheitskontrolle-am-flughafen-frankfurt-blamage-ohne-ende-16514693.html',
             'https://www.faz.net/aktuell/feuilleton/medien/tv-kritik-maischberger-mit-stefan-aust-und-dirk-rossmann-16472805.html',

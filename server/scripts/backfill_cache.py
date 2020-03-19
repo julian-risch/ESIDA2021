@@ -29,7 +29,7 @@ def process_collections_file(file):
     with open(file, 'r') as f:
         for line in f:
             line = line.strip()
-            if line[0] == '-':
+            if line and line[0] == '-':
                 yield line[1:].strip()
 
 

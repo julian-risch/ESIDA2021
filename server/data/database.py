@@ -167,10 +167,11 @@ async def insert_comment(comment: models.CommentScraped, article_id: int) -> int
 async def insert_comments(comments: List[models.CommentScraped], article_id: int):
     values = [{**comment.dict(), 'article_id': article_id} for comment in comments]
     await database.execute_many(comments_table.insert(), values=values)
-    logger.debug(f'INSERTed {len(comments)} into DB!')
+    logger.debug(f'INSERTed {len(comments)} comments into DB!')
 
 
 async def get_article(url: str = None, article_id: int = None) -> Mapping:
+    logger.debug(f'Get article from DB: id: {article_id}, url: {url}')
     assert url or article_id
     if url is not None:
         query = 'SELECT * FROM articles WHERE url = :url'

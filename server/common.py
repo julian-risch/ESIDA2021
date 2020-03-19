@@ -3,6 +3,7 @@ import argparse
 import logging
 import logging.config
 import yaml
+import traceback
 from uvicorn.logging import AccessFormatter, DefaultFormatter
 
 config = None
@@ -61,4 +62,13 @@ class ColourFormatter(DefaultFormatter):
         return super().formatMessage(record)
 
 
-__all__ = ['get_logger_config', 'config', 'init_logging', 'init_config']
+def except2str(e, logger=None):
+    if config.getboolean('server', 'debug_mode'):
+        tb = traceback.format_exc()
+        if logger:
+            logger.error(tb)
+        return tb
+    return f'{type(e).__name__}: {e}'
+
+
+__all__ = ['get_logger_config', 'config', 'init_logging', 'init_config', 'except2str']

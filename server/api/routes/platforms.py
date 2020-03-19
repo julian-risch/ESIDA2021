@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import PlainTextResponse
-from common import init_logging
+from common import init_logging, except2str
 from pydantic import HttpUrl
 from data.models import ArticleCached, CommentCached, ArticleScraped, CommentScraped, CommentedArticle, \
     ScrapeResultStatus, ScrapeResult, ScrapeResultDetails, CacheResult
@@ -29,19 +29,19 @@ def catch_scrape_errors(func):
         except NoScraperException as e:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=ScrapeResultDetails(status=ScrapeResultStatus.NO_SCRAPER,
-                                                           error=str(e)).__dict__)
+                                                           error=except2str(e, logger)).__dict__)
         except NoCommentsWarning as e:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=ScrapeResultDetails(status=ScrapeResultStatus.NO_COMMENTS,
-                                                           error=str(e)).__dict__)
+                                                           error=except2str(e, logger)).__dict__)
         except (RequestException, ScraperWarning) as e:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=ScrapeResultDetails(status=ScrapeResultStatus.SCRAPER_ERROR,
-                                                           error=str(e)).__dict__)
+                                                           error=except2str(e, logger)).__dict__)
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=ScrapeResultDetails(status=ScrapeResultStatus.ERROR,
-                                                           error=str(e)).__dict__)
+                                                           error=except2str(e, logger)).__dict__)
 
     return wrapper
 
