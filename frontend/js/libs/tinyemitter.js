@@ -66,6 +66,4 @@ E.prototype = {
     }
 };
 
-const emitter = new E();
-
-export { emitter }
+export { E }

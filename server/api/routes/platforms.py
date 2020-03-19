@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, WebSocket
 from fastapi.responses import PlainTextResponse
 from common import init_logging, except2str
 from pydantic import HttpUrl

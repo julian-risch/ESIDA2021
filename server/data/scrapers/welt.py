@@ -1,5 +1,5 @@
 import re
-from data.scrapers import Scraper, UnknownStructureWarning
+from data.scrapers import Scraper, UnknownStructureWarning, ScraperWarning
 from datetime import datetime
 import logging
 import data.models as models
@@ -12,9 +12,18 @@ class WeltScraper(Scraper):
     def assert_url(url):
         return re.match(r'https?://(www\.)?welt\.de/.*', url)
 
+    @staticmethod
+    def prepare_url(url):
+        url, _, _ = url.partition('#')
+        return url
+
     @classmethod
     def _scrape(cls, url):
         bs = Scraper.get_html(url)
+
+        if not bs:
+            raise ScraperWarning('HTTP request failed!')
+
         article = cls._scrape_article(bs, url)
         comments = cls._scrape_comments(url)
 
@@ -24,10 +33,15 @@ class WeltScraper(Scraper):
     def _scrape_article(cls, bs, url):
         article_parts = bs.select('.c-article-text p')
         try:
+            summary = bs.select('.c-summary__intro')[0].get_text().strip()
+        except IndexError:
+            summary = None
+
+        try:
             article = models.ArticleScraped(
                 url=url,
                 title=bs.select('.c-headline')[0].get_text().strip(),
-                summary=bs.select('.c-summary__intro')[0].get_text().strip(),
+                summary=summary,
                 author=cls._scrape_author(bs),
                 text='\n\n'.join([e.get_text().strip() for e in article_parts]),
                 published_time=datetime.strptime(bs.select('.c-publish-date')[0]['datetime'], '%Y-%m-%dT%H:%M:%S%z'),

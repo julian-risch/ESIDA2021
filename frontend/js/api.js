@@ -1,5 +1,5 @@
 import * as d3 from './libs/d3.min.js'
-import { emitter } from "./libs/tinyemitter.js";
+import { emitter, E } from "./env/events.js";
 
 const request = (method, url, payload, rawPayload = false) => {
     return new Promise(function (resolve, reject) {
@@ -89,7 +89,7 @@ class Api {
     }
 
     _initListeners() {
-        emitter.on('newSourceURL', this.getArticle.bind(this));
+        emitter.on(E.NEW_SOURCE_URL, this.getArticle.bind(this));
     }
 
     getArticle(url) {
@@ -97,12 +97,13 @@ class Api {
             if (d.detail.status === SCRAPERS.CODES.OK) {
                 d.payload.source = SCRAPERS.scraper2source[d.payload.scraper];
                 d.payload.dateObj = new Date(d.payload.published_time);
-                emitter.emit('receivedArticle', d);
+                emitter.emit(E.RECEIVED_ARTICLE, d);
+                emitter.emit(E.RECEIVED_COMMENTS, d.payload.comments)
             } else {
-                console.log(d);
+                emitter.emit(E.ARTICLE_FAILED, d);
             }
         }).catch((e) => {
-            console.log(e);
+            emitter.emit(E.ARTICLE_FAILED, e);
         });
     }
 }

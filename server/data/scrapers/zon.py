@@ -85,18 +85,17 @@ class ZONScraper(Scraper):
 
     @classmethod
     def _parse_comment(cls, e):
-        user_name = None
         try:
-            author = e.select('div.comment-meta__name a')[0]
+            author = e.select_one('.comment-meta__name a')
             user_id = author['href']
-        except IndexError:
-            author = e.select('div.comment-meta__name')
-            if author is None or len(author) == 0:
-                user_name = ""
-            else:
-                author = author[0]
-                user_name = author.get_text().strip()
+            user_name = author.get_text()
+        except (IndexError, TypeError):
             user_id = None
+            author = e.select_one('.comment-meta__name')
+            if not author:
+                user_name = ''
+            else:
+                user_name = author.get_text()
 
         reply_to = e.select('div.comment__reactions a.comment__origin')
         if reply_to:

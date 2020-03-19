@@ -1,6 +1,6 @@
 import { LANG, FORMAT_DATE } from './lang.js';
 import { EXAMPLE_STORIES } from "./examples.js";
-import { emitter } from "../libs/tinyemitter.js"
+import { emitter, E } from "../env/events.js"
 import { SCRAPERS } from "../api.js";
 
 function nElem({ tag, cls = null, attribs = null, id = null, text = null, children = null }) {
@@ -36,6 +36,11 @@ Node.prototype.appendChildren = function (nodeList, replace = false) {
     if (replace)
         this.innerHTML = '';
     Array.from(nodeList).forEach(node => this.appendChild(node));
+};
+
+Node.prototype.setChild = function (node) {
+    this.innerHTML = '';
+    this.appendChild(node);
 };
 
 const LOADER = `
@@ -94,7 +99,7 @@ class AddSourceModalElements {
         this.CLOSE_BUTTON.addEventListener('click', this.hide);
         this.SUBMIT.addEventListener('click', () => {
             if (SCRAPERS.isValidURL(this.url)) {
-                emitter.emit('newSourceURL', this.url);
+                emitter.emit(E.NEW_SOURCE_URL, this.url);
                 this._hide();
             } else {
                 this.URL.setCustomValidity('No source matched.')
@@ -163,12 +168,16 @@ class SidebarSourceElement {
         let button = getNode('<div class="add">+</div>');
         this.CONTENT.appendChild(button);
         button.addEventListener('click', openModalFunc);
-        emitter.once('newSourceURL', (data) => {
+        emitter.on(E.NEW_SOURCE_URL, (data) => {
             button.innerHTML = LOADER;
         });
-        emitter.once('receivedArticle', (d) => {
+        emitter.once(E.RECEIVED_ARTICLE, (d) => {
             this.update(d.payload.source, d.payload.url, d.payload.title, d.payload.dateObj, d.payload.comments.length);
-        })
+        });
+        emitter.on(E.ARTICLE_FAILED, (d) => {
+            button.innerHTML = 'X';
+            setTimeout(() => button.innerHTML = '+', 1000);
+        });
     }
 
     update(src, url, title, date, num_comments) {
@@ -202,7 +211,7 @@ class SidebarExampleElement {
 
                 let elem = nElem({ tag: 'input', id: id, attribs: attribs });
                 elem.addEventListener('change', (e) => {
-                    emitter.emit('selectexample', story)
+                    emitter.emit(E.EXAMPLE_SELECTED, story)
                 });
                 this.ROOT.appendChild(elem);
 
@@ -219,12 +228,18 @@ class SidebarElements {
         this.ROOT = document.getElementById('sources');
         this.EXAMPLE_PICKER = new SidebarExampleElement();
         this.SOURCES = [];
+        this._initListeners();
+    }
+
+    _initListeners() {
+        emitter.on(E.RECEIVED_ARTICLE, (d) => {
+            this.addEmptySource();
+        })
     }
 
     _addSource(srcElem) {
         this.SOURCES.push(srcElem);
         this.ROOT.appendChild(srcElem.ROOT);
-
     }
 
     addSource(src, url, title, date, comments) {

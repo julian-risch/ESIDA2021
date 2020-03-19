@@ -79,3 +79,17 @@ class ScrapeResult(BaseModel):
 class CacheResult(BaseModel):
     detail: ScrapeResultDetails = ScrapeResultDetails()
     payload: ArticleCached = None
+
+
+class EdgeType(str, Enum):
+    CHILD_OF = 'CHILD_OF'
+    SAME_ARTICLE = 'SAME_ARTICLE'
+    SIMILARITY = 'SIMILARITY'
+    SAME_GROUP = 'SAME_GROUP'
+
+
+class Edge(BaseModel):
+    comment_a: int
+    comment_b: int
+    weight: float
+    type: EdgeType

@@ -1,5 +1,4 @@
 from sqlalchemy import create_engine, Column, ForeignKey, MetaData, Table
-from sqlalchemy.orm import sessionmaker, relationship, Session
 from sqlalchemy.types import DateTime, Boolean, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 import databases
@@ -21,18 +20,8 @@ engine = create_engine(DATABASE_URL,
                            # has to be set to False if sqlite is used
                            "check_same_thread": not DATABASE_URL.startswith('sqlite')
                        })
-# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base(metadata=metadata)
-
-
-# def get_db():
-#     db: SessionLocal = None
-#     try:
-#         db = SessionLocal()
-#         yield db
-#     finally:
-#         db.close()
 
 
 def init_db(app):
@@ -60,7 +49,6 @@ articles_table = Table(
     Column('published_time', DateTime),
     Column('scrape_time', DateTime),
     Column('scraper', String)
-    # comments = relationship('Comment', back_populates='article')
 )
 
 comments_table = Table(
@@ -94,60 +82,17 @@ comments_table = Table(
 
     # Optional details from Tagesschau
     Column('title', String, nullable=True),
-
-    # article = relationship('Article', back_populates='comments')
 )
 
-# class Article(Base):
-#     __tablename__ = 'articles'
-#
-#     id = Column(Integer, primary_key=True, index=True)
-#     url = Column(String, index=True, unique=True)
-#     title = Column(String)
-#     subtitle = Column(String, nullable=True)
-#     summary = Column(String, nullable=True)
-#     author = Column(String, nullable=True)
-#     text = Column(String, nullable=False)
-#     published_time = Column(DateTime)
-#     scrape_time = Column(DateTime)
-#     scraper = Column(String)
-#
-#     comments = relationship('Comment', back_populates='article')
-#
-#
-# class Comment(Base):
-#     __tablename__ = 'comments'
-#
-#     id = Column(Integer, primary_key=True, index=True)
-#     article_id = Column(Integer, ForeignKey('articles.id'), nullable=False)
-#     comment_id = Column(String, index=True, nullable=False)
-#     username = Column(String)
-#     timestamp = Column(DateTime)
-#     text = Column(String)
-#     reply_to = Column(String, ForeignKey('comments.comment_id'), nullable=True)
-#
-#     # Optional details from FAZ and TAZ
-#     num_replies = Column(Integer, nullable=True)
-#     user_id = Column(String, nullable=True)
-#
-#     # Optional details from SPON
-#     upvotes = Column(Integer, nullable=True)
-#     downvotes = Column(Integer, nullable=True)
-#     love = Column(Integer, nullable=True)
-#
-#     # Optional details from Welt
-#     likes = Column(Integer, nullable=True)
-#     recommended = Column(Integer, nullable=True)
-#     child_count = Column(Integer, nullable=True)
-#
-#     # Optional details from ZON
-#     leseempfehlungen = Column(Integer, nullable=True)
-#
-#     # Optional details from Tagesschau
-#     title = Column(String, nullable=True)
-#
-#     article = relationship('Article', back_populates='comments')
-
+edges_table = Table(
+    'edges',
+    metadata,
+    Column('id', Integer, primary_key=True, index=True),
+    # Comma separated list of article_ids (JSON array)
+    Column('articles', String, index=True),
+    # JSON dump of edge list [{comment_id1 (int), comment_id2 (int), weight (float), type (str)},..]
+    Column('edges', String)
+)
 
 Base.metadata.create_all(bind=engine)
 
@@ -168,6 +113,63 @@ async def insert_comments(comments: List[models.CommentScraped], article_id: int
     values = [{**comment.dict(), 'article_id': article_id} for comment in comments]
     await database.execute_many(comments_table.insert(), values=values)
     logger.debug(f'INSERTed {len(comments)} comments into DB!')
+
+
+def get_edge_list(articles: List[int]) -> List[models.Edge]:
+    pass
+
+
+async def get_article_id(url: str) -> int:
+    logger.debug(f'Get article id for url: {url}')
+    query = 'SELECT id FROM articles WHERE url = :url'
+    article_id = await database.fetch_one(query, {'url': url})
+    return article_id['id']
+
+
+async def delete_article(url: str = None, article_id: int = None, recursive=False):
+    logger.debug(f'DELETE article from DB: id: {article_id}, url: {url}')
+    assert url or article_id
+    if url is not None:
+        article_id = await get_article_id(url)
+
+    # apparently no article for this URL in the DB
+    if not article_id:
+        return
+
+    if recursive:
+        await delete_comments(article_id=article_id)
+        await delete_edges(article_id=article_id)
+
+    await database.execute('DELETE FROM articles '
+                           'WHERE id = :article_id;',
+                           {'article_id': article_id})
+
+
+async def delete_comments(url: str = None, article_id: int = None):
+    logger.debug(f'DELETE all comments related to article id: {article_id}, url: {url}')
+    assert url or article_id
+    if url:
+        article_id = get_article_id(url)
+
+    await database.execute('DELETE FROM comments '
+                           'WHERE article_id = :article_id',
+                           {'article_id': article_id})
+
+
+async def delete_edges(edges_id: int = None, article_id: int = None):
+    logger.debug(f'DELETE all edge lists for edge_id: {edges_id}, article_id: {article_id}')
+    assert edges_id or article_id
+    if edges_id:
+        await database.execute('DELETE FROM edges '
+                               'WHERE id = :edge_id',
+                               {'edge_id': edges_id})
+    else:
+        await database.execute('DELETE FROM edges '
+                               'WHERE id in ('
+                               '    SELECT edges.id '
+                               '    FROM edges, json_each(edges.articles) as article_ids'
+                               '    WHERE article_ids.value = :article_id)',
+                               {'article_id': article_id})
 
 
 async def get_article(url: str = None, article_id: int = None) -> Mapping:
@@ -193,10 +195,3 @@ async def get_article_with_comments(url: str = None, article_id: int = None) -> 
     article.comments = comments
 
     return article
-
-# async def insert_article(article: models.ArticleCreate):
-#    db_article = Article(**article.dict())
-#    database.add(db_article)
-
-
-# __all__ = ['Comment', 'Article', 'init_db']
