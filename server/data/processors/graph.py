@@ -4,10 +4,13 @@ from typing import List
 from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator
 from configparser import ConfigParser
 from common import config
+import logging
 
 COMPARATORS = [SameArticleComparator,
                SameCommentComparator,
                ReplyToComparator]
+
+logger = logging.getLogger('data.processors.graph')
 
 
 class GraphRepresentation:
@@ -25,6 +28,9 @@ class GraphRepresentation:
         self.comments = [split_comment(comment) for comment in comments]
         self.id2idx = {}
         self.edges = []
+
+        logger.debug(f'{len(self.comments)} comments turned '
+                     f'into {len([s for c in self.comments for s in c.splits])} splits')
 
         # construct graph
         self._build_index()

@@ -58,6 +58,9 @@ const _api = Object.freeze({
         '/api/ping/{name}': (name) => {
             let query = `/api/ping/${name}`;
             return POST(query);
+        },
+        '/api/graph/': (article_ids, urls, override_cache, ignore_cache, conf) => {
+            // TODO implement
         }
     }
 });

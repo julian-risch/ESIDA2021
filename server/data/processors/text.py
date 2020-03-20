@@ -1,6 +1,10 @@
 import re
 import data.models as models
 from typing import List
+from common import config
+
+
+MIN_SPLIT_LENGTH = config.getint('TextProcessing', 'min_split_len')
 
 
 def split_sentences(s):
@@ -13,6 +17,9 @@ def split_comment(comment: models.CommentCached) -> models.SplitComment:
     splits = []
     bound = 0
     for text_sentence in text_sentences:
+        # skip things that are too short.
+        if len(text_sentence) < 10:
+            continue
         splits.append(models.Split(s=bound, e=bound + len(text_sentence)))
         bound += len(text_sentence) + 1
 

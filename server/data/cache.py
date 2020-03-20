@@ -27,6 +27,9 @@ async def get_graph(urls: List[str] = None, article_ids: List[int] = None, conf:
     graph_rep = GraphRepresentation(comments, conf=conf)
     graph = models.Graph(**graph_rep.__dict__())
 
+    logger.debug(f'Constructed graph with {len(graph.edges)} edges '
+                 f'for article_ids:{article_ids} | urls: {urls}')
+
     if not ignore_cache:
         await db.store_graph(article_ids, graph)
 
