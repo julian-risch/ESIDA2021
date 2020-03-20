@@ -34,14 +34,15 @@ class Scraper(ABC):
     def scrape(cls, url) -> Tuple[models.ArticleScraped, List[models.CommentScraped]]:
         url = cls.prepare_url(url)
         article, comments = cls._scrape(url)
+
+        if not comments:
+            raise NoCommentsWarning(f'No Comments found at {url}!')
+
         comments = list(sorted(comments, key=lambda c: c.timestamp))
 
         logger.debug(f'Scraped: "{article.title}" using "{article.scraper}" for {article.url}')
         logger.debug(f'- Length: {len(article.text)} | num comments: {len(comments)} | '
                      f'Date: {article.published_time} | Author: {article.author}\n')
-
-        if len(comments) == 0:
-            raise NoCommentsWarning(f'No Comments found at {url}!')
 
         return article, comments
 

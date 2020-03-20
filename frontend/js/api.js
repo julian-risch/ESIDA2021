@@ -32,7 +32,7 @@ const POST = (url, payload, rawPayload = false) =>
 /**
  * This should be a 1:1 copy of the API as specified in the openapi.json
  */
-const _api = {
+const _api = Object.freeze({
     'GET': {
         '/api/platforms/article': (url, override_cache, ignore_cache) => {
             let query = '/api/platforms/article?';
@@ -60,9 +60,9 @@ const _api = {
             return POST(query);
         }
     }
-};
+});
 
-const SCRAPERS = {
+const SCRAPERS = Object.freeze({
     isValidURL: (url) => !!url.match(/^https?:\/\/(www\.)?(zeit|sz|sueddeutsche|faz|spiegel|tagesschau|welt|taz)\.(de|net)\/.*$/i),
     scraper2source: {
         "<class 'data.scrapers.faz.FAZScraper'>": 'faz',
@@ -80,7 +80,7 @@ const SCRAPERS = {
         NO_SCRAPER: 'NO_SCRAPER',
         SCRAPER_ERROR: 'SCRAPER_ERROR'
     }
-};
+});
 
 
 class Api {

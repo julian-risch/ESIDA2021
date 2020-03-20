@@ -2,8 +2,9 @@ from sqlalchemy import create_engine, Column, ForeignKey, MetaData, Table
 from sqlalchemy.types import DateTime, Boolean, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 import databases
-from typing import List, Optional, Mapping
+from typing import List, Optional, Mapping, Union
 import logging
+import json
 
 import data.models as models
 from common import config
@@ -84,14 +85,14 @@ comments_table = Table(
     Column('title', String, nullable=True),
 )
 
-edges_table = Table(
-    'edges',
+graphs_table = Table(
+    'graphs',
     metadata,
     Column('id', Integer, primary_key=True, index=True),
     # Comma separated list of article_ids (JSON array)
-    Column('articles', String, index=True),
-    # JSON dump of edge list [{comment_id1 (int), comment_id2 (int), weight (float), type (str)},..]
-    Column('edges', String)
+    Column('article_ids', String, index=True),
+    # JSON dump of models.Graph
+    Column('graph', String)
 )
 
 Base.metadata.create_all(bind=engine)
@@ -113,10 +114,6 @@ async def insert_comments(comments: List[models.CommentScraped], article_id: int
     values = [{**comment.dict(), 'article_id': article_id} for comment in comments]
     await database.execute_many(comments_table.insert(), values=values)
     logger.debug(f'INSERTed {len(comments)} comments into DB!')
-
-
-def get_edge_list(articles: List[int]) -> List[models.Edge]:
-    pass
 
 
 async def get_article_id(url: str) -> int:
@@ -156,18 +153,19 @@ async def delete_comments(url: str = None, article_id: int = None):
                            {'article_id': article_id})
 
 
-async def delete_edges(edges_id: int = None, article_id: int = None):
-    logger.debug(f'DELETE all edge lists for edge_id: {edges_id}, article_id: {article_id}')
-    assert edges_id or article_id
-    if edges_id:
-        await database.execute('DELETE FROM edges '
-                               'WHERE id = :edge_id',
-                               {'edge_id': edges_id})
+async def delete_edges(graph_id: int = None, article_id: int = None):
+    logger.debug(f'DELETE all graphs for graph.id: {graph_id}, article_id: {article_id}')
+    assert graph_id or article_id
+
+    if graph_id:
+        await database.execute('DELETE FROM graphs '
+                               'WHERE id = :graph_id',
+                               {'graph_id': graph_id})
     else:
-        await database.execute('DELETE FROM edges '
+        await database.execute('DELETE FROM graphs '
                                'WHERE id in ('
-                               '    SELECT edges.id '
-                               '    FROM edges, json_each(edges.articles) as article_ids'
+                               '    SELECT graphs.id '
+                               '    FROM graphs, json_each(graphs.article_ids) as article_ids'
                                '    WHERE article_ids.value = :article_id)',
                                {'article_id': article_id})
 
@@ -183,15 +181,57 @@ async def get_article(url: str = None, article_id: int = None) -> Mapping:
     return await database.fetch_one(query, {'article_id': article_id})
 
 
+async def get_comments(article_ids: Union[List[int], int]) -> List[models.CommentCached]:
+    # can be called for a single article_id, so wrap it.
+    if isinstance(article_ids, int):
+        article_ids = [article_ids]
+
+    # make it save to inject into sql query
+    article_ids = ','.join([str(i) for i in article_ids if isinstance(i, int)])
+
+    comments = await database.fetch_all('SELECT c1.*, c2.id as reply_to_id '
+                                        'FROM comments c1 '
+                                        'LEFT JOIN comments c2 ON c1.reply_to = c2.comment_id '
+                                        f'WHERE c1.article_id IN ({article_ids});')
+    logger.debug(f'Found {len(comments)} comments for article_ids: {article_ids}')
+    return [models.CommentCached(**comment) for comment in comments]
+
+
 async def get_article_with_comments(url: str = None, article_id: int = None) -> models.ArticleCached:
     article = await get_article(url, article_id)
     assert bool(article)
     article = models.ArticleCached(**article)
 
-    query = 'SELECT * FROM comments WHERE article_id = :article_id'
-    comments = await database.fetch_all(query, {'article_id': article.id})
-    comments = [models.CommentCached(**comment) for comment in comments]
-
+    comments = await get_comments(article.id)
     article.comments = comments
 
     return article
+
+
+async def get_graph(article_ids: List[int]) -> models.Graph:
+    # make it save to inject into sql query
+    article_ids = [i for i in sorted(article_ids) if isinstance(i, int)]
+
+    result = await database.fetch_one('SELECT * FROM graphs WHERE article_ids = :article_ids',
+                                      {'article_ids': json.dumps(article_ids)})
+    if result:
+        graph = json.loads(result['graph'])
+        logger.debug(f'Retrieved graph id: {result["id"]} for {article_ids}')
+        return models.Graph(article_ids=json.loads(result['article_ids']),
+                            graph_id=result['id'],
+                            comments=graph['comments'],
+                            id2idx=graph['id2idx'],
+                            edges=graph['edges'])
+
+
+async def store_graph(article_ids: List[int], graph: models.Graph):
+    # make it save to inject into sql query
+    article_ids = json.dumps([i for i in sorted(article_ids) if isinstance(i, int)])
+    graph = graph.json(exclude={'articles_id', 'graph_id'})
+
+    last_record_id = await database.execute(graphs_table.insert().values({
+        'graph': graph,
+        'article_ids': article_ids
+    }))
+    logger.debug(f'INSERTed graph for {article_ids} to DB with ID: {last_record_id}!')
+    return last_record_id

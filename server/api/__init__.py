@@ -7,7 +7,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.requests import Request
 from starlette.responses import Response
 from common import config, get_logger_config
-from api.routes import ping, platforms
+from api.routes import ping, platforms, graph
 import uvicorn
 import json
 import resource
@@ -22,7 +22,8 @@ class APISubRouter:
         self.router = APIRouter()
         self.paths = {
             '/ping': ping,
-            '/platforms': platforms
+            '/platforms': platforms,
+            '/graph': graph
         }
         for path, router in self.paths.items():
             self.router.include_router(router.router, prefix=path)

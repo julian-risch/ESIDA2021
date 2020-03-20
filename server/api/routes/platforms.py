@@ -1,19 +1,11 @@
-from fastapi import APIRouter, HTTPException, status, WebSocket
-from fastapi.responses import PlainTextResponse
+from fastapi import APIRouter, HTTPException, status
 from common import init_logging, except2str
 from pydantic import HttpUrl
-from data.models import ArticleCached, CommentCached, ArticleScraped, CommentScraped, CommentedArticle, \
-    ScrapeResultStatus, ScrapeResult, ScrapeResultDetails, CacheResult
-from data.scrapers import get_matching_scraper, scrape, NoScraperException, ScraperWarning, NoCommentsWarning
-from fastapi.responses import JSONResponse
-from typing import Union
-import data.database as db
-import data.models as models
+from data.models import CommentedArticle, ScrapeResultStatus, ScrapeResult, ScrapeResultDetails, CacheResult
+from data.scrapers import scrape, NoScraperException, ScraperWarning, NoCommentsWarning
 import data.cache as cache
-from fastapi import Depends
 from requests.exceptions import RequestException
 import functools
-import json
 
 logger = init_logging('comex.api.route.platforms')
 logger.debug('Setup comex.api.route.platforms router')

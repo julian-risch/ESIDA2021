@@ -35,24 +35,23 @@ class SueddeutscheScraper(Scraper):
     @classmethod
     def _title(cls, bs):
         try:
-            return bs.select('h2 span.sz-article-header__title')[0].get_text()
-        except IndexError:
+            return ' '.join([e.get_text() for e in bs.select('header.sz-article__header h2 span')])
+        except AttributeError:
             pass
         try:
-            return bs.select('article > header > h2')[0].get_text()
-        except IndexError:
-            pass
-        raise UnknownStructureWarning(f'Article Layout not known; couldn\'t find title!')
+            return bs.select_one('article > header > h2').get_text()
+        except AttributeError:
+            raise UnknownStructureWarning(f'Article Layout not known; couldn\'t find title!')
 
     @classmethod
     def _summary(cls, bs):
         try:
-            return '\n\n'.join([e.get_text().strip() for e in bs.select('div.sz-article-intro p')])
-        except IndexError:
-            pass
-        try:
-            return '\n\n'.join([e.get_text().strip() for e in bs.select('div.sz-article__intro p')])
-        except IndexError:
+            sel = bs.select('div.sz-article-intro p')
+            if not sel:
+                sel = bs.select('div.sz-article__intro p')
+            if sel:
+                return '\n\n'.join([e.get_text().strip() for e in sel])
+        except Exception:
             pass
 
     @classmethod
@@ -136,10 +135,8 @@ class SueddeutscheScraper(Scraper):
         return comments
 
 
-# toDO: fix mistakes, after fixing add urls to stories
 if __name__ == '__main__':
     SueddeutscheScraper.test_scraper([
         'https://www.sueddeutsche.de/politik/brexit-johnson-unterhaus-neuwahlen-1.4647880',
         'https://www.sueddeutsche.de/politik/groko-csu-spd-einigung-grundrente-1.4676599'
-        # has comments, but stated it has no comments
     ])

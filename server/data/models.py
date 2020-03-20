@@ -1,15 +1,14 @@
 from pydantic import BaseModel, validator, ValidationError, AnyHttpUrl
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 from enum import Enum
-import re
 
 
 class CommentScraped(BaseModel):
     username: str
     comment_id: str
     timestamp: datetime
-    text: str
+    text: Union[str, List[str]]
     reply_to: Optional[str] = None
 
     # Optional details from FAZ and TAZ
@@ -35,14 +34,15 @@ class CommentScraped(BaseModel):
 class CommentCached(CommentScraped):
     id: int
     article_id: int
+    reply_to_id: Optional[int] = None
 
 
 class ArticleScraped(BaseModel):
     url: AnyHttpUrl
     title: str
-    subtitle: str = None
-    summary: str = None
-    author: str = None
+    subtitle: Optional[str] = None
+    summary: Optional[str] = None
+    author: Optional[str] = None
     text: str
     published_time: datetime
     scrape_time: datetime = datetime.now()
@@ -68,28 +68,78 @@ class ScrapeResultStatus(str, Enum):
 
 class ScrapeResultDetails(BaseModel):
     status: ScrapeResultStatus = ScrapeResultStatus.OK
-    error: str = None
+    error: Optional[str] = None
 
 
 class ScrapeResult(BaseModel):
     detail: ScrapeResultDetails = ScrapeResultDetails()
-    payload: CommentedArticle = None
+    payload: Optional[CommentedArticle] = None
 
 
 class CacheResult(BaseModel):
     detail: ScrapeResultDetails = ScrapeResultDetails()
-    payload: ArticleCached = None
+    payload: Optional[ArticleCached] = None
 
 
 class EdgeType(str, Enum):
-    CHILD_OF = 'CHILD_OF'
-    SAME_ARTICLE = 'SAME_ARTICLE'
-    SIMILARITY = 'SIMILARITY'
-    SAME_GROUP = 'SAME_GROUP'
+    REPLY_TO = 0
+    SAME_ARTICLE = 1
+    SIMILARITY = 2
+    SAME_GROUP = 3
+    SAME_COMMENT = 4
+
+
+class Split(BaseModel):
+    # first character of the sentence
+    s: int
+    # last character of the sentence
+    e: int
+
+
+class ComparatorConfigBase(BaseModel):
+    active: str = 'yes'
+
+
+class SameComponentComparatorConfig(ComparatorConfigBase):
+    base_weight: float = None
+
+
+class SameArticleComparatorConfig(ComparatorConfigBase):
+    base_weight: float = None
+
+
+class ReplyToComparatorConfig(ComparatorConfigBase):
+    base_weight: float = None
+
+
+class ComparatorConfig(BaseModel):
+    SameComponentComparator: Optional[SameComponentComparatorConfig] = None
+    SameArticleComparator: Optional[SameArticleComparatorConfig] = None
+    ReplyToComparator: Optional[ReplyToComparatorConfig] = None
+
+
+class SplitComment(BaseModel):
+    # database ID of the comment
+    id: int
+    # ID of the cluster the comment belongs to
+    grp_id: Optional[int] = None
+    # List of sentences (splits) the comment is comprised of
+    splits: List[Split]
 
 
 class Edge(BaseModel):
-    comment_a: int
-    comment_b: int
-    weight: float
+    src: List[int]  # first is index of comment, second is index of sentence within comment
+    tgt: List[int]  # first is index of comment, second is index of sentence within comment
+    # edge weight
+    wgt: float
     type: EdgeType
+    comp: str
+
+
+class Graph(BaseModel):
+    article_ids: Optional[List[int]] = None
+    graph_id: Optional[int] = None
+
+    comments: List[SplitComment]
+    id2idx: dict
+    edges: List[Edge]
