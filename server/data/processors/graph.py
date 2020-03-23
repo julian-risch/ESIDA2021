@@ -59,12 +59,13 @@ class GraphRepresentation:
                     orig_comment_j = self.orig_comments[j]
                     # if comparing sentences within the same comment, skip lower triangle
                     for sj in range(si + 1 if i == j else 0, len(comment_j.splits)):
+                        weights = []
                         for comparator in comparators:
                             result = comparator.compare(orig_comment_i, comment_i,
                                                         orig_comment_j, comment_j, si, sj)
-                            if result is not None:
-                                self.edges.append(models.Edge(src=[i, si],
-                                                              tgt=[j, sj],
-                                                              wgt=result[1],
-                                                              type=result[0],
-                                                              comp=comparator.short_name()))
+                            if result:
+                                weights.append(result)
+                        if weights:
+                            self.edges.append(models.Edge(src=[i, si],
+                                                          tgt=[j, sj],
+                                                          wgts=weights))

@@ -32,18 +32,30 @@ class Comparator(ABC):
     def short_name(cls) -> str:
         raise NotImplementedError
 
+    @classmethod
     @abstractmethod
-    def compare(self, a: models.CommentCached, _a: models.SplitComment,
-                b: models.CommentCached, _b: models.SplitComment,
-                sentence_a, sentence_b) -> Tuple[models.EdgeType, float]:
+    def edge_type(cls) -> models.EdgeType:
+        raise NotImplementedError
+
+    @abstractmethod
+    def _compare(self, a: models.CommentCached, _a: models.SplitComment,
+                 b: models.CommentCached, _b: models.SplitComment,
+                 split_a: int, split_b: int) -> float:
         """
         Returns a similarity score
         :param a: First comment to compare
         :param _a: Split version of first comment
         :param b: Second comment to compare
         :param _b: Split version of second comment
-        :param sentence_a: index of sentence within comment a
-        :param sentence_b: index of sentence within comment b
+        :param split_a: index of sentence within comment a
+        :param split_b: index of sentence within comment b
         :return: edge type and weight
         """
         raise NotImplementedError
+
+    def compare(self, a: models.CommentCached, _a: models.SplitComment,
+                b: models.CommentCached, _b: models.SplitComment,
+                split_a, split_b) -> models.EdgeWeight:
+        weight = self._compare(a, _a, b, _b, split_a, split_b)
+        if weight:
+            return models.EdgeWeight(wgt=weight, tp=self.edge_type(), comp=self.short_name())

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, validator, ValidationError, AnyHttpUrl
 from datetime import datetime
 from typing import List, Optional, Union
-from enum import Enum
+from enum import Enum, IntEnum
 
 
 class CommentScraped(BaseModel):
@@ -81,7 +81,7 @@ class CacheResult(BaseModel):
     payload: Optional[ArticleCached] = None
 
 
-class EdgeType(str, Enum):
+class EdgeType(IntEnum):
     REPLY_TO = 0
     SAME_ARTICLE = 1
     SIMILARITY = 2
@@ -97,19 +97,22 @@ class Split(BaseModel):
 
 
 class ComparatorConfigBase(BaseModel):
-    active: str = 'yes'
+    active: bool = True
 
 
 class SameComponentComparatorConfig(ComparatorConfigBase):
     base_weight: float = None
+    only_consecutive: bool = True
 
 
 class SameArticleComparatorConfig(ComparatorConfigBase):
     base_weight: float = None
+    only_root: bool = True
 
 
 class ReplyToComparatorConfig(ComparatorConfigBase):
     base_weight: float = None
+    only_root: bool = True
 
 
 class ComparatorConfig(BaseModel):
@@ -127,13 +130,19 @@ class SplitComment(BaseModel):
     splits: List[Split]
 
 
+class EdgeWeight(BaseModel):
+    # edge weight
+    wgt: float
+    # edge type
+    tp: EdgeType
+    # short string of comparator used
+    comp: str
+
+
 class Edge(BaseModel):
     src: List[int]  # first is index of comment, second is index of sentence within comment
     tgt: List[int]  # first is index of comment, second is index of sentence within comment
-    # edge weight
-    wgt: float
-    type: EdgeType
-    comp: str
+    wgts: List[EdgeWeight]
 
 
 class Graph(BaseModel):
