@@ -37,10 +37,9 @@ class Comparator(ABC):
     def edge_type(cls) -> models.EdgeType:
         raise NotImplementedError
 
-    @abstractmethod
-    def _compare(self, a: models.CommentCached, _a: models.SplitComment,
-                 b: models.CommentCached, _b: models.SplitComment,
-                 split_a: int, split_b: int) -> float:
+    def compare(self, a: models.CommentCached, _a: models.SplitComment,
+                b: models.CommentCached, _b: models.SplitComment,
+                split_a, split_b) -> models.EdgeWeight:
         """
         Returns a similarity score
         :param a: First comment to compare
@@ -52,10 +51,3 @@ class Comparator(ABC):
         :return: edge type and weight
         """
         raise NotImplementedError
-
-    def compare(self, a: models.CommentCached, _a: models.SplitComment,
-                b: models.CommentCached, _b: models.SplitComment,
-                split_a, split_b) -> models.EdgeWeight:
-        weight = self._compare(a, _a, b, _b, split_a, split_b)
-        if weight:
-            return models.EdgeWeight(wgt=weight, tp=self.edge_type(), comp=self.short_name())

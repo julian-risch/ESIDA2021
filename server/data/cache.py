@@ -20,7 +20,7 @@ async def get_graph(urls: List[str] = None, article_ids: List[int] = None, conf:
         graph = await db.get_graph(article_ids)
         if graph:
             logger.debug(f'Found graph cache entry with {len(graph.edges)} edges '
-                         f'for article_ids:{article_ids} | urls: {urls}')
+                         f'for article_ids: {article_ids} | urls: {urls}')
             return graph
 
     comments = await db.get_comments(article_ids)
@@ -28,12 +28,16 @@ async def get_graph(urls: List[str] = None, article_ids: List[int] = None, conf:
     graph = models.Graph(**graph_rep.__dict__())
 
     logger.debug(f'Constructed graph with {len(graph.edges)} edges '
-                 f'for article_ids:{article_ids} | urls: {urls}')
+                 f'for article_ids: {article_ids} | urls: {urls}')
 
     if not ignore_cache:
         await db.store_graph(article_ids, graph)
 
     return graph
+
+
+async def get_stored_article(article_id: int):
+    return await db.get_article_with_comments(article_id=article_id)
 
 
 async def get_article(url: str, override_cache=False, ignore_cache=False):
@@ -42,7 +46,7 @@ async def get_article(url: str, override_cache=False, ignore_cache=False):
         # try cache if not ignored or overridden
         if not override_cache and not ignore_cache:
             article = await db.get_article_with_comments(url=url)
-            logger.debug(f'Found cache entry id:{article.id} for {url}')
+            logger.debug(f'Found cache entry id: {article.id} for {url}')
             return article
     except AssertionError:
         # nothing cached for given URL

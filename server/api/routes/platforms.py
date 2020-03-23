@@ -6,6 +6,7 @@ from data.scrapers import scrape, NoScraperException, ScraperWarning, NoComments
 import data.cache as cache
 from requests.exceptions import RequestException
 import functools
+from typing import Union
 
 logger = init_logging('comex.api.route.platforms')
 logger.debug('Setup comex.api.route.platforms router')
@@ -50,8 +51,12 @@ async def direct_scrape(url: HttpUrl):
             description='Try to get the article from the cache, '
                         'otherwise scrape, cache, and return article including comments.')
 @catch_scrape_errors
-# FIXME cache override and ignoring shouldn't be exposed!
-async def get_article(url: HttpUrl, override_cache: bool = False, ignore_cache: bool = False):
-    article = await cache.get_article(url, override_cache, ignore_cache)
+async def get_article(identifier: Union[HttpUrl, int],
+                      override_cache: bool = False, ignore_cache: bool = False):
+    if isinstance(identifier, int):
+        article = await cache.get_stored_article(identifier)
+    else:
+        # FIXME cache override and ignoring shouldn't be exposed!
+        article = await cache.get_article(identifier, override_cache, ignore_cache)
     result = CacheResult(payload=article)
     return result

@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from common import init_logging, except2str
 from pydantic import HttpUrl
 from data.models import Graph, ComparatorConfig
+import data.models as m
 from typing import List, Optional
 import data.cache as cache
 import functools

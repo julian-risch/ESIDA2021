@@ -1,6 +1,6 @@
 from pydantic import BaseModel, validator, ValidationError, AnyHttpUrl
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import List, Optional, Union, NamedTuple, Tuple
 from enum import Enum, IntEnum
 
 
@@ -130,7 +130,7 @@ class SplitComment(BaseModel):
     splits: List[Split]
 
 
-class EdgeWeight(BaseModel):
+class EdgeWeight(Tuple, NamedTuple):
     # edge weight
     wgt: float
     # edge type
@@ -139,10 +139,14 @@ class EdgeWeight(BaseModel):
     comp: str
 
 
+# this is just a hack because Pydantic doesnt understand NamedTuples
+EdgeWeightType = Tuple[float, EdgeType, str]
+
+
 class Edge(BaseModel):
     src: List[int]  # first is index of comment, second is index of sentence within comment
     tgt: List[int]  # first is index of comment, second is index of sentence within comment
-    wgts: List[EdgeWeight]
+    wgts: List[EdgeWeightType]
 
 
 class Graph(BaseModel):

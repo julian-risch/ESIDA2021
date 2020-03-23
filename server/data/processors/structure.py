@@ -24,10 +24,10 @@ class SameCommentComparator(Comparator):
     def edge_type(cls) -> models.EdgeType:
         return models.EdgeType.SAME_COMMENT
 
-    def _compare(self, a: models.CommentCached, _a: models.SplitComment, b: models.CommentCached,
-                 _b: models.SplitComment, split_a, split_b) -> float:
+    def compare(self, a: models.CommentCached, _a: models.SplitComment, b: models.CommentCached,
+                _b: models.SplitComment, split_a, split_b) -> float:
         if a.id == b.id and ((self.only_consecutive and ((split_a + 1) == split_b)) or not self.only_consecutive):
-            return self.base_weight
+            return models.EdgeWeight(wgt=self.base_weight, tp=self.edge_type(), comp=self.short_name())
 
 
 class SameArticleComparator(Comparator):
@@ -44,10 +44,10 @@ class SameArticleComparator(Comparator):
     def edge_type(cls) -> models.EdgeType:
         return models.EdgeType.SAME_ARTICLE
 
-    def _compare(self, a: models.CommentCached, _a: models.SplitComment, b: models.CommentCached,
-                 _b: models.SplitComment, split_a, split_b) -> float:
+    def compare(self, a: models.CommentCached, _a: models.SplitComment, b: models.CommentCached,
+                _b: models.SplitComment, split_a, split_b) -> float:
         if a.article_id == b.article_id and ((self.only_root and split_a == 0 and split_b == 0) or not self.only_root):
-            return self.base_weight
+            return models.EdgeWeight(wgt=self.base_weight, tp=self.edge_type(), comp=self.short_name())
 
 
 class ReplyToComparator(Comparator):
@@ -64,9 +64,9 @@ class ReplyToComparator(Comparator):
     def edge_type(cls) -> models.EdgeType:
         return models.EdgeType.REPLY_TO
 
-    def _compare(self, a: models.CommentCached, _a: models.SplitComment, b: models.CommentCached,
-                 _b: models.SplitComment, split_a, split_b) -> float:
+    def compare(self, a: models.CommentCached, _a: models.SplitComment, b: models.CommentCached,
+                _b: models.SplitComment, split_a, split_b) -> float:
         if ((a.reply_to_id is not None and a.reply_to_id == b.comment_id) or
             (b.reply_to_id is not None and b.reply_to_id == a.comment_id)) and \
                 ((self.only_root and split_a == 0 and split_b == 0) or not self.only_root):
-            return self.base_weight
+            return models.EdgeWeight(wgt=self.base_weight, tp=self.edge_type(), comp=self.short_name())
