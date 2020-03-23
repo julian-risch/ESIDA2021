@@ -36,7 +36,7 @@ const _api = Object.freeze({
     'GET': {
         '/api/platforms/article': (url, override_cache, ignore_cache) => {
             let query = '/api/platforms/article?';
-            query += 'url=' + encodeURIComponent(url);
+            query += 'identifier=' + encodeURIComponent(url);
             if (override_cache)
                 query += '&override_cache=true';
             if (ignore_cache)
