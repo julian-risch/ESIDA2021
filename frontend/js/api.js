@@ -1,5 +1,5 @@
-import * as d3 from './libs/d3.min.js'
 import { emitter, E } from "./env/events.js";
+import { data, API_SETTINGS, GRAPH_CONFIG, Article } from "./env/data.js";
 
 const request = (method, url, payload, rawPayload = false) => {
     return new Promise(function (resolve, reject) {
@@ -34,12 +34,12 @@ const POST = (url, payload, rawPayload = false) =>
  */
 const _api = Object.freeze({
     'GET': {
-        '/api/platforms/article': (url, override_cache, ignore_cache) => {
+        '/api/platforms/article': (url, overrideCache, ignoreCache) => {
             let query = '/api/platforms/article?';
             query += 'identifier=' + encodeURIComponent(url);
-            if (override_cache)
+            if (overrideCache)
                 query += '&override_cache=true';
-            if (ignore_cache)
+            if (ignoreCache)
                 query += '&ignore_cache=true';
 
             return GET(query);
@@ -59,8 +59,21 @@ const _api = Object.freeze({
             let query = `/api/ping/${name}`;
             return POST(query);
         },
-        '/api/graph/': (article_ids, urls, override_cache, ignore_cache, conf) => {
-            // TODO implement
+        '/api/graph/': (articleIds, urls, overrideCache, ignoreCache, conf) => {
+            let query = '/api/graph/';
+            let params = [];
+            if (overrideCache)
+                params.push('override_cache=true');
+            if (ignoreCache)
+                params.push('ignore_cache=true');
+            if (params.length > 0)
+                query += '?' + params.join('&');
+
+            return POST(query, {
+                article_ids: articleIds,
+                urls: urls,
+                conf: conf
+            });
         }
     }
 });
@@ -85,7 +98,6 @@ const SCRAPERS = Object.freeze({
     }
 });
 
-
 class Api {
     constructor() {
         this._initListeners();
@@ -93,20 +105,44 @@ class Api {
 
     _initListeners() {
         emitter.on(E.NEW_SOURCE_URL, this.getArticle.bind(this));
+        emitter.on(E.GRAPH_REQUESTED, () => {
+            this.getGraph(data.getArticleIds());
+        });
     }
 
     getArticle(url) {
         _api.GET["/api/platforms/article"](url).then((d) => {
             if (d.detail.status === SCRAPERS.CODES.OK) {
-                d.payload.source = SCRAPERS.scraper2source[d.payload.scraper];
-                d.payload.dateObj = new Date(d.payload.published_time);
-                emitter.emit(E.RECEIVED_ARTICLE, d);
+                let article = new Article(d.payload.url,
+                    d.payload.title,
+                    d.payload.subtitle,
+                    d.payload.summary,
+                    d.payload.author,
+                    d.payload.text,
+                    new Date(d.payload.published_time),
+                    new Date(d.payload.scrape_time),
+                    SCRAPERS.scraper2source[d.payload.scraper],
+                    d.payload.id,
+                    d.payload.comments.length);
+                emitter.emit(E.RECEIVED_ARTICLE, article);
                 emitter.emit(E.RECEIVED_COMMENTS, d.payload.comments)
             } else {
                 emitter.emit(E.ARTICLE_FAILED, d);
             }
         }).catch((e) => {
+            console.error(e);
             emitter.emit(E.ARTICLE_FAILED, e);
+        });
+    }
+
+    getGraph(articleIds, conf) {
+        if (!conf)
+            conf = GRAPH_CONFIG;
+        _api.POST["/api/graph/"](articleIds, null, null, API_SETTINGS.GRAPH_IGNORE_CACHE, conf).then(d => {
+            emitter.emit(E.GRAPH_RECEIVED, d.graph_id, d.comments, d.id2idx, d.edges);
+        }).catch((e) => {
+            console.error(e);
+            emitter.emit(E.GRAPH_REQUEST_FAILED, e);
         });
     }
 }

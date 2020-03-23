@@ -33,5 +33,6 @@ async def get_graph(article_ids: List[int] = None,
                     conf: ComparatorConfig = None):
     if conf is not None:
         conf = conf.dict(exclude_unset=True)
-    return await cache.get_graph(urls=urls, article_ids=article_ids, conf=conf,
-                                 override_cache=override_cache, ignore_cache=ignore_cache)
+    graph = await cache.get_graph(urls=urls, article_ids=article_ids, conf=conf,
+                                  override_cache=override_cache, ignore_cache=ignore_cache)
+    return graph

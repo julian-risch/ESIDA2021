@@ -172,7 +172,7 @@ class SidebarSourceElement {
             button.innerHTML = LOADER;
         });
         emitter.once(E.RECEIVED_ARTICLE, (d) => {
-            this.update(d.payload.source, d.payload.url, d.payload.title, d.payload.dateObj, d.payload.comments.length);
+            this.update(d.source, d.url, d.title, d.publishedTime, d.numComments);
         });
         emitter.on(E.ARTICLE_FAILED, (d) => {
             button.innerHTML = 'X';
@@ -251,10 +251,21 @@ class SidebarElements {
     }
 }
 
+class MainPanel {
+    constructor() {
+        this.ROOT = document.getElementById('main');
+    }
+    getDimensions() {
+        //this.ROOT.getBoundingClientRect();
+        return [this.ROOT.clientWidth, this.ROOT.clientHeight];
+    }
+}
+
 class Elements {
     constructor() {
         this.ADD_SOURCE_MODAL = new AddSourceModalElements();
         this.SIDEBAR = new SidebarElements(this.ADD_SOURCE_MODAL.show);
+        this.MAIN_PANEL = new MainPanel();
     }
 }
 

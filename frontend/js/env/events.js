@@ -13,6 +13,11 @@ const E = {
     NEW_SOURCE_URL: 'NEW_SOURCE_URL', // DATA: URL as str
     // user chose an example from the list
     EXAMPLE_SELECTED: 'EXAMPLE_SELECTED', // DATA: story object including list of URLs
+    // is emitted when a new graph should be requested from backend
+    GRAPH_REQUESTED: 'GRAPH_REQUESTED', // DATA: empty
+    GRAPH_REQUEST_FAILED: 'GRAPH_REQUEST_FAILED',
+    GRAPH_RECEIVED: 'GRAPH_RECEIVED',
+    REDRAW: 'REDRAW'
 };
 Object.freeze(E);
 

@@ -31,7 +31,9 @@ async def get_graph(urls: List[str] = None, article_ids: List[int] = None, conf:
                  f'for article_ids: {article_ids} | urls: {urls}')
 
     if not ignore_cache:
-        await db.store_graph(article_ids, graph)
+        graph_id = await db.store_graph(article_ids, graph)
+        graph.graph_id = graph_id
+        graph.article_ids = article_ids
 
     return graph
 

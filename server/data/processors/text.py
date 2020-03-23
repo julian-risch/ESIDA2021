@@ -9,7 +9,8 @@ MIN_SPLIT_LENGTH = config.getint('TextProcessing', 'min_split_len')
 
 def split_sentences(s):
     # https://stackoverflow.com/questions/25735644/python-regex-for-splitting-text-into-sentences-sentence-tokenizing
-    return re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', s)
+    # FIXME this isn't ideal, newline is ignored
+    return re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', s, flags=re.MULTILINE)
 
 
 def split_comment(comment: models.CommentCached) -> models.SplitComment:
