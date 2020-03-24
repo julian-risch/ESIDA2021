@@ -1,7 +1,9 @@
 import { LANG, FORMAT_DATE } from './lang.js';
 import { EXAMPLE_STORIES } from "./examples.js";
 import { emitter, E } from "../env/events.js"
-import { SCRAPERS } from "../api.js";
+import { API } from "../api.js";
+import { ComExDrawing } from "../drawing/drawing.js";
+import { ConfigPanel } from "../drawing/config.js";
 
 function nElem({ tag, cls = null, attribs = null, id = null, text = null, children = null }) {
     let elem = document.createElement(tag);
@@ -98,7 +100,7 @@ class AddSourceModalElements {
         });
         this.CLOSE_BUTTON.addEventListener('click', this.hide);
         this.SUBMIT.addEventListener('click', () => {
-            if (SCRAPERS.isValidURL(this.url)) {
+            if (API.isValidScraperUrl(this.url)) {
                 emitter.emit(E.NEW_SOURCE_URL, this.url);
                 this._hide();
             } else {
@@ -168,13 +170,13 @@ class SidebarSourceElement {
         let button = getNode('<div class="add">+</div>');
         this.CONTENT.appendChild(button);
         button.addEventListener('click', openModalFunc);
-        emitter.on(E.NEW_SOURCE_URL, (data) => {
+        emitter.on(E.NEW_SOURCE_URL, () => {
             button.innerHTML = LOADER;
         });
         emitter.once(E.RECEIVED_ARTICLE, (d) => {
             this.update(d.source, d.url, d.title, d.publishedTime, d.numComments);
         });
-        emitter.on(E.ARTICLE_FAILED, (d) => {
+        emitter.on(E.ARTICLE_FAILED, () => {
             button.innerHTML = 'X';
             setTimeout(() => button.innerHTML = '+', 1000);
         });
@@ -210,7 +212,7 @@ class SidebarExampleElement {
                     attribs.push(['checked', '']);
 
                 let elem = nElem({ tag: 'input', id: id, attribs: attribs });
-                elem.addEventListener('change', (e) => {
+                elem.addEventListener('change', () => {
                     emitter.emit(E.EXAMPLE_SELECTED, story)
                 });
                 this.ROOT.appendChild(elem);
@@ -232,7 +234,7 @@ class SidebarElements {
     }
 
     _initListeners() {
-        emitter.on(E.RECEIVED_ARTICLE, (d) => {
+        emitter.on(E.RECEIVED_ARTICLE, () => {
             this.addEmptySource();
         })
     }
@@ -254,10 +256,8 @@ class SidebarElements {
 class MainPanel {
     constructor() {
         this.ROOT = document.getElementById('main');
-    }
-    getDimensions() {
-        //this.ROOT.getBoundingClientRect();
-        return [this.ROOT.clientWidth, this.ROOT.clientHeight];
+        this.DRAWING = new ComExDrawing(this.ROOT);
+        this.CONFIG_PANEL = new ConfigPanel(this.ROOT);
     }
 }
 
@@ -271,4 +271,4 @@ class Elements {
 
 const ELEMENTS = new Elements();
 
-export { ELEMENTS, SidebarSourceElement };
+export { ELEMENTS, SidebarSourceElement, getNodes };

@@ -22,6 +22,10 @@ async def get_graph(urls: List[str] = None, article_ids: List[int] = None, conf:
             logger.debug(f'Found graph cache entry with {len(graph.edges)} edges '
                          f'for article_ids: {article_ids} | urls: {urls}')
             return graph
+        else:
+            logger.debug(f'No cached graph found for article_ids: {article_ids} | urls: {urls}')
+    else:
+        logger.debug('Ignoring cache for graph request.')
 
     comments = await db.get_comments(article_ids)
     graph_rep = GraphRepresentation(comments, conf=conf)

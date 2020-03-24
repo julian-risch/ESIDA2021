@@ -185,9 +185,11 @@ footer > div a:focus {
 #sidebar .source .info .comments:hover::after {
     opacity: 1;
 }
+
 #sidebar .source .add .loading {
     margin-top: 0.5rem;
 }
+
 #sidebar .source .add {
     /*font-weight: bold; */
     font-size: 3rem;
@@ -505,4 +507,51 @@ footer > div a:focus {
 
 #sidebar .pretty-select {
     margin: 2rem 3rem 1rem 3rem;
+}
+
+#config-panel {
+    background-color: #434346b0;
+    position: fixed;
+    top: 1em;
+    right: 1em;
+    padding: 1em;
+    font-size: 0.8em;
+    color: black;
+    width: 10rem;
+}
+
+#config-panel li {
+    list-style: none;
+    margin-bottom: 1rem;
+}
+
+#config-panel input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 0.2rem;
+    background: #bebebe;
+    outline: none;
+    opacity: 0.7;
+    margin: 0.5rem 0;
+}
+
+#config-panel input[type="range"]:hover {
+    opacity: 1;
+}
+
+#config-panel input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 0.3rem;
+    height: 0.8rem;
+    background: white;
+    cursor: pointer;
+}
+
+#config-panel input[type="range"]::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    background: #4CAF50;
+    cursor: pointer;
 }

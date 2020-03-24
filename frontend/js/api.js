@@ -100,6 +100,7 @@ const SCRAPERS = Object.freeze({
 
 class Api {
     constructor() {
+        this.isValidScraperUrl = SCRAPERS.isValidURL;
         this._initListeners();
     }
 
@@ -150,4 +151,4 @@ class Api {
 
 const API = new Api();
 
-export { API, SCRAPERS }
+export { API }

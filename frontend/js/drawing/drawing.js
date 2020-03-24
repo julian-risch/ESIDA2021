@@ -1,113 +1,9 @@
-import { emitter, E } from "../env/events.js"
-import { data } from "../env/data.js";
-import { ELEMENTS } from "../env/elements.js";
+import { emitter, E } from '../env/events.js'
+import { data } from '../env/data.js';
+import { ELEMENTS } from '../env/elements.js';
+import { Layout } from './layout.js';
 
-let chart = (height, width) => {
-    const links = data.links.map(d => Object.create(d));
-    const nodes = data.nodes.map(d => Object.create(d));
-
-    const boxingForce = () => {
-        let margin = 10;
-        for (let node of nodes) {
-            // Of the positions exceed the box, set them to the boundary position.
-            // You may want to include your nodes width to not overlap with the box.
-            node.x = Math.max(margin, Math.min(width - margin, node.x));
-            node.y = Math.max(margin, Math.min(height - margin, node.y));
-        }
-    };
-
-    const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id)
-            .strength(link => 1 / Math.min(data.nodes[link.source.index].count, data.nodes[link.target.index].count) + Math.sqrt(data.links[link.index].value / 574))
-            .iterations(1))
-        .force("charge", d3.forceManyBody().strength(-180).distanceMax(300))
-        .force("collide", d3.forceCollide().radius(15))
-        .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("bounds", boxingForce);
-
-    const svg = d3.create("svg")
-        .attr("viewBox", [0, 0, width, height])
-        .attr("height", height);
-
-    const mainGroup = svg.append("g");
-
-    svg.call(d3.zoom()
-        .extent([[0, 0], [width, height]])
-        .scaleExtent([1, 8])
-        .on("zoom", zoomed));
-
-    function zoomed() {
-        mainGroup.attr("transform", d3.event.transform);
-    }
-
-    const link = mainGroup.append("g")
-        .attr("stroke", "#999")
-        .attr("stroke-opacity", 0.6)
-        .selectAll("line")
-        .data(links)
-        .join("line")
-        .attr("stroke-width", d => Math.sqrt(d.value / 50));
-
-    const node = mainGroup.append("g")
-        .selectAll("g")
-        .data(nodes)
-        .join("g")
-        .call(drag(simulation));
-
-    node.append("circle")
-        .attr("stroke", "#fff")
-        .attr("stroke-width", 1.5)
-        .attr("r", 5)
-        .attr("fill", '#da2d00');
-
-    node.append("title")
-        .text(d => d.name);
-
-    node.append("text")
-        .attr("dy", -3)
-        .text(d => d.name);
-
-    simulation.on("tick", () => {
-        link
-            .attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
-
-        node
-            //.attr("cx", d => d.x)
-            //.attr("cy", d => d.y);
-            .attr("transform", d => "translate(" + d.x + "," + d.y + ")");
-    });
-
-    //invalidation.then(() => simulation.stop());
-
-    return svg.node();
-};
-let drag = simulation => {
-
-    function dragstarted(d) {
-        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-    }
-
-    function dragged(d) {
-        d.fx = d3.event.x;
-        d.fy = d3.event.y;
-    }
-
-    function dragended(d) {
-        if (!d3.event.active) simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
-    }
-
-    return d3.drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended);
-};
+import { DRAWING_CONFIG as CONFIG } from "./config.js";
 
 class Comments {
     constructor() {
@@ -119,7 +15,7 @@ class Comments {
             this.lookup[commentId] = [];
             data.comments[commentId].splits.forEach((split, j) => {
                 this.splits.push({
-                    id: [commentId, j],
+                    orig_id: [commentId, j],
                     text: data.getCommentText(commentId, j)
                 });
                 this.lookup[commentId].push(counter);
@@ -136,44 +32,119 @@ class Comments {
             }
         });
     }
+
+    draw(parent) {
+        this.ROOT = parent.append('g');
+        this.NODES = this.ROOT
+            .selectAll('g')
+            .data(this.splits)
+            .join('g');
+
+        this.NODES
+            .append('circle')
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 1.5)
+            .attr('r', 5)
+            .attr('fill', '#da2d00')
+            .on('click', this.onClick.bind(this));
+
+        /*this.nodes
+            .append('title')
+            .text(d => d.name);
+
+        this.nodes.append('text')
+            .attr('dy', -3)
+            .text(d => d.name);*/
+
+        this.LINKS = parent.append('g')
+            .attr('stroke', '#999')
+            .attr('stroke-opacity', 0.6)
+            .selectAll('line')
+            .data(this.edges)
+            .join('line')
+            .attr('stroke-width', d => Math.sqrt(d.value / 50));
+    }
+
+    onClick(e) {
+        console.log(e)
+        this.LINKS.attr('stroke', (d) => (d.source.index === e.index || d.target.index === e.index) ? 'green' : '#999')
+    }
+
+    onTick() {
+        this.LINKS
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
+        this.NODES
+            //.attr('cx', d => d.x)
+            //.attr('cy', d => d.y);
+            .attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
+    }
+
+    attachSimulation(simulation) {
+        simulation.on('tick', this.onTick.bind(this));
+        this.NODES.call(Layout.drag(simulation));
+    }
+
+}
+
+class Settings {
+
 }
 
 class ComExDrawing {
-    constructor() {
-        let initDims = ELEMENTS.MAIN_PANEL.getDimensions();
-        this.width = initDims[0];
-        this.height = initDims[1];
-        this.ROOT = d3.select(ELEMENTS.MAIN_PANEL.ROOT).append('svg');
-        this.ROOT.attr("viewBox", [0, 0, this.width, this.height])
-            .attr("height", this.height);
+    constructor(parent) {
+        let initDims = ComExDrawing.getDimensions(parent);
+        this.canvasWidth = initDims[0];
+        this.canvasHeight = initDims[1];
+        CONFIG.HEIGHT = this.canvasHeight;
+        CONFIG.WIDTH = this.canvasWidth;
 
+        this.createScales();
 
-        emitter.on(E.REDRAW, this.update.bind(this));
+        this.ROOT = d3.select(parent).append('svg');
+        this.ROOT.attr('viewBox', [0, 0, this.canvasWidth, this.canvasHeight])
+            .attr('height', this.canvasHeight);
+
+        emitter.on(E.REDRAW, this.draw.bind(this));
     }
 
-    update() {
+    draw() {
+        this.MAIN_GROUP = this.ROOT.append('g');
+        this.initZoom();
+
         this.COMMENTS = new Comments();
-        console.log(this.COMMENTS)
-        const node = this.ROOT.append("g")
-            .selectAll("g")
-            .data(data)
-            .join("g")
-            .call(drag(simulation));
+        console.log(this.COMMENTS);
 
-        node.append("circle")
-            .attr("stroke", "#fff")
-            .attr("stroke-width", 1.5)
-            .attr("r", 5)
-            .attr("fill", '#da2d00');
+        this.COMMENTS.draw(this.MAIN_GROUP);
+        this.LAYOUT = new Layout(this.COMMENTS.splits, this.COMMENTS.edges);
+        this.COMMENTS.attachSimulation(this.LAYOUT.simulation);
+        this.ROOT.node();
+    }
 
-        node.append("title")
-            .text(d => d.name);
+    createScales() {
+        this.xScale = d3.scaleLinear()
+            .range([0, this.canvasWidth])
+            .domain([0, CONFIG.WIDTH]);
+        this.yScale = d3.scaleLinear()
+            .range([0, this.canvasHeight])
+            .domain([0, CONFIG.HEIGHT]);
+    }
 
-        node.append("text")
-            .attr("dy", -3)
-            .text(d => d.name);
+    initZoom() {
+        this.ROOT.call(d3.zoom()
+            .extent([[0, 0], [CONFIG.WIDTH, CONFIG.HEIGHT]])
+            .scaleExtent([0.1, 8])
+            .on('zoom', () => {
+                this.MAIN_GROUP.attr('transform', d3.event.transform);
+            }));
+    }
+
+    static getDimensions(elem) {
+        //this.ROOT.getBoundingClientRect();
+        return [elem.clientWidth, elem.clientHeight];
     }
 }
 
-let drawing = new ComExDrawing();
-export { drawing };
+export { ComExDrawing };

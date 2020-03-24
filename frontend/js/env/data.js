@@ -1,5 +1,4 @@
 import { E, emitter } from "./events.js";
-import { SCRAPERS } from "../api.js";
 
 
 const EDGE_TYPES = Object.freeze({
@@ -9,6 +8,8 @@ const EDGE_TYPES = Object.freeze({
     SAME_GROUP: 3,
     SAME_COMMENT: 4
 });
+const EDGE_TYPES_REV = Object.freeze(Object.fromEntries(
+    Object.entries(EDGE_TYPES).map(([k, v]) => [v, k])));
 
 const GRAPH_CONFIG = {
     SameCommentComparator: {
@@ -90,10 +91,8 @@ class DataStore {
     }
 
     getCommentText(commentId, split) {
-        if (split) {
-            let bounds = this.comments[commentId].splits[split];
-            return this.comments[commentId].text.substr(bounds.s, bounds.e);
-        }
+        let bounds = this.comments[commentId].splits[split];
+        return this.comments[commentId].text.substr(bounds.s, bounds.e);
     }
 
     getArticleIds() {
@@ -104,4 +103,4 @@ class DataStore {
 
 let data = new DataStore();
 
-export { GRAPH_CONFIG, API_SETTINGS, DataStore, Article, data };
+export { GRAPH_CONFIG, API_SETTINGS, DataStore, Article, data, EDGE_TYPES, EDGE_TYPES_REV };

@@ -81,26 +81,11 @@ class CacheResult(BaseModel):
     payload: Optional[ArticleCached] = None
 
 
-class EdgeType(IntEnum):
-    REPLY_TO = 0
-    SAME_ARTICLE = 1
-    SIMILARITY = 2
-    SAME_GROUP = 3
-    SAME_COMMENT = 4
-
-
-class Split(BaseModel):
-    # first character of the sentence
-    s: int
-    # last character of the sentence
-    e: int
-
-
 class ComparatorConfigBase(BaseModel):
     active: bool = True
 
 
-class SameComponentComparatorConfig(ComparatorConfigBase):
+class SameCommentComparatorConfig(ComparatorConfigBase):
     base_weight: float = None
     only_consecutive: bool = True
 
@@ -116,9 +101,26 @@ class ReplyToComparatorConfig(ComparatorConfigBase):
 
 
 class ComparatorConfig(BaseModel):
-    SameComponentComparator: Optional[SameComponentComparatorConfig] = None
+    SameCommentComparator: Optional[SameCommentComparatorConfig] = None
     SameArticleComparator: Optional[SameArticleComparatorConfig] = None
     ReplyToComparator: Optional[ReplyToComparatorConfig] = None
+
+
+class EdgeType(IntEnum):
+    REPLY_TO = 0
+    SAME_ARTICLE = 1
+    SIMILARITY = 2
+    SAME_GROUP = 3
+    SAME_COMMENT = 4
+
+
+class Split(BaseModel):
+    # first character of the sentence
+    s: int
+    # last character of the sentence
+    e: int
+    # weight / size of split
+    wgt: Optional[float]
 
 
 class SplitComment(BaseModel):

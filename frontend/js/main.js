@@ -1,7 +1,7 @@
 import { ELEMENTS, SidebarSourceElement } from "./env/elements.js";
 import { emitter, E } from "./env/events.js"
 import { data } from "./env/data.js";
-import { drawing } from "./drawing/drawing.js";
+//import { ComExDrawing } from "./drawing/drawing.js";
 
 ELEMENTS.SIDEBAR.addEmptySource();
 
