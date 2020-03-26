@@ -15,7 +15,7 @@ const GRAPH_CONFIG = {
     SameCommentComparator: {
         active: true,
         base_weight: 1.0,
-        only_consecutive: true
+        only_consecutive: false
     },
     SameArticleComparator: {
         active: false,

@@ -1,49 +1,59 @@
 import { E, emitter } from "../env/events.js";
 import { getNodes } from "../env/elements.js";
+import { GUI } from "../libs/dat.gui.js";
 
 const DRAWING_CONFIG = {
     HEIGHT: 80,
     WIDTH: 100,
-    EDGE_TYPE_WEIGHTS: {
-        REPLY_TO: 1.,
-        SAME_ARTICLE: 1.,
-        //SIMILARITY: 1.,
-        //SAME_GROUP: 1.,
-        SAME_COMMENT: 1.
+    LAYOUT: {
+        EDGE_TYPE_WEIGHTS: {
+            REPLY_TO: 1.,
+            SAME_ARTICLE: 1.,
+            //SIMILARITY: 1.,
+            //SAME_GROUP: 1.,
+            SAME_COMMENT: 1.
+        },
+        CHARGE_STRENGTH: -5,
+        CHARGE_MAX_DISTANCE: 50,
+        FORCE_Y: .01,
+        FORCE_X: .01
     },
-    CHARGE_STRENGTH: -5,
-    CHARGE_MAX_DISTANCE: 50
+    COLOURS: {
+        NODE_FILL_DEFAULT: 'rgb(31, 119, 180)',
+        EDGE_STROKE_DEFAULT: '#999',
+        NODE_OPACITY_UNSELECTED: 0.3
+    },
+    LINKS_VISIBLE: true
 };
 
 class ConfigPanel {
     constructor(parent) {
-        this.ROOT = document.createElement('ul');
-        this.ROOT.setAttribute('id', 'config-panel');
-
-        Object.keys(DRAWING_CONFIG.EDGE_TYPE_WEIGHTS).forEach(key =>
-            this._makeSlider(`${key.toLowerCase()} weight`, 0, 1, 0.1, DRAWING_CONFIG.EDGE_TYPE_WEIGHTS, key)
-        );
-        this._makeSlider('charge strength', -100, 10, 1, DRAWING_CONFIG, 'CHARGE_STRENGTH');
-        this._makeSlider('charge distance', 1, 200, 1, DRAWING_CONFIG, 'CHARGE_MAX_DISTANCE');
-
+        this.gui = new GUI({ autoPlace: false });
+        this.ROOT = this.gui.domElement;
         parent.appendChild(this.ROOT);
-        emitter.on(E.DRAWING_CONFIG_CHANGED, this.onChange);
+
+        this.add('reply_to wgt', 'LAYOUT.EDGE_TYPE_WEIGHTS.REPLY_TO', 0, 1, 0.1);
+        this.add('same_article wgt', 'LAYOUT.EDGE_TYPE_WEIGHTS.SAME_ARTICLE', 0, 1, 0.1);
+        this.add('same_comment wgt', 'LAYOUT.EDGE_TYPE_WEIGHTS.SAME_COMMENT', 0, 1, 0.1);
+        this.add('force_y', 'LAYOUT.FORCE_Y', 0, 1, 0.01);
+        this.add('force_x', 'LAYOUT.FORCE_X', 0, 1, 0.01);
+        this.add('charge strength', 'LAYOUT.CHARGE_STRENGTH', -100, 100, 1);
+        this.add('charge dist', 'LAYOUT.CHARGE_MAX_DISTANCE', 1, 200, 1);
+        this.add('show_links', 'LINKS_VISIBLE');
     }
 
-    onChange() {
-        console.log(DRAWING_CONFIG)
-    }
+    add(name, key, min, max, step) {
+        function getVar(key, base) {
+            let path = key.split('.');
+            if (path.length === 1) return [base, path[0]];
+            else if (path.length > 1) return getVar(path.slice(1).join('.'), base[path[0]])
+        }
 
-    _makeSlider(name, min, max, step, basevar, key) {
-        let elem = getNodes(`<li><div>${name}: <span></span></div><input type="range" value="${basevar[key]}" min="${min}" max="${max}" step="${step}" /></li>`)[0];
-        let input = elem.querySelector('input');
-        let valElem = elem.querySelector('span');
-        input.addEventListener('change', () => {
-            basevar[key] = parseFloat(input.value);
-            valElem.innerText = input.value;
-            emitter.emit(E.DRAWING_CONFIG_CHANGED);
-        });
-        this.ROOT.appendChild(elem);
+        let [object, property] = getVar(key, DRAWING_CONFIG);
+        let controller = this.gui.add(object, property, min, max, step);
+        controller.name(name);
+        controller.onFinishChange((val) => emitter.emit(E.DRAWING_CONFIG_CHANGED, key, val));
+        return controller;
     }
 }
 

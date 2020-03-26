@@ -31,6 +31,9 @@ class Comments {
                 tgt: edge.tgt
             }
         });
+
+        this.highlightActive = false;
+        emitter.on(E.DRAWING_CONFIG_CHANGED, this.onConfigChange.bind(this))
     }
 
     draw(parent) {
@@ -45,8 +48,8 @@ class Comments {
             .attr('stroke', '#fff')
             .attr('stroke-width', 1.5)
             .attr('r', 5)
-            .attr('fill', '#da2d00')
-            .on('click', this.onClick.bind(this));
+            .attr('fill', CONFIG.COLOURS.NODE_FILL_DEFAULT)
+            .on('click', this.nodeOnClick.bind(this));
 
         /*this.nodes
             .append('title')
@@ -57,7 +60,7 @@ class Comments {
             .text(d => d.name);*/
 
         this.LINKS = parent.append('g')
-            .attr('stroke', '#999')
+            .attr('stroke', CONFIG.COLOURS.EDGE_STROKE_DEFAULT)
             .attr('stroke-opacity', 0.6)
             .selectAll('line')
             .data(this.edges)
@@ -65,9 +68,13 @@ class Comments {
             .attr('stroke-width', d => Math.sqrt(d.value / 50));
     }
 
-    onClick(e) {
-        console.log(e)
-        this.LINKS.attr('stroke', (d) => (d.source.index === e.index || d.target.index === e.index) ? 'green' : '#999')
+    nodeOnClick(e) {
+        let nodeOpacity = 1.0;
+        this.highlightActive = !this.highlightActive;
+        if (this.highlightActive)
+            nodeOpacity = (d) => (d.orig_id[0] !== e.orig_id[0]) ? CONFIG.COLOURS.NODE_OPACITY_UNSELECTED : 1.0;
+
+        this.NODES.attr('fill-opacity', nodeOpacity);
     }
 
     onTick() {
@@ -77,20 +84,18 @@ class Comments {
             .attr('x2', d => d.target.x)
             .attr('y2', d => d.target.y);
         this.NODES
-            //.attr('cx', d => d.x)
-            //.attr('cy', d => d.y);
             .attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
+    }
+
+    onConfigChange(key, value) {
+        if (key === 'LINKS_VISIBLE')
+            this.LINKS.attr('stroke-opacity', value ? 1 : 0);
     }
 
     attachSimulation(simulation) {
         simulation.on('tick', this.onTick.bind(this));
         this.NODES.call(Layout.drag(simulation));
     }
-
-}
-
-class Settings {
-
 }
 
 class ComExDrawing {
