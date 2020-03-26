@@ -12,8 +12,9 @@ emitter.emit(E.NEW_SOURCE_URL,
 emitter.emit(E.NEW_SOURCE_URL,
     150 //https://www.faz.net/aktuell/wissen/medizin-ernaehrung/corona-patienten-italienische-verhaeltnisse-koennen-wir-haendeln-16674388.html
 );
+emitter.emit(E.NEW_SOURCE_URL, 151);
 
 setTimeout(() => {
     emitter.emit(E.GRAPH_REQUESTED)
-}, 1000);
+}, 1200);
 console.log(data)

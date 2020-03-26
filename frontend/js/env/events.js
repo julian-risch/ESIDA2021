@@ -17,8 +17,14 @@ const E = {
     GRAPH_REQUESTED: 'GRAPH_REQUESTED', // DATA: empty
     GRAPH_REQUEST_FAILED: 'GRAPH_REQUEST_FAILED',
     GRAPH_RECEIVED: 'GRAPH_RECEIVED',
+    // request to fully redraw the graph
     REDRAW: 'REDRAW',
-    DRAWING_CONFIG_CHANGED: 'DRAWING_CONFIG_CHANGED'
+    // the DRAWING_CONFIG was changed
+    DRAWING_CONFIG_CHANGED: 'DRAWING_CONFIG_CHANGED', // DATA: path in config, new value
+    // comments in the DataStore were updated
+    DATA_UPDATED_COMMENTS: 'DATA_UPDATED_COMMENTS', // DATA: the dict of comments
+    // a comment was selected for highlight (or unselected)
+    COMMENT_SELECTED: 'COMMENT_SELECTED', // DATA: commentId (optional)
 };
 Object.freeze(E);
 

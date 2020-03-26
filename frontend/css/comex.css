@@ -9,7 +9,7 @@
 }
 
 html {
-    height: 100%;
+    height: 100vh;
 }
 
 body {
@@ -18,7 +18,8 @@ body {
     font-family: "TabletGothic", "Helvetica Neue", Helvetica, Arial, FreeSans, sans-serif;
     font-size: 1em;
     line-height: 1;
-    padding: 0 0 3rem 0;
+    height: 100%;
+    overflow: hidden;
 }
 
 
@@ -31,27 +32,61 @@ h1, h2, h3, h4 {
     font-size: 1em;
 }
 
-#sidebar {
-    position: fixed;
-    width: 300px;
-    background-color: #f1f1f1;
+/**********************
+ * Basic Layout
+ */
+#main-container {
+    display: flex;
+    flex-flow: row;
     height: calc(100vh - 3rem);
+}
+
+#main-container > * {
+    flex: 1;
+    height: 100%;
     overflow: hidden;
+}
+
+#sidebar {
+    order: 1;
+    flex-basis: 300px;
+    min-width: 300px;
+    max-width: 300px;
+}
+
+#main {
+    order: 2;
+    flex-basis: 60vw;
+}
+
+#comments {
+    order: 3;
+    flex-basis: 20vw;
+    min-width: 300px;
+    max-width: 500px;
+}
+
+footer {
+    min-width: 100%;
+    height: 3rem;
 }
 
 #main {
     display: block;
-    margin-left: 300px;
+    /*margin-left: 300px;
     width: calc(100vw - 300px);
-    height: calc(100vh - 3rem);
+    height: calc(100vh - 3rem);*/
     overflow: hidden;
+    position: relative;
 }
 
+/**********************
+ * Footer styling
+ */
 footer {
-    position: fixed;
+    /*position: fixed;
     bottom: 0;
-    height: 3rem;
-    width: 100%;
+    width: 100%;*/
     color: #eeeef0;
     background-color: #252525;
     background-image: linear-gradient(to right, #4A4A4A 0%, #2C2A2B 30%, #494A4E 60%, #3B3B3D 80%, #4A4A4A 100%);
@@ -63,7 +98,6 @@ footer {
 }
 
 footer path {
-
     fill: currentColor;
 }
 
@@ -87,6 +121,24 @@ footer > div a:hover,
 footer > div a:active,
 footer > div a:focus {
     color: #e5e5e5;
+}
+
+/**********************
+ * Sidebar styling
+ */
+#sidebar {
+    /*position: fixed;*/
+    background-color: #f1f1f1;
+    /*height: calc(100vh - 3rem);*/
+    overflow: hidden;
+    display: flex;
+    flex-flow: column;
+}
+
+#sources {
+    height: 100%;
+    overflow-y: auto;
+    padding-bottom: 1em;
 }
 
 .comex-logo {
@@ -205,8 +257,77 @@ footer > div a:focus {
     cursor: pointer;
 }
 
+
 #sidebar .source .add:hover {
     background-color: #dcd9d9;
+}
+
+#comments {
+    position: relative;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: none;
+    transition: 0.3s;
+    margin-right: 0;
+    background-color: #f1f1f1;
+}
+
+#comments li {
+    list-style: none;
+    padding: 1em 1em 0.5em 1em;
+    border-bottom: 1px solid #dcd9d9;
+    letter-spacing: 0.015em;
+}
+
+#comments li div {
+    font-size: 0.75em;
+    color: #808080;
+    margin-bottom: 0.7em;
+}
+
+#comments li p {
+    font-size: 0.9em;
+    color: #252525;
+    line-height: 1.5;
+}
+
+#comments li.highlight {
+    background-color: #e1e1e1;
+}
+
+#comments-toggle {
+    position: absolute;
+    top: 20rem;
+    right: 0;
+    width: 1.5rem;
+    height: 4rem;
+    background-color: #e1e1e1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+#comments-toggle .caret {
+    height: 0;
+    width: 0;
+    display: inline-block;
+    border: 0.6rem solid transparent;
+    margin-left: -0.5rem;
+    transition: transform 0.3s, margin 0.4s;
+    transition-delay: 0.3s;
+}
+
+#comments-toggle .caret.left {
+    border-right-color: #8c8c8c;
+}
+
+#comments-toggle .caret.right {
+    border-right-color: #8c8c8c;
+    /*border-left-color: #8c8c8c;*/
+    margin-left: 0.8rem;
+    /*transform: rotate(180deg);*/
+    transform: scale(-1, 1);
 }
 
 #add-source-modal {
@@ -507,51 +628,4 @@ footer > div a:focus {
 
 #sidebar .pretty-select {
     margin: 2rem 3rem 1rem 3rem;
-}
-
-#config-panel {
-    background-color: #434346b0;
-    position: fixed;
-    top: 1em;
-    right: 1em;
-    padding: 1em;
-    font-size: 0.8em;
-    color: black;
-    width: 10rem;
-}
-
-#config-panel li {
-    list-style: none;
-    margin-bottom: 1rem;
-}
-
-#config-panel input[type="range"] {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 0.2rem;
-    background: #bebebe;
-    outline: none;
-    opacity: 0.7;
-    margin: 0.5rem 0;
-}
-
-#config-panel input[type="range"]:hover {
-    opacity: 1;
-}
-
-#config-panel input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 0.3rem;
-    height: 0.8rem;
-    background: white;
-    cursor: pointer;
-}
-
-#config-panel input[type="range"]::-moz-range-thumb {
-    width: 25px;
-    height: 25px;
-    background: #4CAF50;
-    cursor: pointer;
 }

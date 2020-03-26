@@ -253,6 +253,107 @@ class SidebarElements {
     }
 }
 
+class CommentSidebarComment {
+    constructor(comment) {
+        let date = new Date(comment.timestamp);
+
+        this.ROOT = getNode(`<li>
+            <div>
+                <span>${comment.username}</span> •
+                <time datetime="${FORMAT_DATE["YYYY-mm-dd HH:MM"](date)}">${LANG.DATETIME.s(date)}</time>
+            </div>
+            <p>
+                ${comment.text}
+            </p>
+        </li>`);
+
+        this.ROOT.addEventListener('click', () => {
+            emitter.emit(E.COMMENT_SELECTED, comment.id);
+        });
+
+        this.isHighlighted = false;
+    }
+
+    toggleHighlight(force) {
+        this.isHighlighted = (force !== undefined) ? force : !this.isHighlighted;
+        this.ROOT.classList.toggle('highlight', this.isHighlighted);
+        return this.isHighlighted;
+    }
+}
+
+class CommentSidebar {
+    constructor() {
+        this.isVisible = false;
+
+        this.ROOT = document.getElementById('comments');
+        this.LIST = this.ROOT.querySelector('ul');
+        this.SIDEBAR_TOGGLE_BUTTON = document.getElementById('comments-toggle');
+
+        this.COMMENTS = {};
+
+        this.SIDEBAR_TOGGLE_BUTTON.addEventListener('click', this.toggleShow.bind(this));
+        emitter.on(E.DATA_UPDATED_COMMENTS, this.onCommentsReceived.bind(this));
+        emitter.on(E.COMMENT_SELECTED, this.onCommentHighlight.bind(this));
+
+        this.currentlySelected = null;
+    }
+
+    onCommentHighlight(commentId) {
+        if (this.currentlySelected !== null) {
+            this.COMMENTS[this.currentlySelected].toggleHighlight(false);
+            this.currentlySelected = null;
+        } else {
+            if (!!commentId) {
+                let isHighlighted = this.COMMENTS[commentId].toggleHighlight();
+                if (isHighlighted) {
+                    this.ROOT.scrollTo(0, this.COMMENTS[commentId].ROOT.offsetTop - 50);
+                    this.currentlySelected = commentId;
+                }
+            } else
+                Object.values(this.COMMENTS).forEach(comment => comment.toggleHighlight(false));
+        }
+    }
+
+    onCommentsReceived(comments) {
+        // reset the data
+        this.COMMENTS = {};
+        this.LIST.innerHTML = '';
+
+        Object.values(comments)
+            // sort comments by date
+            .sort((a, b) => {
+                if (a.timestamp < b.timestamp) return -1;
+                if (a.timestamp > b.timestamp) return 1;
+                return 0;
+            })
+            // fill the comment panel
+            .forEach((comment) => {
+                let commentSidebarComment = new CommentSidebarComment(comment);
+                this.COMMENTS[comment.id] = commentSidebarComment;
+                this.LIST.appendChild(commentSidebarComment.ROOT);
+            });
+    }
+
+    toggleShow() {
+        console.log(this.SIDEBAR_TOGGLE_BUTTON.children[0])
+        this.isVisible = !this.isVisible;
+        this.SIDEBAR_TOGGLE_BUTTON.children[0].classList.toggle('left', !this.isVisible);
+        this.SIDEBAR_TOGGLE_BUTTON.children[0].classList.toggle('right', this.isVisible);
+        if (this.isVisible) {
+            this.ROOT.style.display = 'block';
+            setTimeout(() => {
+                this.ROOT.style.marginRight = '0';
+            }, 10)
+        } else {
+            this.ROOT.style.marginRight = `-500px`;
+            setTimeout(() => {
+                this.ROOT.style.display = 'none';
+            }, 300)
+        }
+
+    }
+}
+
 class MainPanel {
     constructor() {
         this.ROOT = document.getElementById('main');
@@ -266,6 +367,7 @@ class Elements {
         this.ADD_SOURCE_MODAL = new AddSourceModalElements();
         this.SIDEBAR = new SidebarElements(this.ADD_SOURCE_MODAL.show);
         this.MAIN_PANEL = new MainPanel();
+        this.COMMENTS_SIDEBAR = new CommentSidebar();
     }
 }
 

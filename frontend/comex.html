@@ -7,42 +7,58 @@
     <link rel="stylesheet" href="css/dat.gui.css" />
 </head>
 <body>
-<div id="sidebar">
-    <div class="comex-logo">COM.EX</div>
+<div id="main-container">
+    <aside id="sidebar">
+        <div class="comex-logo">COM.EX</div>
 
-    <div class="pretty-select" id="example-selection" tabindex="1">
-    </div>
-
-    <div id="sources">
-        <!--div class="source">
-            <h1>Quelle 1</h1>
-            <div class="platform"><img src="img/platform_icons/tagesschau.png" alt="" /> Tagesschau</div>
-            <h2><a href="https://www.tagesschau.de/investigativ/ndr-wdr-beatmungsgeraete-101.html">Bundesweite Datenbank
-                für
-                Beatmungsplätze</a></h2>
-            <span class="info">
-                <time datetime="2020-03-15 20:25">15.03.2020 20:25 Uhr</time>
-                <span class="comments">54 Kommentare</span>
-        </span>
+        <div class="pretty-select" id="example-selection" tabindex="1">
         </div>
 
-        <div class="source">
-            <h1>Quelle 2</h1>
-            <div class="platform"><img src="img/platform_icons/zeit.png" alt="" /> Zeit Online</div>
-            <h2>
-                <a href="https://www.zeit.de/digital/internet/2020-03/fake-news-coronavirus-falschnachrichten-luegen-panikmache">So
-                    erkennen Sie, welche Nachrichten zum Coronavirus stimmen</a></h2>
-            <div class="info">
-                <time datetime="2020-03-16 13:32">16.03.2020 13:32 Uhr</time>
-                <span class="comments">175 Kommentare</span>
+        <div id="sources">
+            <!--div class="source">
+                <h1>Quelle 1</h1>
+                <div class="platform"><img src="img/platform_icons/tagesschau.png" alt="" /> Tagesschau</div>
+                <h2><a href="https://www.tagesschau.de/investigativ/ndr-wdr-beatmungsgeraete-101.html">Bundesweite Datenbank
+                    für
+                    Beatmungsplätze</a></h2>
+                <span class="info">
+                    <time datetime="2020-03-15 20:25">15.03.2020 20:25 Uhr</time>
+                    <span class="comments">54 Kommentare</span>
+            </span>
             </div>
-        </div>
 
-        <div class="source">
-            <h1>Quelle 3</h1>
-            <div class="add">+</div>
-        </div-->
+            <div class="source">
+                <h1>Quelle 2</h1>
+                <div class="platform"><img src="img/platform_icons/zeit.png" alt="" /> Zeit Online</div>
+                <h2>
+                    <a href="https://www.zeit.de/digital/internet/2020-03/fake-news-coronavirus-falschnachrichten-luegen-panikmache">So
+                        erkennen Sie, welche Nachrichten zum Coronavirus stimmen</a></h2>
+                <div class="info">
+                    <time datetime="2020-03-16 13:32">16.03.2020 13:32 Uhr</time>
+                    <span class="comments">175 Kommentare</span>
+                </div>
+            </div>
+
+            <div class="source">
+                <h1>Quelle 3</h1>
+                <div class="add">+</div>
+            </div-->
+        </div>
+    </aside>
+    <div id="main"><!--button style="position: absolute; top: 4em; left: 4em;">blcik</button-->
+        <div id="comments-toggle"><span class="caret left"></span></div>
     </div>
+    <aside id="comments">
+        <ul>
+            <!--li>
+                <div><span>Username</span> •
+                <time datetime="2020-03-16 13:32">16.03.2020 13:32 Uhr</time></div>
+                <p>
+                    Text
+                </p>
+            </li-->
+        </ul>
+    </aside>
 </div>
 <footer>
     <div class="left"><a href="https://github.com/TimRepke/comex-web" target="_blank">
@@ -65,11 +81,6 @@
         <a href="https://hpi.de/en/imprint.html" target="_blank">Impressum</a>
     </div>
 </footer>
-<div id="main">
-
-
-</div>
-
 <div id="add-source-modal">
     <!-- Modal content -->
     <div class="modal-content">
@@ -95,8 +106,10 @@
             </div>
         </div>
         <label>
-            <input type="url" pattern="^https?://(www\.)?(zeit|sz|sueddeutsche|faz|spiegel|tagesschau|welt|taz)\.(de|net)/.*"
-                   placeholder="https://..." value="https://www.welt.de/vermischtes/article204780066/Buschbraende-in-Australien-Millionen-Tiere-sterben-Pink-spendet-500-000-Dollar.html#Comments">
+            <input type="url"
+                   pattern="^https?://(www\.)?(zeit|sz|sueddeutsche|faz|spiegel|tagesschau|welt|taz)\.(de|net)/.*"
+                   placeholder="https://..."
+                   value="https://www.welt.de/vermischtes/article204780066/Buschbraende-in-Australien-Millionen-Tiere-sterben-Pink-spendet-500-000-Dollar.html#Comments">
             <span class="error">Diese URL passt zu keiner unterstützten Quelle!</span>
         </label>
         <button class="button">Hinzufügen</button>

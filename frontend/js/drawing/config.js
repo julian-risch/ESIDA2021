@@ -13,8 +13,8 @@ const DRAWING_CONFIG = {
             //SAME_GROUP: 1.,
             SAME_COMMENT: 1.
         },
-        CHARGE_STRENGTH: -5,
-        CHARGE_MAX_DISTANCE: 50,
+        CHARGE_STRENGTH: -10,
+        CHARGE_MAX_DISTANCE: 150,
         FORCE_Y: .01,
         FORCE_X: .01
     },
@@ -38,7 +38,7 @@ class ConfigPanel {
         this.add('force_y', 'LAYOUT.FORCE_Y', 0, 1, 0.01);
         this.add('force_x', 'LAYOUT.FORCE_X', 0, 1, 0.01);
         this.add('charge strength', 'LAYOUT.CHARGE_STRENGTH', -100, 100, 1);
-        this.add('charge dist', 'LAYOUT.CHARGE_MAX_DISTANCE', 1, 200, 1);
+        this.add('charge dist', 'LAYOUT.CHARGE_MAX_DISTANCE', 1, 300, 1);
         this.add('show_links', 'LINKS_VISIBLE');
     }
 

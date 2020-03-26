@@ -67,6 +67,7 @@ class DataStore {
         comments.forEach(c => {
             this.comments[c.id] = c;
         });
+        emitter.emit(E.DATA_UPDATED_COMMENTS, this.comments)
     }
 
     onArticleReceive(article) {

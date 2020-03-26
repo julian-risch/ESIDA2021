@@ -33,7 +33,9 @@ class Comments {
         });
 
         this.highlightActive = false;
-        emitter.on(E.DRAWING_CONFIG_CHANGED, this.onConfigChange.bind(this))
+
+        emitter.on(E.DRAWING_CONFIG_CHANGED, this.onConfigChange.bind(this));
+        emitter.on(E.COMMENT_SELECTED, this.highlightComment.bind(this));
     }
 
     draw(parent) {
@@ -68,13 +70,18 @@ class Comments {
             .attr('stroke-width', d => Math.sqrt(d.value / 50));
     }
 
-    nodeOnClick(e) {
+    highlightComment(commentId){
+        commentId +='';
         let nodeOpacity = 1.0;
         this.highlightActive = !this.highlightActive;
         if (this.highlightActive)
-            nodeOpacity = (d) => (d.orig_id[0] !== e.orig_id[0]) ? CONFIG.COLOURS.NODE_OPACITY_UNSELECTED : 1.0;
+            nodeOpacity = (d) => (d.orig_id[0] !== commentId) ? CONFIG.COLOURS.NODE_OPACITY_UNSELECTED : 1.0;
 
         this.NODES.attr('fill-opacity', nodeOpacity);
+    }
+
+    nodeOnClick(e) {
+        emitter.emit(E.COMMENT_SELECTED, e.orig_id[0]);
     }
 
     onTick() {
