@@ -16,5 +16,6 @@ emitter.emit(E.NEW_SOURCE_URL, 151);
 
 setTimeout(() => {
     emitter.emit(E.GRAPH_REQUESTED)
-}, 1200);
-console.log(data)
+}, 1000);
+
+console.log(data);

@@ -23,12 +23,19 @@ class Comments {
             });
         });
         this.edges = data.edges.map(edge => {
-            return {
-                source: this.lookup[data.idx2id[edge.src[0]]][edge.src[1]],
-                target: this.lookup[data.idx2id[edge.tgt[0]]][edge.tgt[1]],
-                weights: edge.wgts,
-                src: edge.src,
-                tgt: edge.tgt
+            try {
+                return {
+                    source: this.lookup[data.idx2id[edge.src[0]]][edge.src[1]],
+                    target: this.lookup[data.idx2id[edge.tgt[0]]][edge.tgt[1]],
+                    weights: edge.wgts,
+                    src: edge.src,
+                    tgt: edge.tgt
+                }
+            } catch (e) {
+                console.log(edge);
+                console.log(this.lookup);
+                console.log(edge.src[0], data.idx2id[edge.src[0]],this.lookup[data.idx2id[edge.src[0]]]);
+                throw e;
             }
         });
 

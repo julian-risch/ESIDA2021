@@ -64,9 +64,14 @@ class DataStore {
     }
 
     onCommentsReceive(comments) {
+        let lenBefore = Object.keys(this.comments).length;
         comments.forEach(c => {
             this.comments[c.id] = c;
         });
+        console.log(`Received ${comments.length} comments, DataStore.comments ` +
+            `before: ${lenBefore} and after: ${Object.keys(this.comments).length} ` +
+            `(diff: ${Object.keys(this.comments).length - lenBefore})`);
+
         emitter.emit(E.DATA_UPDATED_COMMENTS, this.comments)
     }
 
