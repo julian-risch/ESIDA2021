@@ -191,7 +191,8 @@ async def get_comments(article_ids: Union[List[int], int]) -> List[models.Commen
 
     comments = await database.fetch_all('SELECT c1.*, c2.id as reply_to_id '
                                         'FROM comments c1 '
-                                        'LEFT JOIN comments c2 ON c1.reply_to = c2.comment_id '
+                                        'LEFT JOIN comments c2 ON c1.reply_to = c2.comment_id AND'
+                                        '                         c1.article_id = c2.article_id '
                                         f'WHERE c1.article_id IN ({article_ids});')
     logger.debug(f'Found {len(comments)} comments for article_ids: {article_ids}')
     return [models.CommentCached(**comment) for comment in comments]
