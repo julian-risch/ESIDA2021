@@ -2,7 +2,7 @@ import { emitter, E } from '../env/events.js'
 import { data } from '../env/data.js';
 import { ELEMENTS } from '../env/elements.js';
 import { Layout } from './layout.js';
-
+import '../libs/d3.js';
 import { DRAWING_CONFIG as CONFIG } from "./config.js";
 
 class Comments {
@@ -127,7 +127,6 @@ class ComExDrawing {
         this.ROOT = d3.select(parent).append('svg');
         this.MAIN_GROUP = this.ROOT.append('g');
 
-        this.setDimensions();
         this.createScales();
 
         emitter.on(E.REDRAW, this.draw.bind(this));
@@ -136,6 +135,7 @@ class ComExDrawing {
     draw() {
         this.deconstruct();
 
+        this.setDimensions();
         this.initZoom();
 
         this.COMMENTS = new Comments();
@@ -177,7 +177,8 @@ class ComExDrawing {
         CONFIG.HEIGHT = this.canvasHeight;
         CONFIG.WIDTH = this.canvasWidth;
 
-        this.ROOT.attr('viewBox', [0, 0, this.canvasWidth, this.canvasHeight])
+        this.ROOT
+            .attr('viewBox', [0, 0, this.canvasWidth, this.canvasHeight])
             .attr('height', this.canvasHeight);
     }
 

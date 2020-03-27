@@ -23,6 +23,7 @@ class TinyEmitter {
     }
 
     emit(name, ...data) {
+        //console.log(name, data, this);
         Object.entries(this.listeners[name]).forEach(([key, listener]) => {
             listener.fn.apply(listener.ctx, data);
             if (listener.selfDestruct)

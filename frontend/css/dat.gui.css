@@ -194,6 +194,9 @@
     margin-top: 5px
 }
 
+.dg .cr.function .c .button{
+    display: none;
+}
 .dg .cr.function, .dg .cr.function .property-name, .dg .cr.function *, .dg .cr.boolean, .dg .cr.boolean * {
     cursor: pointer
 }
