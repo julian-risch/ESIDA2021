@@ -40,6 +40,16 @@ class ConfigPanel {
         this.add('charge strength', 'LAYOUT.CHARGE_STRENGTH', -100, 100, 1);
         this.add('charge dist', 'LAYOUT.CHARGE_MAX_DISTANCE', 1, 300, 1);
         this.add('show_links', 'LINKS_VISIBLE');
+        this.addFunction('Stop Simulation', () => emitter.emit(E.SIMULATION_STOP));
+        this.addFunction('Reset Drawing', () => emitter.emit(E.REDRAW));
+    }
+
+    addFunction(name, callback) {
+        let fakeObj = {};
+        fakeObj[name] = callback;
+        let controller = this.gui.add(fakeObj, name);
+        controller.name(name);
+        return controller;
     }
 
     add(name, key, min, max, step) {

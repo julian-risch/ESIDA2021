@@ -14,8 +14,8 @@ class Layout {
             collide: d3.forceCollide(),
             center: d3.forceCenter(CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2),
             bounds: this.boxingForce(),
-            forceX: d3.forceX(CONFIG.WIDTH/2),
-            forceY: d3.forceY(CONFIG.HEIGHT/2)
+            forceX: d3.forceX(CONFIG.WIDTH / 2),
+            forceY: d3.forceY(CONFIG.HEIGHT / 2)
         };
 
         this.simulation = d3.forceSimulation(this.nodes);
@@ -24,19 +24,23 @@ class Layout {
             this.simulation.force(key, force)
         });
 
-        emitter.on(E.DRAWING_CONFIG_CHANGED, (key) => {
-            if (!key.startsWith('LAYOUT')) return;
-            this.simulation.stop();
-            this.update();
-            this.simulation.alpha(1).restart();
-        });
+        this.listeners = [
+            emitter.on(E.DRAWING_CONFIG_CHANGED, (key) => {
+                if (!key.startsWith('LAYOUT')) return;
+                this.simulation.stop();
+                this.update();
+                this.simulation.alpha(1).restart();
+            }),
+            emitter.on(E.SIMULATION_STOP, () => {
+                this.simulation.stop();
+            })];
     }
 
     update() {
         this.forces.link
             .strength(this.linkStrength)
-            //.strength(link => 1 / Math.min(data.nodes[link.source.index].count, data.nodes[link.target.index].count) + Math.sqrt(data.links[link.index].value / 574))
-           // .iterations(1);
+        //.strength(link => 1 / Math.min(data.nodes[link.source.index].count, data.nodes[link.target.index].count) + Math.sqrt(data.links[link.index].value / 574))
+        // .iterations(1);
 
         this.forces.charge
             .strength(CONFIG.LAYOUT.CHARGE_STRENGTH)
@@ -90,6 +94,12 @@ class Layout {
                 }
             });
         }
+    }
+
+    deconstructor() {
+        this.simulation.stop();
+        delete this.simulation;
+        this.listeners.forEach((listener) => emitter.off(listener));
     }
 }
 

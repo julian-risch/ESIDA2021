@@ -335,7 +335,6 @@ class CommentSidebar {
     }
 
     toggleShow() {
-        console.log(this.SIDEBAR_TOGGLE_BUTTON.children[0])
         this.isVisible = !this.isVisible;
         this.SIDEBAR_TOGGLE_BUTTON.children[0].classList.toggle('left', !this.isVisible);
         this.SIDEBAR_TOGGLE_BUTTON.children[0].classList.toggle('right', this.isVisible);

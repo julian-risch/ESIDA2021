@@ -34,15 +34,16 @@ class Comments {
             } catch (e) {
                 console.log(edge);
                 console.log(this.lookup);
-                console.log(edge.src[0], data.idx2id[edge.src[0]],this.lookup[data.idx2id[edge.src[0]]]);
+                console.log(edge.src[0], data.idx2id[edge.src[0]], this.lookup[data.idx2id[edge.src[0]]]);
                 throw e;
             }
         });
 
         this.highlightActive = false;
 
-        emitter.on(E.DRAWING_CONFIG_CHANGED, this.onConfigChange.bind(this));
-        emitter.on(E.COMMENT_SELECTED, this.highlightComment.bind(this));
+        this.eventlisteners = [
+            emitter.on(E.DRAWING_CONFIG_CHANGED, this.onConfigChange.bind(this)),
+            emitter.on(E.COMMENT_SELECTED, this.highlightComment.bind(this))];
     }
 
     draw(parent) {
@@ -77,8 +78,8 @@ class Comments {
             .attr('stroke-width', d => Math.sqrt(d.value / 50));
     }
 
-    highlightComment(commentId){
-        commentId +='';
+    highlightComment(commentId) {
+        commentId += '';
         let nodeOpacity = 1.0;
         this.highlightActive = !this.highlightActive;
         if (this.highlightActive)
@@ -88,7 +89,7 @@ class Comments {
     }
 
     nodeOnClick(e) {
-        emitter.emit(E.COMMENT_SELECTED, e.orig_id[0]);
+        this.eventlisteners.push(emitter.emit(E.COMMENT_SELECTED, e.orig_id[0]));
     }
 
     onTick() {
@@ -110,27 +111,31 @@ class Comments {
         simulation.on('tick', this.onTick.bind(this));
         this.NODES.call(Layout.drag(simulation));
     }
+
+    destructor() {
+        this.eventlisteners.forEach((listener) => emitter.off(listener));
+        this.NODES.remove();
+        this.LINKS.remove();
+        delete this.splits;
+        delete this.lookup;
+        delete this.edges;
+    }
 }
 
 class ComExDrawing {
     constructor(parent) {
-        let initDims = ComExDrawing.getDimensions(parent);
-        this.canvasWidth = initDims[0];
-        this.canvasHeight = initDims[1];
-        CONFIG.HEIGHT = this.canvasHeight;
-        CONFIG.WIDTH = this.canvasWidth;
-
-        this.createScales();
-
         this.ROOT = d3.select(parent).append('svg');
-        this.ROOT.attr('viewBox', [0, 0, this.canvasWidth, this.canvasHeight])
-            .attr('height', this.canvasHeight);
+        this.MAIN_GROUP = this.ROOT.append('g');
+
+        this.setDimensions();
+        this.createScales();
 
         emitter.on(E.REDRAW, this.draw.bind(this));
     }
 
     draw() {
-        this.MAIN_GROUP = this.ROOT.append('g');
+        this.deconstruct();
+
         this.initZoom();
 
         this.COMMENTS = new Comments();
@@ -152,17 +157,39 @@ class ComExDrawing {
     }
 
     initZoom() {
-        this.ROOT.call(d3.zoom()
-            .extent([[0, 0], [CONFIG.WIDTH, CONFIG.HEIGHT]])
-            .scaleExtent([0.1, 8])
-            .on('zoom', () => {
-                this.MAIN_GROUP.attr('transform', d3.event.transform);
-            }));
+        let setExtent = zoom => zoom.extent([[0, 0], [CONFIG.WIDTH, CONFIG.HEIGHT]]);
+
+        if (!this.ZOOM) {
+            this.ZOOM = d3.zoom()
+                .scaleExtent([0.1, 8])
+                .on('zoom', () => {
+                    this.MAIN_GROUP.attr('transform', d3.event.transform);
+                });
+            this.ROOT.call(this.ZOOM);
+        }
+        setExtent(this.ZOOM);
     }
 
-    static getDimensions(elem) {
-        //this.ROOT.getBoundingClientRect();
-        return [elem.clientWidth, elem.clientHeight];
+    setDimensions() {
+        let parent = this.ROOT.node().parentElement;
+        this.canvasWidth = parent.clientWidth;
+        this.canvasHeight = parent.clientHeight;
+        CONFIG.HEIGHT = this.canvasHeight;
+        CONFIG.WIDTH = this.canvasWidth;
+
+        this.ROOT.attr('viewBox', [0, 0, this.canvasWidth, this.canvasHeight])
+            .attr('height', this.canvasHeight);
+    }
+
+    deconstruct() {
+        if (this.COMMENTS) {
+            this.COMMENTS.destructor();
+            delete this.COMMENTS;
+        }
+        if (this.LAYOUT) {
+            this.LAYOUT.deconstructor();
+            delete this.LAYOUT;
+        }
     }
 }
 
