@@ -2,7 +2,6 @@ import { emitter, E } from '../env/events.js'
 import { data } from '../env/data.js';
 import { ELEMENTS } from '../env/elements.js';
 import { Layout } from './layout.js';
-import '../libs/d3.js';
 import { DRAWING_CONFIG as CONFIG } from "./config.js";
 
 class Comments {

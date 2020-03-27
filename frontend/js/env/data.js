@@ -1,5 +1,5 @@
 import { E, emitter } from "./events.js";
-
+import * as JsSearch from "../libs/js-search.js"
 
 const EDGE_TYPES = Object.freeze({
     REPLY_TO: 0,
@@ -61,13 +61,32 @@ class DataStore {
         emitter.on(E.RECEIVED_ARTICLE, this.onArticleReceive.bind(this));
         emitter.on(E.RECEIVED_COMMENTS, this.onCommentsReceive.bind(this));
         emitter.on(E.GRAPH_RECEIVED, this.onGraphReceive.bind(this));
+        emitter.on(E.DATA_UPDATED_COMMENTS, this.resetSearchIndex.bind(this));
+    }
+
+    appendComments(comments) {
+        comments.forEach(c => {
+            this.comments[c.id] = c;
+        });
+    }
+
+    resetSearchIndex(comments) {
+        this.searchIndex = new JsSearch.Search(['id']);
+
+        this.searchIndex.tokenizer = new JsSearch.StemmingTokenizer(JsSearch.stemmer, new JsSearch.SimpleTokenizer());
+        this.searchIndex.addIndex('text');
+        this.searchIndex.addDocuments(Object.values(this.comments));
+
+        console.log(this.searchIndex.search('coron').length)
+
+
     }
 
     onCommentsReceive(comments) {
         let lenBefore = Object.keys(this.comments).length;
-        comments.forEach(c => {
-            this.comments[c.id] = c;
-        });
+
+        this.appendComments(comments);
+
         console.log(`Received ${comments.length} comments, DataStore.comments ` +
             `before: ${lenBefore} and after: ${Object.keys(this.comments).length} ` +
             `(diff: ${Object.keys(this.comments).length - lenBefore})`);
