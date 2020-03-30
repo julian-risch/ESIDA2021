@@ -272,12 +272,19 @@ class CommentSidebarComment {
         });
 
         this.isHighlighted = false;
+        this.visible = true;
     }
 
     toggleHighlight(force) {
         this.isHighlighted = (force !== undefined) ? force : !this.isHighlighted;
         this.ROOT.classList.toggle('highlight', this.isHighlighted);
         return this.isHighlighted;
+    }
+
+    applyFilter(active) {
+        if (active === this.visible) return; // do nothing if nothing changed
+        this.visible = active;
+        this.ROOT.style.display = active ? 'list-item' : 'none';
     }
 }
 
@@ -286,14 +293,23 @@ class CommentSidebar {
         this.isVisible = false;
 
         this.ROOT = document.getElementById('comments');
-        this.LIST = this.ROOT.querySelector('ul');
+        this.LIST = document.querySelector('#comments > ul');
         this.SIDEBAR_TOGGLE_BUTTON = document.getElementById('comments-toggle');
+        this.BUTTON_CLEAR_FILTERS = document.getElementById('comments-filters-clear');
+        this.BUTTON_SEARCH = document.querySelector('#comments-filters-search > button');
+        this.SEARCH_BOX = document.querySelector('#comments-filters-search > input');
+        this.COUNTER = document.getElementById('comments-filters-counter');
 
         this.COMMENTS = {};
 
         this.SIDEBAR_TOGGLE_BUTTON.addEventListener('click', this.toggleShow.bind(this));
+        this.SEARCH_BOX.addEventListener('input', this.searchSubmit.bind(this));
+        this.BUTTON_SEARCH.addEventListener('click', this.searchSubmit.bind(this));
+        this.BUTTON_CLEAR_FILTERS.addEventListener('click', () => emitter.emit(E.CLEAR_FILTERS));
+
         emitter.on(E.DATA_UPDATED_COMMENTS, this.onCommentsReceived.bind(this));
         emitter.on(E.COMMENT_SELECTED, this.onCommentHighlight.bind(this));
+        emitter.on(E.FILTERS_UPDATED, this.onFiltersChanged.bind(this));
 
         this.currentlySelected = null;
     }
@@ -334,12 +350,34 @@ class CommentSidebar {
             });
     }
 
+    setCounter(selected) {
+        let total = Object.keys(this.COMMENTS).length;
+        if (selected === undefined) selected = total;
+        this.COUNTER.innerText = `${selected} / ${total}`;
+    }
+
+    onFiltersChanged(comments) {
+        let counter = 0;
+        Object.values(comments).forEach(comment => {
+            let visible = comment.active === undefined || comment.active;
+            this.COMMENTS[comment.id].applyFilter(visible);
+            if (visible) counter++;
+        });
+        this.setCounter(counter);
+    }
+
+    searchSubmit() {
+        let text = this.SEARCH_BOX.value;
+        if (text.length >= 2)
+            emitter.emit(E.COMMENT_SEARCH, text)
+    }
+
     toggleShow() {
         this.isVisible = !this.isVisible;
         this.SIDEBAR_TOGGLE_BUTTON.children[0].classList.toggle('left', !this.isVisible);
         this.SIDEBAR_TOGGLE_BUTTON.children[0].classList.toggle('right', this.isVisible);
         if (this.isVisible) {
-            this.ROOT.style.display = 'block';
+            this.ROOT.style.display = 'flex';
             setTimeout(() => {
                 this.ROOT.style.marginRight = '0';
             }, 10)
@@ -349,7 +387,6 @@ class CommentSidebar {
                 this.ROOT.style.display = 'none';
             }, 300)
         }
-
     }
 }
 

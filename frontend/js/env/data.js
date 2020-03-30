@@ -33,6 +33,14 @@ const API_SETTINGS = {
     GRAPH_IGNORE_CACHE: true
 };
 
+function difference(setA, setB) {
+    let _difference = new Set(setA);
+    for (let elem of setB) {
+        _difference.delete(elem)
+    }
+    return _difference
+}
+
 class Article {
     constructor(url, title, subtitle, summary, author, text,
                 publishedTime, scrapeTime, scraper, articleId, numComments) {
@@ -56,12 +64,15 @@ class DataStore {
     id2idx = {};
     edges = [];
     groups = {};
+    filterKeep = undefined;
 
     constructor() {
         emitter.on(E.RECEIVED_ARTICLE, this.onArticleReceive.bind(this));
         emitter.on(E.RECEIVED_COMMENTS, this.onCommentsReceive.bind(this));
         emitter.on(E.GRAPH_RECEIVED, this.onGraphReceive.bind(this));
         emitter.on(E.DATA_UPDATED_COMMENTS, this.resetSearchIndex.bind(this));
+        emitter.on(E.COMMENT_SEARCH, this.searchComments.bind(this));
+        emitter.on(E.CLEAR_FILTERS, this.clearFilters.bind(this));
     }
 
     appendComments(comments) {
@@ -70,16 +81,49 @@ class DataStore {
         });
     }
 
-    resetSearchIndex(comments) {
+    resetSearchIndex() {
         this.searchIndex = new JsSearch.Search(['id']);
 
         this.searchIndex.tokenizer = new JsSearch.StemmingTokenizer(JsSearch.stemmer, new JsSearch.SimpleTokenizer());
         this.searchIndex.addIndex('text');
         this.searchIndex.addDocuments(Object.values(this.comments));
+    }
 
-        console.log(this.searchIndex.search('coron').length)
+    clearFilters() {
+        if (this.filterKeep === undefined) return;
+        this.filterKeep = undefined;
+        Object.values(this.comments).forEach(comment => {
+            delete comment.active;
+        });
+        emitter.emit(E.FILTERS_UPDATED, this.comments);
+    }
 
+    updateFilters(keepIds) {
+        keepIds = new Set(keepIds);
+        if (this.filterKeep === undefined)
+            // initialise filtering parameter
+            Object.values(this.comments).forEach(comment => {
+                comment.active = false;
+            });
+        else
+            difference(this.filterKeep, keepIds).forEach(key => {
+                this.comments[key].active = false;
+            });
 
+        keepIds.forEach(key => {
+            this.comments[key].active = true;
+        });
+
+        this.filterKeep = keepIds;
+        emitter.emit(E.FILTERS_UPDATED, this.comments);
+    }
+
+    searchComments(query) {
+        console.log(query);
+        let searchResult = this.searchIndex.search(query);
+        console.log(searchResult.length);
+
+        this.updateFilters(searchResult.map((c) => c.id));
     }
 
     onCommentsReceive(comments) {
