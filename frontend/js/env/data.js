@@ -119,10 +119,7 @@ class DataStore {
     }
 
     searchComments(query) {
-        console.log(query);
         let searchResult = this.searchIndex.search(query);
-        console.log(searchResult.length);
-
         this.updateFilters(searchResult.map((c) => c.id));
     }
 

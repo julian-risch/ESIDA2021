@@ -126,6 +126,11 @@ class ComExDrawing {
         this.ROOT = d3.select(parent).append('svg');
         this.MAIN_GROUP = this.ROOT.append('g');
 
+        this.MOUSE_SETTINGS_ZOOM = document.getElementById('mouse-settings-zoom');
+        this.MOUSE_SETTINGS_ZOOM.addEventListener('change', this.updateMouseMode.bind(this));
+        this.MOUSE_SETTINGS_SELECT = document.getElementById('mouse-settings-select');
+        this.MOUSE_SETTINGS_SELECT.addEventListener('change', this.updateMouseMode.bind(this));
+
         this.createScales();
 
         emitter.on(E.REDRAW, this.draw.bind(this));
@@ -146,6 +151,22 @@ class ComExDrawing {
         this.ROOT.node();
     }
 
+    updateMouseMode() {
+        let modes = this.getMouseMode();
+        console.log(modes);
+        if (modes.zoom) this.initZoom();
+        else this.initZoom(true);
+
+        //if (modes.lasso)
+    }
+
+    getMouseMode() {
+        return {
+            zoom: this.MOUSE_SETTINGS_ZOOM.checked,
+            lasso: this.MOUSE_SETTINGS_SELECT.checked
+        }
+    }
+
     createScales() {
         this.xScale = d3.scaleLinear()
             .range([0, this.canvasWidth])
@@ -155,18 +176,21 @@ class ComExDrawing {
             .domain([0, CONFIG.HEIGHT]);
     }
 
-    initZoom() {
-        let setExtent = zoom => zoom.extent([[0, 0], [CONFIG.WIDTH, CONFIG.HEIGHT]]);
-
+    initZoom(fake) {
         if (!this.ZOOM) {
             this.ZOOM = d3.zoom()
-                .scaleExtent([0.1, 8])
-                .on('zoom', () => {
-                    this.MAIN_GROUP.attr('transform', d3.event.transform);
-                });
+                .scaleExtent([0.1, 8]);
             this.ROOT.call(this.ZOOM);
         }
-        setExtent(this.ZOOM);
+        this.ZOOM.extent([[0, 0], [CONFIG.WIDTH, CONFIG.HEIGHT]]);
+        if (fake) {
+            this.ZOOM.on('zoom', () => {
+            });
+        } else {
+            this.ZOOM.on('zoom', () => {
+                this.MAIN_GROUP.attr('transform', d3.event.transform);
+            });
+        }
     }
 
     setDimensions() {

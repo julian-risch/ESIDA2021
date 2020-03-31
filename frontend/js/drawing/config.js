@@ -32,6 +32,7 @@ class ConfigPanel {
         this.ROOT = this.gui.domElement;
         parent.appendChild(this.ROOT);
 
+
         this.add('reply_to wgt', 'LAYOUT.EDGE_TYPE_WEIGHTS.REPLY_TO', 0, 1, 0.1);
         this.add('same_article wgt', 'LAYOUT.EDGE_TYPE_WEIGHTS.SAME_ARTICLE', 0, 1, 0.1);
         this.add('same_comment wgt', 'LAYOUT.EDGE_TYPE_WEIGHTS.SAME_COMMENT', 0, 1, 0.1);

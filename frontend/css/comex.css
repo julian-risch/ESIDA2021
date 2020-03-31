@@ -676,3 +676,41 @@ footer > div a:focus {
 #sidebar .pretty-select {
     margin: 2rem 3rem 1rem 3rem;
 }
+
+#mouse-settings {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #e1e1e175;
+    padding: 0.75rem;
+    display: flex;
+}
+
+#mouse-settings label {
+    margin-right: 0.5rem;
+    background-color: #e1e1e1;
+    padding: 0.25em;
+    border: 1px dashed #8c8c8c;
+    opacity: 0.5;
+}
+
+#mouse-settings input:checked + label {
+    opacity: 1;
+    border-style: solid;
+}
+
+#mouse-settings label:last-of-type {
+    margin-right: 0;
+}
+
+#mouse-settings svg {
+    height: 0.9rem;
+}
+
+#mouse-settings svg path {
+    fill: #8c8c8c;
+}
+
+#mouse-settings input {
+    display: none;
+}
