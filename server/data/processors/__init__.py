@@ -51,3 +51,40 @@ class Comparator(ABC):
         :return: edge type and weight
         """
         raise NotImplementedError
+
+
+class Modifier(ABC):
+    def __init__(self, conf=None):
+        self.conf = conf
+
+    @classmethod
+    def is_on(cls, conf=None):
+        return (conf or config).getboolean(cls.__name__, 'active', fallback=True)
+
+    def conf_getboolean(self, key, param):
+        if param is not None:
+            return param
+        return self.conf.getboolean(self.__class__.__name__, key)
+
+    def conf_getfloat(self, key, param):
+        if param is not None:
+            return param
+        return self.conf.getfloat(self.__class__.__name__, key)
+
+    def conf_get(self, key, param):
+        if param is not None:
+            return param
+        return self.conf.get(self.__class__.__name__, key)
+
+    @classmethod
+    @abstractmethod
+    def short_name(cls) -> str:
+        raise NotImplementedError
+
+    def modify(self, graph: models.Graph) -> models.Graph:
+        """
+        Returns the modified, original, graph
+        :param graph: The graph for modification
+        :return: The modified graph
+        """
+        raise NotImplementedError
