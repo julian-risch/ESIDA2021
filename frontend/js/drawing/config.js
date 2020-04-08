@@ -43,6 +43,8 @@ class ConfigPanel {
         this.add('show_links', 'LINKS_VISIBLE');
         this.addFunction('Stop Simulation', () => emitter.emit(E.SIMULATION_STOP));
         this.addFunction('Reset Drawing', () => emitter.emit(E.REDRAW));
+
+        this.gui.close();
     }
 
     addFunction(name, callback) {

@@ -322,7 +322,7 @@ class CommentSidebar {
             if (!!commentId) {
                 let isHighlighted = this.COMMENTS[commentId].toggleHighlight();
                 if (isHighlighted) {
-                    this.ROOT.scrollTo(0, this.COMMENTS[commentId].ROOT.offsetTop - 50);
+                    this.LIST.scrollTo(0, this.COMMENTS[commentId].ROOT.offsetTop - 50);
                     this.currentlySelected = commentId;
                 }
             } else

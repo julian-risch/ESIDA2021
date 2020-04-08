@@ -20,7 +20,7 @@ class Layout {
 
         this.simulation = d3.forceSimulation(this.nodes);
         // FIXME remove again
-        this.simulation.stop();
+        //this.simulation.stop();
         this.update();
         Object.entries(this.forces).forEach(([key, force]) => {
             this.simulation.force(key, force)

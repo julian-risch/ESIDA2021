@@ -28,7 +28,7 @@ class Comparator(ABC):
         return self.conf.get(self.__class__.__name__, key)
 
     @classmethod
-    @abstractmethod
+    @abstractmethod<
     def short_name(cls) -> str:
         raise NotImplementedError
 

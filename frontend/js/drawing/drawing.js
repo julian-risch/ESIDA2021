@@ -2,6 +2,7 @@ import { emitter, E } from '../env/events.js'
 import { data } from '../env/data.js';
 import { ELEMENTS } from '../env/elements.js';
 import { Layout } from './layout.js';
+import { Lasso } from "./lasso.js";
 import { DRAWING_CONFIG as CONFIG } from "./config.js";
 
 class Comments {
@@ -130,6 +131,8 @@ class ComExDrawing {
         this.MOUSE_SETTINGS_ZOOM.addEventListener('change', this.updateMouseMode.bind(this));
         this.MOUSE_SETTINGS_SELECT = document.getElementById('mouse-settings-select');
         this.MOUSE_SETTINGS_SELECT.addEventListener('change', this.updateMouseMode.bind(this));
+        this.MOUSE_SETTINGS_CENTRE = document.getElementById('mouse-settings-centre');
+        this.MOUSE_SETTINGS_CENTRE.addEventListener('click', this.centreZoom.bind(this));
 
         this.createScales();
 
@@ -141,21 +144,26 @@ class ComExDrawing {
 
         this.setDimensions();
         this.initZoom();
+        this.updateMouseMode();
 
         this.COMMENTS = new Comments();
         console.log(this.COMMENTS);
 
         this.COMMENTS.draw(this.MAIN_GROUP);
         this.LAYOUT = new Layout(this.COMMENTS.splits, this.COMMENTS.edges);
+        this.LASSO = new Lasso(this.ROOT, this.COMMENTS.NODES);
         this.COMMENTS.attachSimulation(this.LAYOUT.simulation);
         this.ROOT.node();
     }
 
     updateMouseMode() {
         let modes = this.getMouseMode();
-        console.log(modes);
-        if (modes.zoom) this.initZoom();
-        else this.initZoom(true);
+        if (modes.zoom) {
+            this.ZOOM.filter(() => modes.zoom);
+        } else {
+            this.ZOOM.filter(null);
+            this.LASSO.attachLasso();
+        }
 
         //if (modes.lasso)
     }
@@ -176,21 +184,22 @@ class ComExDrawing {
             .domain([0, CONFIG.HEIGHT]);
     }
 
-    initZoom(fake) {
+    centreZoom() {
+        this.ZOOM.scaleTo(this.MAIN_GROUP, 1);
+        // FIXME: somehow is 0 0 not the centroid
+        this.ZOOM.translateTo(this.MAIN_GROUP, 0, 0);
+    }
+
+    initZoom() {
         if (!this.ZOOM) {
             this.ZOOM = d3.zoom()
-                .scaleExtent([0.1, 8]);
+                .scaleExtent([0.1, 8])
+                .on('zoom', () => {
+                    this.MAIN_GROUP.attr('transform', d3.event.transform);
+                });
             this.ROOT.call(this.ZOOM);
         }
         this.ZOOM.extent([[0, 0], [CONFIG.WIDTH, CONFIG.HEIGHT]]);
-        if (fake) {
-            this.ZOOM.on('zoom', () => {
-            });
-        } else {
-            this.ZOOM.on('zoom', () => {
-                this.MAIN_GROUP.attr('transform', d3.event.transform);
-            });
-        }
     }
 
     setDimensions() {

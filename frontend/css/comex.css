@@ -692,6 +692,7 @@ footer > div a:focus {
     padding: 0.25em;
     border: 1px dashed #8c8c8c;
     opacity: 0.5;
+    cursor: pointer;
 }
 
 #mouse-settings input:checked + label {

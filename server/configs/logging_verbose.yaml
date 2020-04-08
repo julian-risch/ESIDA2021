@@ -3,14 +3,14 @@ disable_existing_loggers: off
 formatters:
     default:
         (): common.ColourFormatter
-        fmt: '%(asctime)s [%(levelnamec)17s] %(name)s: %(message)s'
+        fmt: '%(asctime)s [%(levelnamec)s] %(name)s: %(message)s'
         use_colors: on
     process:
         format: '%(asctime)s [%(levelname)s] %(processName)-10s %(name)s: %(message)s'
     access:
         #(): uvicorn.logging.AccessFormatter
         (): common.AccessLogFormatter
-        fmt: '%(asctime)s [     REQ] %(name)s: %(client_addr)s - "%(request_line)s" %(status_code)s | time: %(wall_time)s | CPU: %(cpu_time)s'
+        fmt: '%(asctime)s [   REQ  ] %(name)s: %(client_addr)s - "%(request_line)s" %(status_code)s | time: %(wall_time)s | CPU: %(cpu_time)s'
         use_colors: on
 handlers:
     default:
