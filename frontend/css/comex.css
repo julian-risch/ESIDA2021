@@ -264,34 +264,81 @@ footer > div a:focus {
 
 #comments {
     position: relative;
-    overflow-x: hidden;
-    overflow-y: auto;
-    display: none;
+    display: flex;
+    flex-direction: column;
     transition: 0.3s;
     margin-right: 0;
     background-color: #f1f1f1;
 }
 
-#comments li {
+#comments-filters {
+    padding: 1rem 1rem;
+    background-color: #e1e1e1;
+}
+
+#comments-filters ul {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+
+#comments-filters ul li {
+    list-style: none;
+    display: flex;
+    margin-right: 1rem;
+
+}
+
+#comments-filters button {
+    height: 2rem;
+    width: 2rem;
+    cursor: pointer;
+    background-color: #bdb9b9;
+}
+
+#comments-filters button:hover {
+    background-color: #989898;
+}
+
+#comments-filters button svg {
+    margin: 0.5rem;
+}
+
+#comments-filters input {
+    padding: 0.5rem;
+}
+
+#comments-filters-counter {
+    font-size: 0.75em;
+    color: #808080;
+}
+
+#comments > ul {
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: 100%;
+}
+
+#comments > ul > li {
     list-style: none;
     padding: 1em 1em 0.5em 1em;
     border-bottom: 1px solid #dcd9d9;
     letter-spacing: 0.015em;
 }
 
-#comments li div {
+#comments > ul > li div {
     font-size: 0.75em;
     color: #808080;
     margin-bottom: 0.7em;
 }
 
-#comments li p {
+#comments > ul > li p {
     font-size: 0.9em;
     color: #252525;
     line-height: 1.5;
 }
 
-#comments li.highlight {
+#comments > ul > li.highlight {
     background-color: #e1e1e1;
 }
 
@@ -628,4 +675,43 @@ footer > div a:focus {
 
 #sidebar .pretty-select {
     margin: 2rem 3rem 1rem 3rem;
+}
+
+#mouse-settings {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #e1e1e175;
+    padding: 0.75rem;
+    display: flex;
+}
+
+#mouse-settings label {
+    margin-right: 0.5rem;
+    background-color: #e1e1e1;
+    padding: 0.25em;
+    border: 1px dashed #8c8c8c;
+    opacity: 0.5;
+    cursor: pointer;
+}
+
+#mouse-settings input:checked + label {
+    opacity: 1;
+    border-style: solid;
+}
+
+#mouse-settings label:last-of-type {
+    margin-right: 0;
+}
+
+#mouse-settings svg {
+    height: 0.9rem;
+}
+
+#mouse-settings svg path {
+    fill: #8c8c8c;
+}
+
+#mouse-settings input {
+    display: none;
 }

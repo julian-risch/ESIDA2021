@@ -2,6 +2,7 @@ import { emitter, E } from '../env/events.js'
 import { data } from '../env/data.js';
 import { ELEMENTS } from '../env/elements.js';
 import { Layout } from './layout.js';
+import { Lasso } from "./lasso.js";
 import { DRAWING_CONFIG as CONFIG } from "./config.js";
 
 class Comments {
@@ -126,6 +127,13 @@ class ComExDrawing {
         this.ROOT = d3.select(parent).append('svg');
         this.MAIN_GROUP = this.ROOT.append('g');
 
+        this.MOUSE_SETTINGS_ZOOM = document.getElementById('mouse-settings-zoom');
+        this.MOUSE_SETTINGS_ZOOM.addEventListener('change', this.updateMouseMode.bind(this));
+        this.MOUSE_SETTINGS_SELECT = document.getElementById('mouse-settings-select');
+        this.MOUSE_SETTINGS_SELECT.addEventListener('change', this.updateMouseMode.bind(this));
+        this.MOUSE_SETTINGS_CENTRE = document.getElementById('mouse-settings-centre');
+        this.MOUSE_SETTINGS_CENTRE.addEventListener('click', this.centreZoom.bind(this));
+
         this.createScales();
 
         emitter.on(E.REDRAW, this.draw.bind(this));
@@ -136,14 +144,35 @@ class ComExDrawing {
 
         this.setDimensions();
         this.initZoom();
+        this.updateMouseMode();
 
         this.COMMENTS = new Comments();
         console.log(this.COMMENTS);
 
         this.COMMENTS.draw(this.MAIN_GROUP);
         this.LAYOUT = new Layout(this.COMMENTS.splits, this.COMMENTS.edges);
+        this.LASSO = new Lasso(this.ROOT, this.COMMENTS.NODES);
         this.COMMENTS.attachSimulation(this.LAYOUT.simulation);
         this.ROOT.node();
+    }
+
+    updateMouseMode() {
+        let modes = this.getMouseMode();
+        if (modes.zoom) {
+            this.ZOOM.filter(() => modes.zoom);
+        } else {
+            this.ZOOM.filter(null);
+            this.LASSO.attachLasso();
+        }
+
+        //if (modes.lasso)
+    }
+
+    getMouseMode() {
+        return {
+            zoom: this.MOUSE_SETTINGS_ZOOM.checked,
+            lasso: this.MOUSE_SETTINGS_SELECT.checked
+        }
     }
 
     createScales() {
@@ -155,9 +184,13 @@ class ComExDrawing {
             .domain([0, CONFIG.HEIGHT]);
     }
 
-    initZoom() {
-        let setExtent = zoom => zoom.extent([[0, 0], [CONFIG.WIDTH, CONFIG.HEIGHT]]);
+    centreZoom() {
+        this.ZOOM.scaleTo(this.MAIN_GROUP, 1);
+        // FIXME: somehow is 0 0 not the centroid
+        this.ZOOM.translateTo(this.MAIN_GROUP, 0, 0);
+    }
 
+    initZoom() {
         if (!this.ZOOM) {
             this.ZOOM = d3.zoom()
                 .scaleExtent([0.1, 8])
@@ -166,7 +199,7 @@ class ComExDrawing {
                 });
             this.ROOT.call(this.ZOOM);
         }
-        setExtent(this.ZOOM);
+        this.ZOOM.extent([[0, 0], [CONFIG.WIDTH, CONFIG.HEIGHT]]);
     }
 
     setDimensions() {

@@ -66,6 +66,13 @@ const E = {
     DATA_UPDATED_COMMENTS: 'DATA_UPDATED_COMMENTS', // DATA: the dict of comments
     // a comment was selected for highlight (or unselected)
     COMMENT_SELECTED: 'COMMENT_SELECTED', // DATA: commentId (optional)
+    // request to remove all comment filters
+    CLEAR_FILTERS: 'CLEAR_FILTERS', // DATA: none
+    // emitted when the search box updated
+    COMMENT_SEARCH: 'COMMENT_SEARCH', // DATA: current search query
+    // emitted when the DataSource has updated the 'active' field
+    FILTERS_UPDATED: 'FILTERS_UPDATED', // DATA: comment object with updated 'active' field
+
 };
 Object.freeze(E);
 
