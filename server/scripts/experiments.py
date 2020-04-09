@@ -11,5 +11,8 @@ async def get_graph(article_ids: List[int] = None, conf: dict = None) -> models.
 
     return graph
 
+# todo: get config, article IDs
+conf = None
+article_ids = None
 
-get_graph()
+get_graph(article_ids, conf)
