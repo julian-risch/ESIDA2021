@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from data.processors import Modifier
 import data.models as models
-from typing import List, Tuple, Dict
+from typing import List, Dict
 import logging
 import numpy as np
 
@@ -83,10 +83,6 @@ class PageRanker(Modifier):
     def short_name(cls) -> str:
         return 'pr'
 
-    @classmethod
-    def edge_type(cls) -> models.EdgeType:
-        return models.EdgeType.SAME_COMMENT
-
     def modify(self, graph: models.Graph) -> models.Graph:
         return graph
 
@@ -94,10 +90,10 @@ class PageRanker(Modifier):
 def build_edge_dict(graph: models.Graph):
     dic = defaultdict(list)
     for e in graph.edges:
-        if e not in dic[e.source_id]:
-            dic[e.source_id].append(e)
-        if e not in dic[e.target_id]:
-            dic[e.target_id].append(e)
+        if e not in dic[e.src]:
+            dic[e.src].append(e)
+        if e not in dic[e.tgt]:
+            dic[e.tgt].append(e)
     return dic
 
 
@@ -120,10 +116,6 @@ class EdgeFilter(Modifier):
     @classmethod
     def short_name(cls) -> str:
         return 'ef'
-
-    @classmethod
-    def edge_type(cls) -> models.EdgeType:
-        return models.EdgeType.SAME_COMMENT
 
     def modify(self, graph: models.Graph) -> models.Graph:
         def within_thresholds(wgt_list: List[models.EdgeWeightType], thresholds: Dict[models.EdgeType, float]):
@@ -168,10 +160,6 @@ class BottomEdgeFilter(Modifier):
     def short_name(cls) -> str:
         return 'bef'
 
-    @classmethod
-    def edge_type(cls) -> models.EdgeType:
-        return models.EdgeType.SAME_COMMENT
-
     def modify(self, graph: models.Graph, top_edges=5, edge_type=models.EdgeType.SIMILARITY) -> models.Graph:
         filtered_edges = []
         edge_dict = build_edge_dict(graph)
@@ -179,13 +167,14 @@ class BottomEdgeFilter(Modifier):
         # FIXME: check if node index correctly choosen
         for node_id in graph.id2idx.keys():
             node_edges = edge_dict[node_id]
-            node_edges = sorted(node_edges, key=lambda edge: edge.wgts[edge_type], reverse=True)[:top_edges]
+            node_edges = sorted(node_edges, key=lambda e: e.wgts[edge_type], reverse=True)[:top_edges]
             for edge in node_edges:
                 if edge not in filtered_edges:
                     filtered_edges.append(edge)
         graph.edges = filtered_edges
 
         return graph
+
 
 class Representives:
     @classmethod
@@ -204,6 +193,7 @@ class Representives:
     #     sims = [avg.cos_sim(vec) for vec in vecs]
     #     max_id = sims.index(max(sims))
     #     return nodes[max_id]
+
 
 class NodeMerger(Modifier):
     def __init__(self, *args, base_weight=None, only_consecutive: bool = None, **kwargs):
@@ -224,10 +214,6 @@ class NodeMerger(Modifier):
     @classmethod
     def short_name(cls) -> str:
         return 'nm'
-
-    @classmethod
-    def edge_type(cls) -> models.EdgeType:
-        return models.EdgeType.SAME_COMMENT
 
     def modify(self, graph: models.Graph, top_edges=5, edge_type=models.EdgeType.SIMILARITY) -> models.Graph:
         return graph
@@ -315,14 +301,14 @@ class NodeMerger(Modifier):
 
         # remove nodes that should be replaced and memorize them
         remove_dict = defaultdict(list)
-        for node in self.nodes:
+        for node in graph.nodes:
             if node.node_id in final_replacements.keys():
                 remove_dict[final_replacements[node.node_id]].append(node)
-                self.nodes.remove(node)
+                graph.nodes.remove(node)
                 # merge value_ids with otherwise deleted information
 
         # node merge
-        for node in self.nodes:
+        for node in graph.nodes:
             if node.node_id in remove_dict.keys():
                 replaced_nodes = remove_dict[node.node_id]
                 # representant = Representives.avg_embedding(node, replaced_nodes)
