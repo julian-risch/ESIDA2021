@@ -193,17 +193,17 @@ class Representives:
         node.text += " | " + " | ".join([removed_node.text for removed_node in removed_nodes])
         return node
 
-    @classmethod
-    def avg_embedding(cls, node, removed_nodes):
-        nodes = list(removed_nodes)
-        nodes.append(node)
-
-        vecs = [n.vector for n in nodes]
-        avg = Vector.average(vecs)
-
-        sims = [avg.cos_sim(vec) for vec in vecs]
-        max_id = sims.index(max(sims))
-        return nodes[max_id]
+    # @classmethod
+    # def avg_embedding(cls, node, removed_nodes):
+    #     nodes = list(removed_nodes)
+    #     nodes.append(node)
+    #
+    #     vecs = [n.vector for n in nodes]
+    #     avg = Vector.average(vecs)
+    #
+    #     sims = [avg.cos_sim(vec) for vec in vecs]
+    #     max_id = sims.index(max(sims))
+    #     return nodes[max_id]
 
 class NodeMerger(Modifier):
     def __init__(self, *args, base_weight=None, only_consecutive: bool = None, **kwargs):
