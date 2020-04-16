@@ -37,15 +37,15 @@ logger = logging.getLogger('data.graph.comparator')
 #         return graph
 
 class PageRanker(Modifier):
-    def pagerank(self, num_iterations: int = 100, d: float = 0.85, normalize=True):
-        m = self.adjacence_matrix / self.adjacence_matrix.sum(axis=0, keepdims=1)
+    def pagerank(self, graph, num_iterations: int = 100, d: float = 0.85, normalize=True):
+        m = graph.adjacence_matrix / graph.adjacence_matrix.sum(axis=0, keepdims=1)
         n = m.shape[1]
         v = np.random.rand(n, 1)
         v = v / np.linalg.norm(v, 1)
         m_hat = (d * m + (1 - d) / n)
         for i in range(num_iterations):
             v = m_hat @ v
-        ranks = {n.node_id: r[0] for n, r in zip(self.nodes, v)}
+        ranks = {n.node_id: r[0] for n, r in zip(graph.nodes, v)}
 
         ranks = {k: v for k, v in sorted(ranks.items(), key=lambda item: item[1], reverse=True)}
 
@@ -58,11 +58,11 @@ class PageRanker(Modifier):
             ranks = {k: (v - v_min) / (v_max - v_min) + 0.001 for k, v in ranks.items()}
 
         # update Graph
-        for node in self.nodes:
-            if node.weights is None:
-                node.weights = {}
+        for node_id in graph.id2idx:
+            if node_id.weights is None:
+                node_id.weights = {}
 
-            node.weights["pagerank"] = ranks[node.node_id]
+            node_id.weights["pagerank"] = ranks[node_id]
 
     def __init__(self, *args, base_weight=None, only_consecutive: bool = None, **kwargs):
         """
@@ -176,16 +176,10 @@ class BottomEdgeFilter(Modifier):
         filtered_edges = []
         edge_dict = build_edge_dict(graph)
 
-        wgt_index_dict = {models.EdgeType.SAME_COMMENT: 0,
-                          models.EdgeType.SAME_ARTICLE: 1,
-                          models.EdgeType.SIMILARITY: 2,
-                          models.EdgeType.SAME_GROUP: 3,
-                          models.EdgeType.REPLY_TO: 4}
-
-        # FIXME: check if node index and wgt_index is correctly choosen
+        # FIXME: check if node index correctly choosen
         for node_id in graph.id2idx.keys():
             node_edges = edge_dict[node_id]
-            node_edges = sorted(node_edges, key=lambda edge: edge.wgts[wgt_index_dict[edge_type]], reverse=True)[:top_edges]
+            node_edges = sorted(node_edges, key=lambda edge: edge.wgts[edge_type], reverse=True)[:top_edges]
             for edge in node_edges:
                 if edge not in filtered_edges:
                     filtered_edges.append(edge)
