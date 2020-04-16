@@ -186,3 +186,155 @@ class BottomEdgeFilter(Modifier):
         graph.edges = filtered_edges
 
         return graph
+
+class Representives:
+    @classmethod
+    def concanative(cls, node, removed_nodes):
+        node.text += " | " + " | ".join([removed_node.text for removed_node in removed_nodes])
+        return node
+
+    @classmethod
+    def avg_embedding(cls, node, removed_nodes):
+        nodes = list(removed_nodes)
+        nodes.append(node)
+
+        vecs = [n.vector for n in nodes]
+        avg = Vector.average(vecs)
+
+        sims = [avg.cos_sim(vec) for vec in vecs]
+        max_id = sims.index(max(sims))
+        return nodes[max_id]
+
+class NodeMerger(Modifier):
+    def __init__(self, *args, base_weight=None, only_consecutive: bool = None, **kwargs):
+        """
+        Returns base_weight iff split_a and split_b are part of the same comment.
+        :param args:
+        :param base_weight: weight to attach
+        :param only_consecutive: only return weight of splits are consecutive
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.base_weight = self.conf_getfloat('base_weight', base_weight)
+        self.only_consecutive = self.conf_getboolean('only_consecutive', only_consecutive)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'base_weight: {self.base_weight} and only_consecutive: {self.only_consecutive}')
+
+    @classmethod
+    def short_name(cls) -> str:
+        return 'nm'
+
+    @classmethod
+    def edge_type(cls) -> models.EdgeType:
+        return models.EdgeType.SAME_COMMENT
+
+    def modify(self, graph: models.Graph, top_edges=5, edge_type=models.EdgeType.SIMILARITY) -> models.Graph:
+        return graph
+
+    def merge_nodes(self, graph, textual=0.8, structural=0.8, temporal=3600, representative_function=len, conj="and"):
+        def clusters(to_replace):
+            finalized_replacements = {}
+            for k, v in to_replace.items():
+                for k2, v2 in to_replace.items():
+                    if v == k2:
+                        finalized_replacements[k] = v2
+
+                if k not in finalized_replacements:
+                    finalized_replacements[k] = v
+
+            cluster = defaultdict(list)
+            for k, v in to_replace.items():
+                cluster[v].append(k)
+
+            for k, v in cluster.items():
+                for k2, v2 in cluster.items():
+                    if k != k2 and k in v2:
+                        cluster[k2].extend(v)
+                        cluster[k].clear()
+            # print(cluster)
+            # replacement -> [to_be_replaced_1, ..., to_be_replaced_n]
+            cluster = {k: l for k, l in cluster.items() if len(l) > 0}
+
+            # to_be_replaced -> replacement
+            finalized_replacements = {v: k for k, l in cluster.items() for v in l}
+
+            return cluster, finalized_replacements
+
+        # FIXME: user proper node dict
+        node_dict = graph.id2idx
+        edge_dict = build_edge_dict(graph)
+
+        replacements = {}
+
+        # investigate what can be replaced with what
+        for edge in graph.edges:
+
+            # FIXME: user edge weights correctly
+            if conj == "or":
+                filter_bool = edge.weights["textual"] > textual or edge.weights["structural"] > structural or \
+                              edge.weights["temporal"] < temporal
+            else:
+                filter_bool = edge.weights["textual"] > textual and edge.weights["structural"] > structural and \
+                              edge.weights["temporal"] < temporal
+
+            # todo: replace use of node class with node id
+            if filter_bool:
+                source = node_dict.get(edge.src)
+                target = node_dict.get(edge.tgt)
+
+                if source is None or target is None:
+                    continue
+
+                if source == target:
+                    edge.src = None
+                    edge.tgt = None
+                    continue
+
+                if representative_function(source.text) > representative_function(target.text):
+                    use = source
+                    drop = target
+                else:
+                    use = target
+                    drop = source
+
+                if use == drop:
+                    raise UserWarning("use and drop same!")
+
+                replacements[drop.node_id] = use.node_id
+
+        # use only replacements that cannot be replaced by others
+        _, final_replacements = clusters(replacements)
+        # replace nodes in edges
+        for edge in graph.edges:
+            if edge.source_id in final_replacements.keys():
+                edge.src = final_replacements[edge.src]
+
+            if edge.target_id in final_replacements.keys():
+                edge.tgt = final_replacements[edge.tgt]
+
+        # remove nodes that should be replaced and memorize them
+        remove_dict = defaultdict(list)
+        for node in self.nodes:
+            if node.node_id in final_replacements.keys():
+                remove_dict[final_replacements[node.node_id]].append(node)
+                self.nodes.remove(node)
+                # merge value_ids with otherwise deleted information
+
+        # node merge
+        for node in self.nodes:
+            if node.node_id in remove_dict.keys():
+                replaced_nodes = remove_dict[node.node_id]
+                # representant = Representives.avg_embedding(node, replaced_nodes)
+                representant = Representives.concanative(node, replaced_nodes)
+                node.text = representant.text
+                node.vector = representant.vector
+
+        # final filtering
+        self.edges = list([e for e in self.edges if not (e.source_id is None or e.target_id is None)
+                           and e.weights_bigger_as_threshold(threshold=0,
+                                                             aggregate_function=boolean_or)
+                           and e.source_id != e.target_id])
+        self.nodes = [node for node in self.nodes if node.node_id in edge_dict]
+
+        return None
