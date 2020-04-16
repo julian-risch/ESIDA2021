@@ -331,10 +331,10 @@ class NodeMerger(Modifier):
                 node.vector = representant.vector
 
         # final filtering
-        self.edges = list([e for e in self.edges if not (e.source_id is None or e.target_id is None)
-                           and e.weights_bigger_as_threshold(threshold=0,
-                                                             aggregate_function=boolean_or)
-                           and e.source_id != e.target_id])
-        self.nodes = [node for node in self.nodes if node.node_id in edge_dict]
+        # self.edges = list([e for e in self.edges if not (e.source_id is None or e.target_id is None)
+        #                    and e.weights_bigger_as_threshold(threshold=0,
+        #                                                      aggregate_function=boolean_or)
+        #                    and e.source_id != e.target_id])
+        # self.nodes = [node for node in self.nodes if node.node_id in edge_dict]
 
         return None
