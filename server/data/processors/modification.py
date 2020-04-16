@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from data.processors import Modifier
 import data.models as models
 from typing import List, Tuple, Dict
@@ -79,7 +81,7 @@ class PageRanker(Modifier):
 
     @classmethod
     def short_name(cls) -> str:
-        return 'sc'
+        return 'pr'
 
     @classmethod
     def edge_type(cls) -> models.EdgeType:
@@ -87,6 +89,17 @@ class PageRanker(Modifier):
 
     def modify(self, graph: models.Graph) -> models.Graph:
         return graph
+
+
+def build_edge_dict(graph: models.Graph):
+    dic = defaultdict(list)
+    for e in graph.edges:
+        if e not in dic[e.source_id]:
+            dic[e.source_id].append(e)
+        if e not in dic[e.target_id]:
+            dic[e.target_id].append(e)
+    return dic
+
 
 class EdgeFilter(Modifier):
     def __init__(self, *args, base_weight=None, only_consecutive: bool = None, **kwargs):
@@ -106,7 +119,7 @@ class EdgeFilter(Modifier):
 
     @classmethod
     def short_name(cls) -> str:
-        return 'sc'
+        return 'ef'
 
     @classmethod
     def edge_type(cls) -> models.EdgeType:
@@ -133,3 +146,49 @@ class EdgeFilter(Modifier):
     #                   if edge.weights["textual"] >= textual
     #                   and edge.weights["structural"] >= structural
     #                   and edge.weights["temporal"] <= temporal]
+
+
+class BottomEdgeFilter(Modifier):
+    def __init__(self, *args, base_weight=None, only_consecutive: bool = None, **kwargs):
+        """
+        Returns base_weight iff split_a and split_b are part of the same comment.
+        :param args:
+        :param base_weight: weight to attach
+        :param only_consecutive: only return weight of splits are consecutive
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.base_weight = self.conf_getfloat('base_weight', base_weight)
+        self.only_consecutive = self.conf_getboolean('only_consecutive', only_consecutive)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'base_weight: {self.base_weight} and only_consecutive: {self.only_consecutive}')
+
+    @classmethod
+    def short_name(cls) -> str:
+        return 'bef'
+
+    @classmethod
+    def edge_type(cls) -> models.EdgeType:
+        return models.EdgeType.SAME_COMMENT
+
+    def modify(self, graph: models.Graph, top_edges=5, edge_type=models.EdgeType.SIMILARITY) -> models.Graph:
+        filtered_edges = []
+        edge_dict = build_edge_dict(graph)
+
+        wgt_index_dict = {models.EdgeType.SAME_COMMENT: 0,
+                          models.EdgeType.SAME_ARTICLE: 1,
+                          models.EdgeType.SIMILARITY: 2,
+                          models.EdgeType.SAME_GROUP: 3,
+                          models.EdgeType.REPLY_TO: 4}
+
+        # FIXME: check if node index and wgt_index is correctly choosen
+        for node_id in graph.id2idx.keys():
+            node_edges = edge_dict[node_id]
+            node_edges = sorted(node_edges, key=lambda edge: edge.wgts[wgt_index_dict[edge_type]], reverse=True)[:top_edges]
+            for edge in node_edges:
+                if edge not in filtered_edges:
+                    filtered_edges.append(edge)
+        graph.edges = filtered_edges
+
+        return graph
