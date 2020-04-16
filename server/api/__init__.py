@@ -10,7 +10,7 @@ from common import config, get_logger_config
 from api.routes import ping, platforms, graph
 import uvicorn
 import json
-import resource
+# import resource
 import time
 import logging
 
@@ -57,25 +57,25 @@ class TimingMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         start_time = time.time()
-        start_cpu_time = self._get_cpu_time()
+        # start_cpu_time = self._get_cpu_time()
 
         response = await call_next(request)
 
-        used_cpu_time = self._get_cpu_time() - start_cpu_time
+        # used_cpu_time = self._get_cpu_time() - start_cpu_time
         used_time = time.time() - start_time
 
-        response.headers['X-CPU-Time'] = f'{used_cpu_time:.8f}s'
+        # response.headers['X-CPU-Time'] = f'{used_cpu_time:.8f}s'
         response.headers['X-WallTime'] = f'{used_time:.8f}s'
 
         request.scope['timing_stats'] = {
-            'cpu_time': f'{used_cpu_time:.8f}s',
+            # 'cpu_time': f'{used_cpu_time:.8f}s',
             'wall_time': f'{used_time:.8f}s'
         }
 
         return response
 
-    @staticmethod
-    def _get_cpu_time():
-        resources = resource.getrusage(resource.RUSAGE_SELF)
-        # add up user time (ru_utime) and system time (ru_stime)
-        return resources[0] + resources[1]
+    # @staticmethod
+    # def _get_cpu_time():
+    #     resources = resource.getrusage(resource.RUSAGE_SELF)
+    #     # add up user time (ru_utime) and system time (ru_stime)
+    #     return resources[0] + resources[1]
