@@ -66,7 +66,7 @@ class PageRanker(Modifier):
 
     def __init__(self, *args, num_iterations: int = None, d: float = None, normalize=None, **kwargs):
         """
-        Returns base_weight iff split_a and split_b are part of the same comment.
+        Returns a graph with node pageranked node weights
         :param args:
         :param num_iterations: number of iteration for PageRank
         :d: d parameter for PageRank
