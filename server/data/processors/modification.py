@@ -37,22 +37,22 @@ logger = logging.getLogger('data.graph.comparator')
 #         return graph
 
 class PageRanker(Modifier):
-    def pagerank(self, graph, num_iterations: int = 100, d: float = 0.85, normalize=True):
+    def pagerank(self, graph):
         # FIXME: use proper adjacence matrix
-        adjacence_matrix = graph.edges # np.array of adjacence matrix
+        adjacence_matrix = graph.edges  # np.array of adjacence matrix
 
         m = adjacence_matrix / adjacence_matrix.sum(axis=0, keepdims=1)
         n = m.shape[1]
         v = np.random.rand(n, 1)
         v = v / np.linalg.norm(v, 1)
-        m_hat = (d * m + (1 - d) / n)
-        for i in range(num_iterations):
+        m_hat = (self.d * m + (1 - self.d) / n)
+        for i in range(self.num_iterations):
             v = m_hat @ v
         ranks = {n.id: r[0] for n, r in zip(graph.nodes, v)}
 
         ranks = {k: v for k, v in sorted(ranks.items(), key=lambda item: item[1], reverse=True)}
 
-        if normalize:
+        if self.normalize:
             values = list(ranks.values())
             v_max = np.max(values)
             v_min = np.min(values)
@@ -64,15 +64,19 @@ class PageRanker(Modifier):
         for node in graph.nodes:
             node.wgts[models.NodeType.PAGERANK] = ranks[node.id]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, num_iterations: int = 100, d: float = 0.85, normalize=True, **kwargs):
         """
         Returns base_weight iff split_a and split_b are part of the same comment.
         :param args:
-        :param base_weight: weight to attach
-        :param only_consecutive: only return weight of splits are consecutive
+        :param num_iterations: number of iteration for PageRank
+        :d: d parameter for PageRank
+        :normalize: normalize the PageRank values?
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
+        self.num_iterations = num_iterations
+        self.d = d
+        self.normalize = normalize
 
         logger.debug(f'{self.__class__.__name__} initialised')
 
@@ -96,20 +100,21 @@ def build_edge_dict(graph: models.Graph):
 
 
 class EdgeFilter(Modifier):
-    def __init__(self, *args, base_weight=None, only_consecutive: bool = None, **kwargs):
+    def __init__(self, *args, thresholds, **kwargs):
         """
         Returns base_weight iff split_a and split_b are part of the same comment.
         :param args:
-        :param base_weight: weight to attach
-        :param only_consecutive: only return weight of splits are consecutive
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-        self.base_weight = self.conf_getfloat('base_weight', base_weight)
-        self.only_consecutive = self.conf_getboolean('only_consecutive', only_consecutive)
+        # fixme: do this in a way that mathces config files
+        self.thresholds = {models.EdgeType.SAME_COMMENT: 0.7,
+                           models.EdgeType.SAME_ARTICLE: 0.8,
+                           models.EdgeType.SIMILARITY: 0.9,
+                           models.EdgeType.SAME_GROUP: 0.1,
+                           models.EdgeType.REPLY_TO: 0.8}
 
-        logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'base_weight: {self.base_weight} and only_consecutive: {self.only_consecutive}')
+        logger.debug(f'{self.__class__.__name__} initialised')
 
     @classmethod
     def short_name(cls) -> str:
@@ -122,13 +127,7 @@ class EdgeFilter(Modifier):
                     return False
             return True
 
-        example_thresholds = {models.EdgeType.SAME_COMMENT: 0.7,
-                              models.EdgeType.SAME_ARTICLE: 0.8,
-                              models.EdgeType.SIMILARITY: 0.9,
-                              models.EdgeType.SAME_GROUP: 0.1,
-                              models.EdgeType.REPLY_TO: 0.8}
-
-        graph.edges = [edge for edge in graph.edges if within_thresholds(edge.wgts, thresholds=example_thresholds)]
+        graph.edges = [edge for edge in graph.edges if within_thresholds(edge.wgts, thresholds=self.thresholds)]
         return graph
     # def remove_edges(self, textual=0.8, structural=0.96, temporal=7200):
     #     # self.edges = [edge for edge in self.edges if edge.weights_bigger_as_threshold()]
