@@ -10,7 +10,7 @@ from common import config, get_logger_config
 from api.routes import ping, platforms, graph
 import uvicorn
 import json
-# import resource
+import resource
 import time
 import logging
 
@@ -74,8 +74,8 @@ class TimingMiddleware(BaseHTTPMiddleware):
 
         return response
 
-    # @staticmethod
-    # def _get_cpu_time():
-    #     resources = resource.getrusage(resource.RUSAGE_SELF)
-    #     # add up user time (ru_utime) and system time (ru_stime)
-    #     return resources[0] + resources[1]
+    @staticmethod
+    def _get_cpu_time():
+        resources = resource.getrusage(resource.RUSAGE_SELF)
+        # add up user time (ru_utime) and system time (ru_stime)
+        return resources[0] + resources[1]
