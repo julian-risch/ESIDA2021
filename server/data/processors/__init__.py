@@ -71,6 +71,11 @@ class Modifier(ABC):
             return param
         return self.conf.getfloat(self.__class__.__name__, key)
 
+    def conf_getint(self, key, param):
+        if param is not None:
+            return param
+        return self.conf.getint(self.__class__.__name__, key)
+
     def conf_get(self, key, param):
         if param is not None:
             return param
