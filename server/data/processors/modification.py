@@ -38,14 +38,17 @@ logger = logging.getLogger('data.graph.comparator')
 
 class PageRanker(Modifier):
     def pagerank(self, graph, num_iterations: int = 100, d: float = 0.85, normalize=True):
-        m = graph.adjacence_matrix / graph.adjacence_matrix.sum(axis=0, keepdims=1)
+        # FIXME: use proper adjacence matrix
+        adjacence_matrix = graph.edges # np.array of adjacence matrix
+
+        m = adjacence_matrix / adjacence_matrix.sum(axis=0, keepdims=1)
         n = m.shape[1]
         v = np.random.rand(n, 1)
         v = v / np.linalg.norm(v, 1)
         m_hat = (d * m + (1 - d) / n)
         for i in range(num_iterations):
             v = m_hat @ v
-        ranks = {n.node_id: r[0] for n, r in zip(graph.nodes, v)}
+        ranks = {n.id: r[0] for n, r in zip(graph.nodes, v)}
 
         ranks = {k: v for k, v in sorted(ranks.items(), key=lambda item: item[1], reverse=True)}
 
@@ -57,14 +60,11 @@ class PageRanker(Modifier):
                 v_min = -1 + v_max
             ranks = {k: (v - v_min) / (v_max - v_min) + 0.001 for k, v in ranks.items()}
 
-        # update Graph
-        for node_id in graph.id2idx:
-            if node_id.weights is None:
-                node_id.weights = {}
+        # update node of graph with new weights for PageRank
+        for node in graph.nodes:
+            node.wgts[models.NodeType.PAGERANK] = ranks[node.id]
 
-            node_id.weights["pagerank"] = ranks[node_id]
-
-    def __init__(self, *args, base_weight=None, only_consecutive: bool = None, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
         Returns base_weight iff split_a and split_b are part of the same comment.
         :param args:
@@ -73,17 +73,15 @@ class PageRanker(Modifier):
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-        self.base_weight = self.conf_getfloat('base_weight', base_weight)
-        self.only_consecutive = self.conf_getboolean('only_consecutive', only_consecutive)
 
-        logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'base_weight: {self.base_weight} and only_consecutive: {self.only_consecutive}')
+        logger.debug(f'{self.__class__.__name__} initialised')
 
     @classmethod
     def short_name(cls) -> str:
         return 'pr'
 
     def modify(self, graph: models.Graph) -> models.Graph:
+        self.pagerank(graph)
         return graph
 
 

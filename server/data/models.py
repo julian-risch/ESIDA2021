@@ -1,6 +1,6 @@
 from pydantic import BaseModel, validator, ValidationError, AnyHttpUrl
 from datetime import datetime
-from typing import List, Optional, Union, NamedTuple, Tuple
+from typing import List, Optional, Union, NamedTuple, Tuple, Dict
 from enum import Enum, IntEnum
 
 
@@ -179,3 +179,4 @@ class Graph(BaseModel):
     comments: List[SplitComment]
     id2idx: dict
     edges: List[Edge]
+    nodes: List[Node]
