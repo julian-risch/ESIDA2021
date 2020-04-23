@@ -5,6 +5,8 @@ import data.models as models
 from typing import List, Tuple
 import logging
 
+from data.processors.embedding import cosine_similarity, load_fasttext_model
+
 logger = logging.getLogger('data.graph.comparator')
 
 
@@ -119,5 +121,33 @@ class TemporalComparator(Comparator):
             return datetime.strptime(timestring, "%Y-%m-%d %H:%M:%S")
 
         weight = time_second_difference(timestring_to_stamp(a.timestamp), timestring_to_stamp(b.timestamp))
+
+        return models.EdgeWeight(wgt=weight, tp=self.edge_type(), comp=self.short_name())
+
+class SimilarityComparator(Comparator):
+    # base_weight will be ignored
+    def __init__(self, *args, base_weight=None, only_root: bool = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.base_weight = self.conf_getfloat('base_weight', base_weight)
+        self.only_root = self.conf_getboolean('only_root', only_root)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'base_weight: {self.base_weight} and only_root: {self.only_root}')
+
+        self.model = load_fasttext_model()
+
+    @classmethod
+    def short_name(cls) -> str:
+        return 'sim'
+
+    @classmethod
+    def edge_type(cls) -> models.EdgeType:
+        return models.EdgeType.TEMPORAL
+
+    def compare(self, a: models.CommentCached, _a: models.SplitComment,
+                b: models.CommentCached, _b: models.SplitComment,
+                split_a, split_b) -> float:
+
+        weight = cosine_similarity(self.model, a.text, b.text)
 
         return models.EdgeWeight(wgt=weight, tp=self.edge_type(), comp=self.short_name())
