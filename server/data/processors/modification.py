@@ -1,10 +1,10 @@
+import logging
 from collections import defaultdict
 
-from data.processors import Modifier
-import data.models as models
-from typing import List, Dict
-import logging
 import numpy as np
+
+import data.models as models
+from data.processors import Modifier
 
 logger = logging.getLogger('data.graph.comparator')
 
@@ -195,7 +195,7 @@ class BottomSimilarityEdgeFilter(Modifier):
         # FIXME: check if node index correctly choosen
         for node_id in graph.id2idx.keys():
             node_edges = edge_dict[node_id]
-            node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type], reverse=True)[:self.top_edges]
+            node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type()], reverse=True)[:self.top_edges]
             for edge in node_edges:
                 if edge not in filtered_edges:
                     filtered_edges.append(edge)
@@ -283,7 +283,7 @@ class NodeMerger(Modifier):
     def short_name(cls) -> str:
         return 'nm'
 
-    def modify(self, graph: models.Graph, top_edges=5, edge_type=models.EdgeType.SIMILARITY) -> models.Graph:
+    def modify(self, graph: models.Graph) -> models.Graph:
         return graph
 
     def merge_nodes(self, graph, textual=0.8, structural=0.8, temporal=3600, representative_function=len, conj="and"):
@@ -326,11 +326,19 @@ class NodeMerger(Modifier):
 
             # FIXME: user edge weights correctly
             if conj == "or":
-                filter_bool = edge.weights["textual"] > textual or edge.weights["structural"] > structural or \
-                              edge.weights["temporal"] < temporal
+                filter_bool = edge.wgts[models.EdgeType.SIMILARITY] > textual \
+                              or edge.wgts[models.EdgeType.REPLY_TO] > structural \
+                              or edge.wgts[models.EdgeType.SAME_COMMENT] > structural \
+                              or edge.wgts[models.EdgeType.SAME_ARTICLE] > structural \
+                              or edge.wgts[models.EdgeType.SAME_GROUP] > structural \
+                              or edge.wgts[models.EdgeType.TEMPORAL] < temporal
             else:
-                filter_bool = edge.weights["textual"] > textual and edge.weights["structural"] > structural and \
-                              edge.weights["temporal"] < temporal
+                filter_bool = edge.wgts[models.EdgeType.SIMILARITY] > textual \
+                              and edge.wgts[models.EdgeType.REPLY_TO] > structural \
+                              and edge.wgts[models.EdgeType.SAME_COMMENT] > structural \
+                              and edge.wgts[models.EdgeType.SAME_ARTICLE] > structural \
+                              and edge.wgts[models.EdgeType.SAME_GROUP] > structural \
+                              and edge.wgts[models.EdgeType.TEMPORAL] < temporal
 
             # todo: replace use of node class with node id
             if filter_bool:
@@ -361,34 +369,48 @@ class NodeMerger(Modifier):
         _, final_replacements = clusters(replacements)
         # replace nodes in edges
         for edge in graph.edges:
-            if edge.source_id in final_replacements.keys():
+            if edge.src in final_replacements.keys():
                 edge.src = final_replacements[edge.src]
 
-            if edge.target_id in final_replacements.keys():
+            if edge.tgt in final_replacements.keys():
                 edge.tgt = final_replacements[edge.tgt]
 
         # remove nodes that should be replaced and memorize them
         remove_dict = defaultdict(list)
         for node in graph.nodes:
-            if node.node_id in final_replacements.keys():
-                remove_dict[final_replacements[node.node_id]].append(node)
+            if node.id in final_replacements.keys():
+                remove_dict[final_replacements[node.id]].append(node)
                 graph.nodes.remove(node)
                 # merge value_ids with otherwise deleted information
 
         # node merge
         for node in graph.nodes:
-            if node.node_id in remove_dict.keys():
-                replaced_nodes = remove_dict[node.node_id]
+            if node.id in remove_dict.keys():
+                replaced_nodes = remove_dict[node.id]
                 # representant = Representives.avg_embedding(node, replaced_nodes)
                 representant = Representives.concanative(node, replaced_nodes)
-                node.text = representant.text
-                node.vector = representant.vector
+                # todo: set text and vector of node
+                # node.text = representant.text
+                # node.vector = representant.vector
 
         # final filtering
-        # self.edges = list([e for e in self.edges if not (e.source_id is None or e.target_id is None)
-        #                    and e.weights_bigger_as_threshold(threshold=0,
-        #                                                      aggregate_function=boolean_or)
-        #                    and e.source_id != e.target_id])
-        # self.nodes = [node for node in self.nodes if node.node_id in edge_dict]
+        graph.edges = list([e for e in graph.edges if not (e.source_id is None or e.target_id is None)
+                           and self.weights_bigger_as_threshold(e, threshold=0)
+                           and e.source_id != e.target_id])
+        graph.nodes = [node for node in graph.nodes if node.node_id in edge_dict]
 
         return None
+
+    def weights_bigger_as_threshold(self, edge: models.Edge, threshold: float = 0, edge_types=None):
+        if edge_types is None:
+            edge_types = [models.EdgeType.SIMILARITY, models.EdgeType.SAME_COMMENT]
+        choosen_weights = [edge.wgts[edge_type] for edge_type in edge_types]
+
+        # boolean_and
+        for w in choosen_weights:
+            if w <= threshold:
+                return False
+        return True
+
+
+
