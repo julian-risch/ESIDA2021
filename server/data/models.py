@@ -132,7 +132,8 @@ class SplitComment(BaseModel):
     splits: List[Split]
 
 
-class EdgeWeight(Tuple, NamedTuple):
+class EdgeWeight(NamedTuple):
+# class EdgeWeight(Tuple, NamedTuple):
     # edge weight
     wgt: float
     # edge type
