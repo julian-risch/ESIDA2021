@@ -325,6 +325,7 @@ class NodeMerger(Modifier):
                     continue
 
                 # todo: read textual attribute correctly from nodes
+                # graph.comments[graph.id2idx[source]].text
                 if representative_function(source.text) > representative_function(target.text):
                     use = source
                     drop = target
