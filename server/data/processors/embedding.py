@@ -8,6 +8,8 @@ def load_fasttext_model(path='E:\\cc.de.300.bin'):
 
 
 def vectorize_sentence(model, sentence: str) -> List[float]:
+    if not model:
+        model = load_fasttext_model()
     return model.get_sentence_vector(sentence.replace("\n", " "))
 
 
@@ -28,8 +30,8 @@ def cosine_similarity(model, text_a: str, text_b: str):
     if text_a is text_b:
         return 1
 
-    a = vectorize_sentence(text_a)
-    b = vectorize_sentence(text_b)
+    a = vectorize_sentence(model, text_a)
+    b = vectorize_sentence(model, text_b)
 
     self_norm = np.linalg.norm(a)
     other_norm = np.linalg.norm(b)

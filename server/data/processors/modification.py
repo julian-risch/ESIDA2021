@@ -9,33 +9,6 @@ from data.processors import Modifier
 logger = logging.getLogger('data.graph.comparator')
 
 
-# class AModifiyer(Modifier):
-#     def __init__(self, *args, base_weight=None, only_consecutive: bool = None, **kwargs):
-#         """
-#         Returns base_weight iff split_a and split_b are part of the same comment.
-#         :param args:
-#         :param base_weight: weight to attach
-#         :param only_consecutive: only return weight of splits are consecutive
-#         :param kwargs:
-#         """
-#         super().__init__(*args, **kwargs)
-#         self.base_weight = self.conf_getfloat('base_weight', base_weight)
-#         self.only_consecutive = self.conf_getboolean('only_consecutive', only_consecutive)
-#
-#         logger.debug(f'{self.__class__.__name__} initialised with '
-#                      f'base_weight: {self.base_weight} and only_consecutive: {self.only_consecutive}')
-#
-#     @classmethod
-#     def short_name(cls) -> str:
-#         return 'sc'
-#
-#     @classmethod
-#     def edge_type(cls) -> models.EdgeType:
-#         return models.EdgeType.SAME_COMMENT
-#
-#     def modify(self, graph: models.Graph) -> models.Graph:
-#         return graph
-
 class PageRanker(Modifier):
     def pagerank(self, graph):
         # FIXME: use proper adjacence matrix
