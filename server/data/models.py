@@ -112,6 +112,7 @@ class EdgeType(IntEnum):
     SIMILARITY = 2
     SAME_GROUP = 3
     SAME_COMMENT = 4
+    TEMPORAL = 5
 
 class NodeType(IntEnum):
     PAGERANK = 0
