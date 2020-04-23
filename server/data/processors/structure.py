@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from data.processors import Comparator
 import data.models as models
 from typing import List, Tuple
@@ -85,3 +87,37 @@ class ReplyToComparator(Comparator):
             (b.reply_to_id is not None and b.reply_to_id == a.id)) and \
                 ((self.only_root and split_a == 0 and split_b == 0) or not self.only_root):
             return models.EdgeWeight(wgt=self.base_weight, tp=self.edge_type(), comp=self.short_name())
+
+
+class TemporalComparator(Comparator):
+    # base_weight will be ignored
+    def __init__(self, *args, base_weight=None, only_root: bool = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.base_weight = self.conf_getfloat('base_weight', base_weight)
+        self.only_root = self.conf_getboolean('only_root', only_root)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'base_weight: {self.base_weight} and only_root: {self.only_root}')
+
+    @classmethod
+    def short_name(cls) -> str:
+        return 'temp'
+
+    @classmethod
+    def edge_type(cls) -> models.EdgeType:
+        return models.EdgeType.TEMPORAL
+
+    def compare(self, a: models.CommentCached, _a: models.SplitComment,
+                b: models.CommentCached, _b: models.SplitComment,
+                split_a, split_b) -> float:
+        def time_second_difference(a, b):
+            if a > b:
+                return (a - b).total_seconds()
+            return int((b - a).total_seconds())
+
+        def timestring_to_stamp(timestring):
+            return datetime.strptime(timestring, "%Y-%m-%d %H:%M:%S")
+
+        weight = time_second_difference(timestring_to_stamp(a.timestamp), timestring_to_stamp(b.timestamp))
+
+        return models.EdgeWeight(wgt=weight, tp=self.edge_type(), comp=self.short_name())
