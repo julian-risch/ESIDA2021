@@ -339,7 +339,6 @@ class NodeMerger(Modifier):
                               and edge.wgts[models.EdgeType.SAME_GROUP] > structural \
                               and edge.wgts[models.EdgeType.TEMPORAL] < temporal
 
-            # todo: replace use of node class with node id
             if filter_bool:
                 source = node_dict.get(edge.src)
                 target = node_dict.get(edge.tgt)
@@ -352,6 +351,7 @@ class NodeMerger(Modifier):
                     edge.tgt = None
                     continue
 
+                # todo: read textual attribute correctly from nodes
                 if representative_function(source.text) > representative_function(target.text):
                     use = source
                     drop = target
