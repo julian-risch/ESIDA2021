@@ -324,7 +324,6 @@ class NodeMerger(Modifier):
         # investigate what can be replaced with what
         for edge in graph.edges:
 
-            # FIXME: user edge weights correctly
             if conj == "or":
                 filter_bool = edge.wgts[models.EdgeType.SIMILARITY] > textual \
                               or edge.wgts[models.EdgeType.REPLY_TO] > structural \
@@ -398,6 +397,8 @@ class NodeMerger(Modifier):
                            and self.weights_bigger_as_threshold(e, threshold=0)
                            and e.source_id != e.target_id])
         graph.nodes = [node for node in graph.nodes if node.node_id in edge_dict]
+        # todo: update index
+        # graph.id2idx = ...
 
         return None
 
