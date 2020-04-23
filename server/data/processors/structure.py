@@ -1,10 +1,7 @@
-from datetime import datetime
-
-from data.processors import Comparator
-import data.models as models
-from typing import List, Tuple
 import logging
-
+from datetime import datetime
+import data.models as models
+from data.processors import Comparator
 from data.processors.embedding import cosine_similarity, load_fasttext_model
 
 logger = logging.getLogger('data.graph.comparator')
@@ -112,10 +109,11 @@ class TemporalComparator(Comparator):
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
                 split_a, split_b) -> float:
-        def time_second_difference(a, b):
-            if a > b:
-                return (a - b).total_seconds()
-            return int((b - a).total_seconds())
+
+        def time_second_difference(x, y):
+            if x > y:
+                return (x - y).total_seconds()
+            return int((y - x).total_seconds())
 
         def timestring_to_stamp(timestring):
             return datetime.strptime(timestring, "%Y-%m-%d %H:%M:%S")
@@ -123,6 +121,7 @@ class TemporalComparator(Comparator):
         weight = time_second_difference(timestring_to_stamp(a.timestamp), timestring_to_stamp(b.timestamp))
 
         return models.EdgeWeight(wgt=weight, tp=self.edge_type(), comp=self.short_name())
+
 
 class SimilarityComparator(Comparator):
     # base_weight will be ignored
