@@ -80,7 +80,7 @@ class PageRanker(Modifier):
         return 'pr'
 
     def modify(self, graph: models.Graph) -> models.Graph:
-        self.pagerank(graph,edge_type=models.EdgeType.SIMILARITY)
+        self.pagerank(graph, type_of_edge=models.EdgeType.SIMILARITY)
         return graph
 
 
