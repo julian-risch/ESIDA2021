@@ -10,6 +10,26 @@ from data.processors import Modifier
 logger = logging.getLogger('data.graph.comparator')
 
 
+# helper functions
+def node_to_sid(node: List[int] = None, a: int = None, b: int = None) -> str:
+    if node:
+        return f'{node[0]}|{node[1]}'
+    else:
+        return f'{a}|{b}'
+
+
+def build_edge_dict(graph: models.Graph):
+    dic = defaultdict(list)
+    for e in graph.edges:
+        src = node_to_sid(e.src)
+        tgt = node_to_sid(e.tgt)
+        if e not in dic[src]:
+            dic[src].append(e)
+        if e not in dic[tgt]:
+            dic[tgt].append(e)
+    return dic
+
+
 class PageRanker(Modifier):
     def pagerank(self, graph, type_of_edge: models.EdgeType):
         def edge_list_to_adjacence_matrix(edges, edge_type: models.EdgeType):
@@ -60,9 +80,11 @@ class PageRanker(Modifier):
             for j, split in enumerate(comment.splits):
                 split.wgts[models.SplitType.PAGERANK] = ranks[node_to_sid(node=None, a=comment.id, b=j)]
 
+        return graph
+
     def __init__(self, *args, num_iterations: int = None, d: float = None, normalize=None, **kwargs):
         """
-        Returns a graph with node pageranked node weights
+        Returns a graph with page-ranked node weights
         :param args:
         :param num_iterations: number of iteration for PageRank
         :d: d parameter for PageRank
@@ -82,32 +104,13 @@ class PageRanker(Modifier):
         return 'pr'
 
     def modify(self, graph: models.Graph) -> models.Graph:
-        self.pagerank(graph, type_of_edge=models.EdgeType.SIMILARITY)
-        return graph
-
-
-def node_to_sid(node: List[int] = None, a: int = None, b: int = None) -> str:
-    if node:
-        return f'{node[0]}|{node[1]}'
-    else:
-        return f'{a}|{b}'
-
-def build_edge_dict(graph: models.Graph):
-    dic = defaultdict(list)
-    for e in graph.edges:
-        src = node_to_sid(e.src)
-        tgt = node_to_sid(e.tgt)
-        if e not in dic[src]:
-            dic[src].append(e)
-        if e not in dic[tgt]:
-            dic[tgt].append(e)
-    return dic
+        return self.pagerank(graph, type_of_edge=models.EdgeType.SIMILARITY)
 
 
 class PageRankFilter(Modifier):
     def __init__(self, *args, k=None, strict=None, **kwargs):
         """
-        Returns base_weight iff split_a and split_b are part of the same comment.
+        Remove edges from a graph not connected to top-k nodes
         :param args:
         :k: top k page-ranked items to choose
         :strict: filter edges strictly (only allow edges between top-k nodes) or not (edge only needs on top-k node)
@@ -141,6 +144,46 @@ class PageRankFilter(Modifier):
                            if node_to_sid(edge.src) in filtered_ranks or node_to_sid(edge.tgt) in filtered_ranks]
 
         return graph
+
+
+class CentralityDegreeCalculator(Modifier):
+    def __init__(self, *args, num_iterations: int = None, d: float = None, normalize=None, **kwargs):
+        """
+        Returns a graph with page-ranked node weights
+        :param args:
+        :param num_iterations: number of iteration for PageRank
+        :d: d parameter for PageRank
+        :normalize: normalize the PageRank values?
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.num_iterations = self.conf_getint('num_iterations', num_iterations)
+        self.d = self.conf_getint('d', d)
+        self.normalize = self.conf_getboolean('normalize', normalize)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'num_iterations={self.num_iterations}, d={self.d} and normalize={self.normalize}')
+
+    @classmethod
+    def short_name(cls) -> str:
+        return 'pr'
+
+    def degree_centralities(self, graph):
+        counter_dict = defaultdict(int)
+        for edge in graph.edges:
+            counter_dict[node_to_sid(edge.tgt)] += 1
+            counter_dict[node_to_sid(edge.src)] += 1
+
+        # update node of graph with new weights for for degree centrality
+        for comment in graph.comments:
+            for j, split in enumerate(comment.splits):
+                split.wgts[models.SplitType.DEGREECENTRALITY] = counter_dict[node_to_sid(node=None, a=comment.id, b=j)]
+
+        return graph
+
+    def modify(self, graph: models.Graph) -> models.Graph:
+        return self.degree_centralities(graph)
+
 
 # class EdgeFilter(Modifier):
 #     def __init__(self, *args, thresholds, **kwargs):
@@ -182,7 +225,7 @@ class PageRankFilter(Modifier):
 class SimilarityEdgeFilter(Modifier):
     def __init__(self, *args, threshold=None, **kwargs):
         """
-        Returns base_weight iff split_a and split_b are part of the same comment.
+        Removes all edges of the specific type below a threshold
         :param args:
         :threshold: value for edges to filter
         :param kwargs:
@@ -309,7 +352,7 @@ class Representives:
 class NodeMerger(Modifier):
     def __init__(self, *args, base_weight=None, only_consecutive: bool = None, **kwargs):
         """
-        Returns base_weight iff split_a and split_b are part of the same comment.
+        Merges nodes together
         :param args:
         :param base_weight: weight to attach
         :param only_consecutive: only return weight of splits are consecutive

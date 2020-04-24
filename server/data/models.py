@@ -117,8 +117,9 @@ class EdgeType(IntEnum):
 class SplitType(IntEnum):
     SIZE = 0
     PAGERANK = 1
-    RECENCY = 2
-    VOTES = 3
+    DEGREECENTRALITY = 2
+    RECENCY = 3
+    VOTES = 4
 
 
 class SplitWeight(Tuple, NamedTuple):
