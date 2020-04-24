@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 
 import numpy as np
-
+import scipy.sparse as sparse
 import data.models as models
 from data.processors import Modifier
 
@@ -11,8 +11,11 @@ logger = logging.getLogger('data.graph.comparator')
 
 class PageRanker(Modifier):
     def pagerank(self, graph):
+        #todo: replace graph.nodes properly
         # FIXME: use proper adjacence matrix
-        adjacence_matrix = graph.edges  # np.array of adjacence matrix
+        adjacence_matrix = [] # np.array of adjacence matrix
+
+
 
         m = adjacence_matrix / adjacence_matrix.sum(axis=0, keepdims=1)
         n = m.shape[1]
@@ -21,7 +24,7 @@ class PageRanker(Modifier):
         m_hat = (self.d * m + (1 - self.d) / n)
         for i in range(self.num_iterations):
             v = m_hat @ v
-        ranks = {n.id: r[0] for n, r in zip(graph.nodes, v)}
+        ranks = {n: r[0] for n, r in zip(graph.id2idx.keys(), v)}
 
         ranks = {k: v for k, v in sorted(ranks.items(), key=lambda item: item[1], reverse=True)}
 
@@ -34,8 +37,10 @@ class PageRanker(Modifier):
             ranks = {k: (v - v_min) / (v_max - v_min) + 0.001 for k, v in ranks.items()}
 
         # update node of graph with new weights for PageRank
-        for node in graph.nodes:
-            node.wgts[models.NodeType.PAGERANK] = ranks[node.id]
+        for node_id in graph.id2idx:
+            graph.comments[node_id].splits[0].wgts[models.SplitType.PAGERANK] = ranks[node_id]
+
+            # node.wgts[models.NodeType.PAGERANK] = ranks[node.id]
 
     def __init__(self, *args, num_iterations: int = None, d: float = None, normalize=None, **kwargs):
         """
@@ -52,7 +57,7 @@ class PageRanker(Modifier):
         self.normalize = self.conf_getboolean('normalize', normalize)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'{self.num_iterations=}, {self.d=} and {self.normalize=}')
+                     f'num_iterations={self.num_iterations}, d={self.d} and normalize={self.normalize}')
 
     @classmethod
     def short_name(cls) -> str:
@@ -123,7 +128,7 @@ class SimilarityEdgeFilter(Modifier):
         self.threshold = self.conf_getfloat("threshold", threshold)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'{self.threshold=}')
+                     f'threshold={self.threshold}')
 
     @classmethod
     def short_name(cls) -> str:
@@ -151,7 +156,7 @@ class BottomSimilarityEdgeFilter(Modifier):
         self.top_edges = self.conf_getint('d', top_edges)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'{self.top_edges=}')
+                     f'top_edges={self.top_edges}')
 
     @classmethod
     def short_name(cls) -> str:
@@ -189,7 +194,7 @@ class BottomReplyToEdgeFilter(Modifier):
         self.top_edges = self.conf_getint('d', top_edges)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'{self.top_edges=}')
+                     f'top_edges={self.top_edges}')
 
     @classmethod
     def short_name(cls) -> str:
