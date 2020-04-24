@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from typing import List
 
 import numpy as np
 import scipy.sparse as sparse
@@ -18,8 +19,9 @@ class PageRanker(Modifier):
             nodes = set()
             arr = []
             for edge in edges:
-                src_sid = f'{edge.src[0]}|{edge.src[1]}'
-                tgt_sid = f'{edge.tgt[0]}|{edge.tgt[1]}'
+                node_to_sid()
+                src_sid = node_to_sid(edge.src)
+                tgt_sid = node_to_sid(edge.tgt)
                 nodes.add(src_sid)
                 nodes.add(tgt_sid)
                 arr.extend(np.array([src_sid, tgt_sid, edge.wgts[edge_type]]))
@@ -56,7 +58,7 @@ class PageRanker(Modifier):
         # update node of graph with new weights for PageRank
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
-                split.wgts[models.SplitType.PAGERANK] = ranks[f'{comment.id}_{j}']
+                split.wgts[models.SplitType.PAGERANK] = ranks[node_to_sid(node=None, a=comment.id, b=j)]
 
     def __init__(self, *args, num_iterations: int = None, d: float = None, normalize=None, **kwargs):
         """
@@ -84,13 +86,21 @@ class PageRanker(Modifier):
         return graph
 
 
+def node_to_sid(node: List[int] = None, a: int = None, b: int = None) -> str:
+    if node:
+        return f'{node[0]}|{node[1]}'
+    else:
+        return f'{a}|{b}'
+
 def build_edge_dict(graph: models.Graph):
     dic = defaultdict(list)
     for e in graph.edges:
-        if e not in dic[e.src]:
-            dic[e.src].append(e)
-        if e not in dic[e.tgt]:
-            dic[e.tgt].append(e)
+        src = node_to_sid(e.src)
+        tgt = node_to_sid(e.tgt)
+        if e not in dic[src]:
+            dic[src].append(e)
+        if e not in dic[tgt]:
+            dic[tgt].append(e)
     return dic
 
 
@@ -155,7 +165,7 @@ class SimilarityEdgeFilter(Modifier):
         return models.EdgeType.SIMILARITY
 
     def modify(self, graph: models.Graph) -> models.Graph:
-        # FIXME: dont understand why edge_type is function call here and in BottomSimilarityEdgeFilter attribute
+        # note that edge_type is function call here and in BottomSimilarityEdgeFilter it can be an attribute
         graph.edges = [edge for edge in graph.edges if edge.wgts[self.__class__.edge_type()] > self.threshold]
         return graph
 
