@@ -11,11 +11,17 @@ logger = logging.getLogger('data.graph.comparator')
 
 class PageRanker(Modifier):
     def pagerank(self, graph):
+        def edge_list_to_adjacence_matrix(edges, edge_type: models.EdgeType):
+            arr = np.array([[f'{edge.src[0]}|{edge.src[1]}', f'{edge.tgt[0]}|{edge.tgt[1]}', edge.wgts[edge_type]]
+                            for edge in edges])
+            shape = tuple(arr.max(axis=0)[:2] + 1)
+            coo = sparse.coo_matrix((arr[:, 2], (arr[:, 0], arr[:, 1])), shape=shape,
+                                    dtype=arr.dtype)
+            return coo.to_dense()
+
         #todo: replace graph.nodes properly
         # FIXME: use proper adjacence matrix
-        adjacence_matrix = [] # np.array of adjacence matrix
-
-
+        adjacence_matrix = edge_list_to_adjacence_matrix(graph.edges)
 
         m = adjacence_matrix / adjacence_matrix.sum(axis=0, keepdims=1)
         n = m.shape[1]
