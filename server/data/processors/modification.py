@@ -112,7 +112,6 @@ def build_edge_dict(graph: models.Graph):
 #         :param kwargs:
 #         """
 #         super().__init__(*args, **kwargs)
-#         # fixme: do this in a way that mathces config files
 #         self.thresholds = {models.EdgeType.SAME_COMMENT: 0.7,
 #                            models.EdgeType.SAME_ARTICLE: 0.8,
 #                            models.EdgeType.SIMILARITY: 0.9,
@@ -196,13 +195,14 @@ class BottomSimilarityEdgeFilter(Modifier):
         filtered_edges = []
         edge_dict = build_edge_dict(graph)
 
-        # FIXME: check if node index correctly choosen
-        for node_id in graph.id2idx.keys():
-            node_edges = edge_dict[node_id]
-            node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type()], reverse=True)[:self.top_edges]
-            for edge in node_edges:
-                if edge not in filtered_edges:
-                    filtered_edges.append(edge)
+        # for node_id in graph.id2idx.keys():
+        for comment in graph.comments:
+            for j, split in enumerate(comment.splits):
+                node_edges = edge_dict[node_to_sid(node=None, a=comment.id, b=j)]
+                node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type()], reverse=True)[:self.top_edges]
+                for edge in node_edges:
+                    if edge not in filtered_edges:
+                        filtered_edges.append(edge)
         graph.edges = filtered_edges
 
         return graph
@@ -234,13 +234,14 @@ class BottomReplyToEdgeFilter(Modifier):
         filtered_edges = []
         edge_dict = build_edge_dict(graph)
 
-        # FIXME: check if node index correctly choosen
-        for node_id in graph.id2idx.keys():
-            node_edges = edge_dict[node_id]
-            node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type], reverse=True)[:self.top_edges]
-            for edge in node_edges:
-                if edge not in filtered_edges:
-                    filtered_edges.append(edge)
+        for comment in graph.comments:
+            for j, split in enumerate(comment.splits):
+                node_edges = edge_dict[node_to_sid(node=None, a=comment.id, b=j)]
+                node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type()], reverse=True)[
+                             :self.top_edges]
+                for edge in node_edges:
+                    if edge not in filtered_edges:
+                        filtered_edges.append(edge)
         graph.edges = filtered_edges
 
         return graph
