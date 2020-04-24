@@ -10,7 +10,7 @@ logger = logging.getLogger('data.graph.comparator')
 
 
 class PageRanker(Modifier):
-    def pagerank(self, graph):
+    def pagerank(self, graph, edge_type: models.EdgeType):
         def edge_list_to_adjacence_matrix(edges, edge_type: models.EdgeType):
             arr = np.array([[f'{edge.src[0]}|{edge.src[1]}', f'{edge.tgt[0]}|{edge.tgt[1]}', edge.wgts[edge_type]]
                             for edge in edges])
@@ -19,9 +19,9 @@ class PageRanker(Modifier):
                                     dtype=arr.dtype)
             return coo.to_dense()
 
-        #todo: replace graph.nodes properly
-        # FIXME: use proper adjacence matrix
-        adjacence_matrix = edge_list_to_adjacence_matrix(graph.edges)
+        # todo: replace graph.nodes properly
+        # todo: check if adjacence matrix works as intended
+        adjacence_matrix = edge_list_to_adjacence_matrix(graph.edges, edge_type)
 
         m = adjacence_matrix / adjacence_matrix.sum(axis=0, keepdims=1)
         n = m.shape[1]
@@ -70,7 +70,7 @@ class PageRanker(Modifier):
         return 'pr'
 
     def modify(self, graph: models.Graph) -> models.Graph:
-        self.pagerank(graph)
+        self.pagerank(graph,edge_type=models.EdgeType.SIMILARITY)
         return graph
 
 
