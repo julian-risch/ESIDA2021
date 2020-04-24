@@ -141,7 +141,7 @@ class SimilarityComparator(Comparator):
 
     @classmethod
     def edge_type(cls) -> models.EdgeType:
-        return models.EdgeType.TEMPORAL
+        return models.EdgeType.SIMILARITY
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
