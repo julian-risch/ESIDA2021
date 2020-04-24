@@ -10,18 +10,29 @@ logger = logging.getLogger('data.graph.comparator')
 
 
 class PageRanker(Modifier):
-    def pagerank(self, graph, edge_type: models.EdgeType):
+    def pagerank(self, graph, type_of_edge: models.EdgeType):
         def edge_list_to_adjacence_matrix(edges, edge_type: models.EdgeType):
-            arr = np.array([[f'{edge.src[0]}|{edge.src[1]}', f'{edge.tgt[0]}|{edge.tgt[1]}', edge.wgts[edge_type]]
-                            for edge in edges])
+            # arr = np.array([[f'{edge.src[0]}|{edge.src[1]}', f'{edge.tgt[0]}|{edge.tgt[1]}', edge.wgts[edge_type]]
+            #                 for edge in edges])
+
+            nodes = set()
+            arr = []
+            for edge in edges:
+                src_sid = f'{edge.src[0]}|{edge.src[1]}'
+                tgt_sid = f'{edge.tgt[0]}|{edge.tgt[1]}'
+                nodes.add(src_sid)
+                nodes.add(tgt_sid)
+                arr.extend(np.array([src_sid, tgt_sid, edge.wgts[edge_type]]))
+
+            arr = np.array(arr)
+
             shape = tuple(arr.max(axis=0)[:2] + 1)
             coo = sparse.coo_matrix((arr[:, 2], (arr[:, 0], arr[:, 1])), shape=shape,
                                     dtype=arr.dtype)
-            return coo.to_dense()
+            return coo.to_dense(), nodes
 
-        # todo: replace graph.nodes properly
         # todo: check if adjacence matrix works as intended
-        adjacence_matrix = edge_list_to_adjacence_matrix(graph.edges, edge_type)
+        adjacence_matrix, node_sids = edge_list_to_adjacence_matrix(graph.edges, type_of_edge)
 
         m = adjacence_matrix / adjacence_matrix.sum(axis=0, keepdims=1)
         n = m.shape[1]
@@ -30,7 +41,7 @@ class PageRanker(Modifier):
         m_hat = (self.d * m + (1 - self.d) / n)
         for i in range(self.num_iterations):
             v = m_hat @ v
-        ranks = {n: r[0] for n, r in zip(graph.id2idx.keys(), v)}
+        ranks = {n: r[0] for n, r in zip(node_sids, v)}
 
         ranks = {k: v for k, v in sorted(ranks.items(), key=lambda item: item[1], reverse=True)}
 
@@ -43,10 +54,9 @@ class PageRanker(Modifier):
             ranks = {k: (v - v_min) / (v_max - v_min) + 0.001 for k, v in ranks.items()}
 
         # update node of graph with new weights for PageRank
-        for node_id in graph.id2idx:
-            graph.comments[node_id].splits[0].wgts[models.SplitType.PAGERANK] = ranks[node_id]
-
-            # node.wgts[models.NodeType.PAGERANK] = ranks[node.id]
+        for comment in graph.comments:
+            for j, split in enumerate(comment.splits):
+                split.wgts[models.SplitType.PAGERANK] = ranks[f'{comment.id}_{j}']
 
     def __init__(self, *args, num_iterations: int = None, d: float = None, normalize=None, **kwargs):
         """
