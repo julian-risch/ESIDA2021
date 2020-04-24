@@ -114,10 +114,22 @@ class EdgeType(IntEnum):
     SAME_COMMENT = 4
     TEMPORAL = 5
 
-class NodeType(IntEnum):
-    PAGERANK = 0
-    RECENCY = 1
-    VOTES = 2
+class SplitType(IntEnum):
+    SIZE = 0
+    PAGERANK = 1
+    RECENCY = 2
+    VOTES = 3
+
+
+class SplitWeight(Tuple, NamedTuple):
+    # node weight
+    wgt: float
+    # node weight type
+    tp: SplitType
+
+
+# this is just a hack because Pydantic doesnt understand NamedTuples
+SplitWeightType = Tuple[float, SplitWeight]
 
 class Split(BaseModel):
     # first character of the sentence
@@ -125,7 +137,8 @@ class Split(BaseModel):
     # last character of the sentence
     e: int
     # weight / size of split
-    wgt: Optional[float]
+    # wgt: Optional[float]
+    wgts: List[SplitWeightType]
 
 
 class SplitComment(BaseModel):
@@ -150,23 +163,6 @@ class EdgeWeight(Tuple, NamedTuple):
 EdgeWeightType = Tuple[float, EdgeType, str]
 
 
-class NodeWeight(Tuple, NamedTuple):
-    # node weight
-    wgt: float
-    # node weight type
-    tp: NodeType
-    # short string of modificator used
-    mod: str
-
-# this is just a hack because Pydantic doesnt understand NamedTuples
-NodeWeightType = Tuple[float, NodeType, str]
-
-
-class Node(BaseModel):
-    id: int
-    wgts: List[EdgeWeightType]
-
-
 class Edge(BaseModel):
     src: List[int]  # first is index of comment, second is index of sentence within comment
     tgt: List[int]  # first is index of comment, second is index of sentence within comment
@@ -180,4 +176,3 @@ class Graph(BaseModel):
     comments: List[SplitComment]
     id2idx: dict
     edges: List[Edge]
-    nodes: List[Node]
