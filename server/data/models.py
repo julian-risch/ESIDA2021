@@ -1,6 +1,6 @@
-from pydantic import BaseModel, validator, ValidationError, AnyHttpUrl
+from pydantic import BaseModel, AnyHttpUrl
 from datetime import datetime
-from typing import List, Optional, Union, NamedTuple, Tuple, Dict
+from typing import List, Optional, Union, NamedTuple, Tuple
 from enum import Enum, IntEnum
 
 
@@ -114,6 +114,7 @@ class EdgeType(IntEnum):
     SAME_COMMENT = 4
     TEMPORAL = 5
 
+
 class SplitType(IntEnum):
     SIZE = 0
     PAGERANK = 1
@@ -131,6 +132,7 @@ class SplitWeight(Tuple, NamedTuple):
 
 # this is just a hack because Pydantic doesnt understand NamedTuples
 SplitWeightType = Tuple[float, SplitWeight]
+
 
 class Split(BaseModel):
     # first character of the sentence
