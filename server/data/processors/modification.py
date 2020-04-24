@@ -104,6 +104,44 @@ def build_edge_dict(graph: models.Graph):
     return dic
 
 
+class PageRankFilter(Modifier):
+    def __init__(self, *args, k=None, strict=None, **kwargs):
+        """
+        Returns base_weight iff split_a and split_b are part of the same comment.
+        :param args:
+        :k: top k page-ranked items to choose
+        :strict: filter edges strictly (only allow edges between top-k nodes) or not (edge only needs on top-k node)
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.k = self.conf_getint("k", k)
+        self.strict = self.conf_getboolean('strict', strict)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'k={self.k} and strict={self.strict}')
+
+    @classmethod
+    def short_name(cls) -> str:
+        return 'prf'
+
+    @classmethod
+    def split_type(cls) -> models.SplitType:
+        return models.SplitType.PAGERANK
+
+    def modify(self, graph: models.Graph) -> models.Graph:
+        page_ranks = {node_to_sid(node=None, a=comment.id, b=j): split.wgts[models.SplitType.PAGERANK]
+                      for comment in graph.comments for j, split in enumerate(comment.splits)}
+        filtered_ranks = {k: v for k, v in sorted(page_ranks.items(), key=lambda item: item[1], reverse=True)[:self.k]}
+
+        if self.strict:
+            graph.edges = [edge for edge in graph.edges
+                           if node_to_sid(edge.src) in filtered_ranks and node_to_sid(edge.tgt) in filtered_ranks]
+        else:
+            graph.edges = [edge for edge in graph.edges
+                           if node_to_sid(edge.src) in filtered_ranks or node_to_sid(edge.tgt) in filtered_ranks]
+
+        return graph
+
 # class EdgeFilter(Modifier):
 #     def __init__(self, *args, thresholds, **kwargs):
 #         """
