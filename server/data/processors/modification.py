@@ -372,7 +372,7 @@ class NodeMerger(Modifier):
     def modify(self, graph: models.Graph) -> models.Graph:
         return graph
 
-    def merge_nodes(self, graph, textual=0.8, structural=0.8, temporal=3600, representative_function=len, conj="and"):
+    def merge_nodes(self, graph: models.Graph, textual=0.8, structural=0.8, temporal=3600, representative_function=len, conj="and"):
         def clusters(to_replace):
             finalized_replacements = {}
             for k, v in to_replace.items():
@@ -401,15 +401,12 @@ class NodeMerger(Modifier):
 
             return cluster, finalized_replacements
 
-        # FIXME: user proper node dict
-        node_dict = graph.id2idx
         edge_dict = build_edge_dict(graph)
 
         replacements = {}
 
         # investigate what can be replaced with what
         for edge in graph.edges:
-
             if conj == "or":
                 filter_bool = edge.wgts[models.EdgeType.SIMILARITY] > textual \
                               or edge.wgts[models.EdgeType.REPLY_TO] > structural \
@@ -426,68 +423,66 @@ class NodeMerger(Modifier):
                               and edge.wgts[models.EdgeType.TEMPORAL] < temporal
 
             if filter_bool:
-                source = node_dict.get(edge.src)
-                target = node_dict.get(edge.tgt)
+                source = edge.src
+                target = edge.tgt
 
-                if source is None or target is None:
-                    continue
 
-                if source == target:
-                    edge.src = None
-                    edge.tgt = None
-                    continue
-
-                # todo: read textual attribute correctly from nodes
-                # graph.comments[graph.id2idx[source]].text
-                if representative_function(source.text) > representative_function(target.text):
-                    use = source
-                    drop = target
-                else:
-                    use = target
-                    drop = source
-
-                if use == drop:
-                    raise UserWarning("use and drop same!")
-
-                replacements[drop.node_id] = use.node_id
+            #
+            #     if source is None or target is None:
+            #         continue
+            #
+            #     if source == target:
+            #         edge.src = None
+            #         edge.tgt = None
+            #         continue
+            #
+            #     # todo: think of clustering without replacing
+            #     # graph.comments[graph.id2idx[source]].text
+            #     if representative_function(graph.comments[source[0]]) > representative_function(target.text):
+            #         use = source
+            #         drop = target
+            #     else:
+            #         use = target
+            #         drop = source
+            #
+            #     if use == drop:
+            #         raise UserWarning("use and drop same!")
+            #
+            #     replacements[drop.node_id] = use.node_id
 
         # use only replacements that cannot be replaced by others
-        _, final_replacements = clusters(replacements)
+        cluster, final_replacements = clusters(replacements)
         # replace nodes in edges
-        for edge in graph.edges:
-            if edge.src in final_replacements.keys():
-                edge.src = final_replacements[edge.src]
-
-            if edge.tgt in final_replacements.keys():
-                edge.tgt = final_replacements[edge.tgt]
+        # for edge in graph.edges:
+        #     if edge.src in final_replacements.keys():
+        #         edge.src = final_replacements[edge.src]
+        #
+        #     if edge.tgt in final_replacements.keys():
+        #         edge.tgt = final_replacements[edge.tgt]
 
         # remove nodes that should be replaced and memorize them
-        remove_dict = defaultdict(list)
-        for node in graph.nodes:
-            if node.id in final_replacements.keys():
-                remove_dict[final_replacements[node.id]].append(node)
-                graph.nodes.remove(node)
+        # remove_dict = defaultdict(list)
+        # for node in graph.nodes:
+        #     if node.id in final_replacements.keys():
+        #         remove_dict[final_replacements[node.id]].append(node)
+        #         graph.nodes.remove(node)
                 # merge value_ids with otherwise deleted information
-
-        # node merge
-        for node in graph.nodes:
-            if node.id in remove_dict.keys():
-                replaced_nodes = remove_dict[node.id]
+        # obsolete node merge
+        # for node in graph.nodes:
+        #     if node.id in remove_dict.keys():
+        #         replaced_nodes = remove_dict[node.id]
                 # representant = Representives.avg_embedding(node, replaced_nodes)
-                representant = Representives.concanative(node, replaced_nodes)
-                # todo: set text and vector of node
+                # representant = Representives.concanative(node, replaced_nodes)
                 # node.text = representant.text
                 # node.vector = representant.vector
 
         # final filtering
-        graph.edges = list([e for e in graph.edges if not (e.source_id is None or e.target_id is None)
-                           and self.weights_bigger_as_threshold(e, threshold=0)
-                           and e.source_id != e.target_id])
-        graph.nodes = [node for node in graph.nodes if node.node_id in edge_dict]
-        # todo: update index
+        # graph.edges = list([e for e in graph.edges if not (e.source_id is None or e.target_id is None)
+        #                    and self.weights_bigger_as_threshold(e, threshold=0)
+        #                    and e.source_id != e.target_id])
         # graph.id2idx = ...
 
-        return None
+        return cluster
 
     def weights_bigger_as_threshold(self, edge: models.Edge, threshold: float = 0, edge_types=None):
         if edge_types is None:
