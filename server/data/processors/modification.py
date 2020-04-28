@@ -18,6 +18,10 @@ def node_to_sid(node: List[int] = None, a: int = None, b: int = None) -> str:
         return f'{a}|{b}'
 
 
+def sid_to_nodes(sid: str = None) -> List[int]:
+    return [int(node_id) for node_id in sid.split('|')]
+
+
 def build_edge_dict(graph: models.Graph):
     dic = defaultdict(list)
     for e in graph.edges:
@@ -349,30 +353,35 @@ class Representives:
     #     return nodes[max_id]
 
 
+# I think the clustering result should be passed to the frontend and not modify the graph at all
 class NodeMerger(Modifier):
-    def __init__(self, *args, base_weight=None, only_consecutive: bool = None, **kwargs):
+    def __init__(self, *args, textual_threshold: float = None, structural_threshold: float = None, temporal_threshold: int = None, **kwargs):
         """
         Merges nodes together
         :param args:
-        :param base_weight: weight to attach
-        :param only_consecutive: only return weight of splits are consecutive
+        :param textual_threshold: threshold for textual similarity
+        :param structural_threshold: threshold for structural similarity
+        :param temporal_threshold: threshold for temporal similarity
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-        self.base_weight = self.conf_getfloat('base_weight', base_weight)
-        self.only_consecutive = self.conf_getboolean('only_consecutive', only_consecutive)
+        self.textual_threshold = self.conf_getfloat('textual_threshold', textual_threshold)
+        self.structural_threshold = self.conf_getfloat('structural_threshold', structural_threshold)
+        self.temporal_threshold = self.conf_getfloat('temporal_threshold', temporal_threshold)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'base_weight: {self.base_weight} and only_consecutive: {self.only_consecutive}')
+                     f'textual_threshold={self.textual_threshold}, structural_threshold={self.structural_threshold} '
+                     f'and temporal_threshold={self.temporal_threshold}')
 
     @classmethod
     def short_name(cls) -> str:
         return 'nm'
 
     def modify(self, graph: models.Graph) -> models.Graph:
+        clusters = self.merge_nodes(graph, textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitType.PAGERANK)
         return graph
 
-    def merge_nodes(self, graph: models.Graph, textual=0.8, structural=0.8, temporal=3600, representative_function=len, conj="and"):
+    def merge_nodes(self, graph: models.Graph, textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitType.PAGERANK):
         def clusters(to_replace):
             finalized_replacements = {}
             for k, v in to_replace.items():
@@ -426,48 +435,47 @@ class NodeMerger(Modifier):
                 source = edge.src
                 target = edge.tgt
 
+                if source is None or target is None:
+                    continue
 
-            #
-            #     if source is None or target is None:
-            #         continue
-            #
-            #     if source == target:
-            #         edge.src = None
-            #         edge.tgt = None
-            #         continue
-            #
-            #     # todo: think of clustering without replacing
-            #     # graph.comments[graph.id2idx[source]].text
-            #     if representative_function(graph.comments[source[0]]) > representative_function(target.text):
-            #         use = source
-            #         drop = target
-            #     else:
-            #         use = target
-            #         drop = source
-            #
-            #     if use == drop:
-            #         raise UserWarning("use and drop same!")
-            #
-            #     replacements[drop.node_id] = use.node_id
+                if source == target:
+                    edge.src = None
+                    edge.tgt = None
+                    continue
+
+                source_weight = graph.comments[source[0]].splits[source[1]].wgts[representive_weight]
+                target_weight = graph.comments[target[0]].splits[target[1]].wgts[representive_weight]
+
+                if source_weight > target_weight:
+                    use = source
+                    drop = target
+                else:
+                    use = target
+                    drop = source
+
+                if use == drop:
+                    raise UserWarning("use and drop same!")
+
+                replacements[node_to_sid(drop)] = node_to_sid(use)
 
         # use only replacements that cannot be replaced by others
         cluster, final_replacements = clusters(replacements)
-        # replace nodes in edges
-        # for edge in graph.edges:
-        #     if edge.src in final_replacements.keys():
-        #         edge.src = final_replacements[edge.src]
-        #
-        #     if edge.tgt in final_replacements.keys():
-        #         edge.tgt = final_replacements[edge.tgt]
+        #   # replace nodes in edges
+        for edge in graph.edges:
+            if node_to_sid(edge.src) in final_replacements.keys():
+                edge.src = sid_to_nodes(final_replacements[edge.src])
 
-        # remove nodes that should be replaced and memorize them
+            if node_to_sid(edge.tgt) in final_replacements.keys():
+                edge.tgt = sid_to_nodes(final_replacements[edge.tgt])
+
+        #   # remove nodes that should be replaced and memorize them
         # remove_dict = defaultdict(list)
         # for node in graph.nodes:
         #     if node.id in final_replacements.keys():
         #         remove_dict[final_replacements[node.id]].append(node)
         #         graph.nodes.remove(node)
                 # merge value_ids with otherwise deleted information
-        # obsolete node merge
+        #   # obsolete node merge
         # for node in graph.nodes:
         #     if node.id in remove_dict.keys():
         #         replaced_nodes = remove_dict[node.id]
@@ -476,11 +484,10 @@ class NodeMerger(Modifier):
                 # node.text = representant.text
                 # node.vector = representant.vector
 
-        # final filtering
-        # graph.edges = list([e for e in graph.edges if not (e.source_id is None or e.target_id is None)
-        #                    and self.weights_bigger_as_threshold(e, threshold=0)
-        #                    and e.source_id != e.target_id])
-        # graph.id2idx = ...
+        #   # final filtering
+        graph.edges = list([e for e in graph.edges if not (e.src is None or e.tgt is None)
+                           and self.weights_bigger_as_threshold(e, threshold=0)
+                           and node_to_sid(e.src) != node_to_sid(e.tgt)])
 
         return cluster
 
