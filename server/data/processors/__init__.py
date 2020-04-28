@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from common import config
 import data.models as models
 # from pythonlangutil.overload import Overload, signature
-
 from data.processors.graph import GraphRepresentation
 
 
@@ -96,7 +95,7 @@ class Modifier(ABC):
 
     # @Overload
     # @signature("models.Graph")
-    def modify(self, graph_to_modify: models.Graph) -> models.Graph:
+    def modify(self, graph_to_modify: GraphRepresentation) -> GraphRepresentation:
         """
         Returns the modified, original, graph
         :param graph_to_modify: The graph for modification
