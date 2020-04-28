@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from common import config
 import data.models as models
-from typing import List, Tuple
 # from pythonlangutil.overload import Overload, signature
 
 from data.processors.graph import GraphRepresentation
@@ -64,6 +63,12 @@ class Modifier(ABC):
     def is_on(cls, conf=None):
         return (conf or config).getboolean(cls.__name__, 'active', fallback=True)
 
+    @classmethod
+    def use(cls, modifiers_to_use, graph_to_modify: models.Graph, conf=None):
+        modifiers = [modifier(conf=conf) for modifier in modifiers_to_use if modifier.is_on(conf)]
+        for modifier in modifiers:
+            modifier.modify(graph_to_modify)
+
     def conf_getboolean(self, key, param):
         if param is not None:
             return param
@@ -89,13 +94,12 @@ class Modifier(ABC):
     def short_name(cls) -> str:
         raise NotImplementedError
 
-
     # @Overload
     # @signature("models.Graph")
-    def modify(self, graph: models.Graph) -> models.Graph:
+    def modify(self, graph_to_modify: models.Graph) -> models.Graph:
         """
         Returns the modified, original, graph
-        :param graph: The graph for modification
+        :param graph_to_modify: The graph for modification
         :return: The modified graph
         """
         raise NotImplementedError

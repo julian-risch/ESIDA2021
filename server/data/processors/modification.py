@@ -107,8 +107,8 @@ class PageRanker(Modifier):
     def short_name(cls) -> str:
         return 'pr'
 
-    def modify(self, graph: models.Graph) -> models.Graph:
-        return self.pagerank(graph, type_of_edge=models.EdgeType.SIMILARITY)
+    def modify(self, graph_to_modify: models.Graph) -> models.Graph:
+        return self.pagerank(graph_to_modify, type_of_edge=models.EdgeType.SIMILARITY)
 
 
 class PageRankFilter(Modifier):
@@ -135,19 +135,19 @@ class PageRankFilter(Modifier):
     def split_type(cls) -> models.SplitType:
         return models.SplitType.PAGERANK
 
-    def modify(self, graph: models.Graph) -> models.Graph:
+    def modify(self, graph_to_modify: models.Graph) -> models.Graph:
         page_ranks = {node_to_sid(node=None, a=comment.id, b=j): split.wgts[models.SplitType.PAGERANK]
-                      for comment in graph.comments for j, split in enumerate(comment.splits)}
+                      for comment in graph_to_modify.comments for j, split in enumerate(comment.splits)}
         filtered_ranks = {k: v for k, v in sorted(page_ranks.items(), key=lambda item: item[1], reverse=True)[:self.k]}
 
         if self.strict:
-            graph.edges = [edge for edge in graph.edges
-                           if node_to_sid(edge.src) in filtered_ranks and node_to_sid(edge.tgt) in filtered_ranks]
+            graph_to_modify.edges = [edge for edge in graph_to_modify.edges
+                                     if node_to_sid(edge.src) in filtered_ranks and node_to_sid(edge.tgt) in filtered_ranks]
         else:
-            graph.edges = [edge for edge in graph.edges
-                           if node_to_sid(edge.src) in filtered_ranks or node_to_sid(edge.tgt) in filtered_ranks]
+            graph_to_modify.edges = [edge for edge in graph_to_modify.edges
+                                     if node_to_sid(edge.src) in filtered_ranks or node_to_sid(edge.tgt) in filtered_ranks]
 
-        return graph
+        return graph_to_modify
 
 
 class CentralityDegreeCalculator(Modifier):
@@ -185,8 +185,8 @@ class CentralityDegreeCalculator(Modifier):
 
         return graph
 
-    def modify(self, graph: models.Graph) -> models.Graph:
-        return self.degree_centralities(graph)
+    def modify(self, graph_to_modify: models.Graph) -> models.Graph:
+        return self.degree_centralities(graph_to_modify)
 
 
 # class EdgeFilter(Modifier):
@@ -248,10 +248,10 @@ class SimilarityEdgeFilter(Modifier):
     def edge_type(cls) -> models.EdgeType:
         return models.EdgeType.SIMILARITY
 
-    def modify(self, graph: models.Graph) -> models.Graph:
+    def modify(self, graph_to_modify: models.Graph) -> models.Graph:
         # note that edge_type is function call here and in BottomSimilarityEdgeFilter it can be an attribute
-        graph.edges = [edge for edge in graph.edges if edge.wgts[self.__class__.edge_type()] > self.threshold]
-        return graph
+        graph_to_modify.edges = [edge for edge in graph_to_modify.edges if edge.wgts[self.__class__.edge_type()] > self.threshold]
+        return graph_to_modify
 
 
 class BottomSimilarityEdgeFilter(Modifier):
@@ -276,21 +276,21 @@ class BottomSimilarityEdgeFilter(Modifier):
     def edge_type(cls) -> models.EdgeType:
         return models.EdgeType.SIMILARITY
 
-    def modify(self, graph: models.Graph) -> models.Graph:
+    def modify(self, graph_to_modify: models.Graph) -> models.Graph:
         filtered_edges = []
-        edge_dict = build_edge_dict(graph)
+        edge_dict = build_edge_dict(graph_to_modify)
 
         # for node_id in graph.id2idx.keys():
-        for comment in graph.comments:
+        for comment in graph_to_modify.comments:
             for j, split in enumerate(comment.splits):
                 node_edges = edge_dict[node_to_sid(node=None, a=comment.id, b=j)]
                 node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type()], reverse=True)[:self.top_edges]
                 for edge in node_edges:
                     if edge not in filtered_edges:
                         filtered_edges.append(edge)
-        graph.edges = filtered_edges
+        graph_to_modify.edges = filtered_edges
 
-        return graph
+        return graph_to_modify
 
 
 class BottomReplyToEdgeFilter(Modifier):
@@ -315,11 +315,11 @@ class BottomReplyToEdgeFilter(Modifier):
     def edge_type(cls) -> models.EdgeType:
         return models.EdgeType.REPLY_TO
 
-    def modify(self, graph: models.Graph) -> models.Graph:
+    def modify(self, graph_to_modify: models.Graph) -> models.Graph:
         filtered_edges = []
-        edge_dict = build_edge_dict(graph)
+        edge_dict = build_edge_dict(graph_to_modify)
 
-        for comment in graph.comments:
+        for comment in graph_to_modify.comments:
             for j, split in enumerate(comment.splits):
                 node_edges = edge_dict[node_to_sid(node=None, a=comment.id, b=j)]
                 node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type()], reverse=True)[
@@ -327,9 +327,9 @@ class BottomReplyToEdgeFilter(Modifier):
                 for edge in node_edges:
                     if edge not in filtered_edges:
                         filtered_edges.append(edge)
-        graph.edges = filtered_edges
+        graph_to_modify.edges = filtered_edges
 
-        return graph
+        return graph_to_modify
 
 # todo: add bottom edge filters for other edge types
 
@@ -377,9 +377,9 @@ class NodeMerger(Modifier):
     def short_name(cls) -> str:
         return 'nm'
 
-    def modify(self, graph: models.Graph) -> models.Graph:
-        clusters = self.merge_nodes(graph, textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitType.PAGERANK)
-        return graph
+    def modify(self, graph_to_modify: models.Graph) -> models.Graph:
+        clusters = self.merge_nodes(graph_to_modify, textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitType.PAGERANK)
+        return graph_to_modify
 
     def merge_nodes(self, graph: models.Graph, textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitType.PAGERANK):
         def clusters(to_replace):

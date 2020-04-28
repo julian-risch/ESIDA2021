@@ -3,12 +3,16 @@ import data.database as db
 import data.models as models
 from fastapi import Depends
 from typing import Union, Optional, Tuple, List
+from data.processors.modification import PageRanker, PageRankFilter
+
+from data.processors import Modifier
 from data.scrapers import scrape, prepare_url, get_matching_scraper, \
     NoScraperException, ScraperWarning, NoCommentsWarning
 from data.processors.graph import GraphRepresentation
 import logging
 
 logger = logging.getLogger('data.cache')
+MODIFIERS = [PageRanker, PageRankFilter]
 
 
 async def get_graph(urls: List[str] = None, article_ids: List[int] = None, conf: dict = None,
@@ -30,6 +34,10 @@ async def get_graph(urls: List[str] = None, article_ids: List[int] = None, conf:
     comments = await db.get_comments(article_ids)
     graph_rep = GraphRepresentation(comments, conf=conf)
     graph = models.Graph(**graph_rep.__dict__())
+
+    graph = Modifier.use(modifiers_to_use=MODIFIERS, graph_to_modify=graph, conf=conf)
+
+
 
     logger.debug(f'Constructed graph with {len(graph.edges)} edges '
                  f'for article_ids: {article_ids} | urls: {urls}')

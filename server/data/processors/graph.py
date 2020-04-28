@@ -2,6 +2,7 @@ from data.processors.text import split_comment
 import data.models as models
 from typing import List
 from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator
+# from data.processors.modification import PageRanker, PageRankFilter
 from configparser import ConfigParser
 from common import config
 import logging
@@ -70,3 +71,12 @@ class GraphRepresentation:
                             self.edges.append(models.Edge(src=[i, si],
                                                           tgt=[j, sj],
                                                           wgts=weights))
+
+    # maybe this should work for GraphRepresentation and Graph to call it here
+    # def modify(self):
+    #     modifiers = [modifier(conf=self.conf) for modifier in MODIFIERS if modifier.is_on(self.conf)]
+    #
+    #     for modifier in modifiers:
+    #         modifier.modify(self)
+    #         # modifier.modify(models.Graph(**self.__dict__()))
+    #
