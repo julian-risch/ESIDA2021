@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 from common import config
 import data.models as models
-# from pythonlangutil.overload import Overload, signature
-from data.processors.graph import GraphRepresentation
 
 
 class Comparator(ABC):
@@ -63,7 +61,7 @@ class Modifier(ABC):
         return (conf or config).getboolean(cls.__name__, 'active', fallback=True)
 
     @classmethod
-    def use(cls, modifiers_to_use, graph_to_modify: models.Graph, conf=None):
+    def use(cls, modifiers_to_use, graph_to_modify, conf=None):
         modifiers = [modifier(conf=conf) for modifier in modifiers_to_use if modifier.is_on(conf)]
         for modifier in modifiers:
             modifier.modify(graph_to_modify)
@@ -93,22 +91,10 @@ class Modifier(ABC):
     def short_name(cls) -> str:
         raise NotImplementedError
 
-    # @Overload
-    # @signature("models.Graph")
-    def modify(self, graph_to_modify: GraphRepresentation) -> GraphRepresentation:
+    def modify(self, graph_to_modify):
         """
         Returns the modified, original, graph
         :param graph_to_modify: The graph for modification
         :return: The modified graph
         """
         raise NotImplementedError
-
-    # @modify.overload
-    # @signature(GraphRepresentation)
-    # def modify(self, graph: GraphRepresentation) -> models.Graph:
-    #     """
-    #     Returns the modified, original, graph
-    #     :param graph: The graph for modification
-    #     :return: The modified graph
-    #     """
-    #     raise NotImplementedError
