@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 from common import config
 import data.models as models
 from typing import List, Tuple
+# from pythonlangutil.overload import Overload, signature
+
+from data.processors.graph import GraphRepresentation
 
 
 class Comparator(ABC):
@@ -86,6 +89,9 @@ class Modifier(ABC):
     def short_name(cls) -> str:
         raise NotImplementedError
 
+
+    # @Overload
+    # @signature("models.Graph")
     def modify(self, graph: models.Graph) -> models.Graph:
         """
         Returns the modified, original, graph
@@ -93,3 +99,13 @@ class Modifier(ABC):
         :return: The modified graph
         """
         raise NotImplementedError
+
+    # @modify.overload
+    # @signature(GraphRepresentation)
+    # def modify(self, graph: GraphRepresentation) -> models.Graph:
+    #     """
+    #     Returns the modified, original, graph
+    #     :param graph: The graph for modification
+    #     :return: The modified graph
+    #     """
+    #     raise NotImplementedError
