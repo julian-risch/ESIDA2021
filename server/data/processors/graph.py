@@ -2,7 +2,7 @@ from data.processors.text import split_comment
 import data.models as models
 from typing import List
 from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator
-# from data.processors.modification import PageRanker, PageRankFilter
+from data.processors.modification import PageRanker, PageRankFilter
 from configparser import ConfigParser
 from common import config
 import logging
@@ -10,6 +10,8 @@ import logging
 COMPARATORS = [SameArticleComparator,
                SameCommentComparator,
                ReplyToComparator]
+
+MODIFIERS = [PageRanker, PageRankFilter]
 
 logger = logging.getLogger('data.processors.graph')
 
@@ -37,6 +39,7 @@ class GraphRepresentation:
         # construct graph
         self._build_index()
         self._pairwise_comparisons()
+        self._modify()
 
     def __dict__(self) -> models.Graph.__dict__:
         return {
@@ -72,11 +75,8 @@ class GraphRepresentation:
                                                           tgt=[j, sj],
                                                           wgts=weights))
 
-    # maybe this should work for GraphRepresentation and Graph to call it here
-    # def modify(self):
-    #     modifiers = [modifier(conf=self.conf) for modifier in MODIFIERS if modifier.is_on(self.conf)]
-    #
-    #     for modifier in modifiers:
-    #         modifier.modify(self)
-    #         # modifier.modify(models.Graph(**self.__dict__()))
-    #
+    def _modify(self):
+        modifiers = [modifier(conf=self.conf) for modifier in MODIFIERS if modifier.is_on(self.conf)]
+
+        for modifier in modifiers:
+            modifier.modify(self)
