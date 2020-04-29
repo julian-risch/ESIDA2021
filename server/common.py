@@ -19,7 +19,6 @@ def init_config(override_args=None):
 
     config = configparser.ConfigParser()
     # init config with defaults
-    print(config.read('configs/DEFAULT.ini'))
     config.read('configs/DEFAULT.ini')
     # override with user defined config
     config.read(args.config)
