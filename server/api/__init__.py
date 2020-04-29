@@ -13,6 +13,9 @@ import json
 # import resource
 import time
 import logging
+import mimetypes
+mimetypes.init()
+
 
 logger = logging.getLogger('comex.api.server')
 
@@ -32,7 +35,7 @@ class APISubRouter:
 class Server:
     def __init__(self):
         self.app = FastAPI()
-
+        mimetypes.add_type('application/javascript', '.js')
         logger.debug('Setup Middlewares')
         trusted_hosts = json.loads(config.get('server', 'hosts'))
         if config.getboolean('server', 'header_trusted_host'):
