@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import List
 
 import numpy as np
-# import scipy.sparse as sparse
+import scipy.sparse as sparse
 import data.models as models
 from data.processors import Modifier
 from data.processors.graph import GraphRepresentation
