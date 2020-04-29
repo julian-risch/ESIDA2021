@@ -3,10 +3,9 @@ from collections import defaultdict
 from typing import List
 
 import numpy as np
-import scipy.sparse as sparse
+# import scipy.sparse as sparse
 import data.models as models
 from data.processors import Modifier
-from data.processors.graph import GraphRepresentation
 
 logger = logging.getLogger('data.graph.comparator')
 
@@ -23,7 +22,7 @@ def sid_to_nodes(sid: str = None) -> List[int]:
     return [int(node_id) for node_id in sid.split('|')]
 
 
-def build_edge_dict(graph: GraphRepresentation):
+def build_edge_dict(graph: "GraphRepresentation"):
     dic = defaultdict(list)
     for e in graph.edges:
         src = node_to_sid(e.src)
@@ -36,7 +35,7 @@ def build_edge_dict(graph: GraphRepresentation):
 
 
 class PageRanker(Modifier):
-    def pagerank(self, graph: GraphRepresentation, type_of_edge: models.EdgeType):
+    def pagerank(self, graph: "GraphRepresentation", type_of_edge: models.EdgeType):
         def edge_list_to_adjacence_matrix(edges, edge_type: models.EdgeType):
             # arr = np.array([[f'{edge.src[0]}|{edge.src[1]}', f'{edge.tgt[0]}|{edge.tgt[1]}', edge.wgts[edge_type]]
             #                 for edge in edges])
@@ -53,9 +52,9 @@ class PageRanker(Modifier):
             arr = np.array(arr)
 
             shape = tuple(arr.max(axis=0)[:2] + 1)
-            coo = sparse.coo_matrix((arr[:, 2], (arr[:, 0], arr[:, 1])), shape=shape,
-                                    dtype=arr.dtype)
-            return coo.to_dense(), nodes
+            # coo = sparse.coo_matrix((arr[:, 2], (arr[:, 0], arr[:, 1])), shape=shape,
+            #                         dtype=arr.dtype)
+            return None, None #coo.to_dense(), nodes
 
         # todo: check if adjacence matrix works as intended
         adjacence_matrix, node_sids = edge_list_to_adjacence_matrix(graph.edges, type_of_edge)
@@ -107,7 +106,7 @@ class PageRanker(Modifier):
     def short_name(cls) -> str:
         return 'pr'
 
-    def modify(self, graph_to_modify: GraphRepresentation) -> GraphRepresentation:
+    def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         return self.pagerank(graph_to_modify, type_of_edge=models.EdgeType.SIMILARITY)
 
 
@@ -135,7 +134,7 @@ class PageRankFilter(Modifier):
     def split_type(cls) -> models.SplitType:
         return models.SplitType.PAGERANK
 
-    def modify(self, graph_to_modify: GraphRepresentation) -> GraphRepresentation:
+    def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         page_ranks = {node_to_sid(node=None, a=comment.id, b=j): split.wgts[models.SplitType.PAGERANK]
                       for comment in graph_to_modify.comments for j, split in enumerate(comment.splits)}
         filtered_ranks = {k: v for k, v in sorted(page_ranks.items(), key=lambda item: item[1], reverse=True)[:self.k]}
@@ -185,7 +184,7 @@ class CentralityDegreeCalculator(Modifier):
 
         return graph
 
-    def modify(self, graph_to_modify: GraphRepresentation) -> GraphRepresentation:
+    def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         return self.degree_centralities(graph_to_modify)
 
 
@@ -210,7 +209,7 @@ class CentralityDegreeCalculator(Modifier):
 #     def short_name(cls) -> str:
 #         return 'ef'
 #
-#     def modify(self, graph: GraphRepresentation) -> GraphRepresentation:
+#     def modify(self, graph: "GraphRepresentation") -> "GraphRepresentation":
 #         def within_thresholds(wgt_list: List[models.EdgeWeightType], thresholds: Dict[models.EdgeType, float]):
 #             for wgt in wgt_list:
 #                 if wgt[0] < thresholds[wgt[1]]:
@@ -248,7 +247,7 @@ class SimilarityEdgeFilter(Modifier):
     def edge_type(cls) -> models.EdgeType:
         return models.EdgeType.SIMILARITY
 
-    def modify(self, graph_to_modify: GraphRepresentation) -> GraphRepresentation:
+    def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         # note that edge_type is function call here and in BottomSimilarityEdgeFilter it can be an attribute
         graph_to_modify.edges = [edge for edge in graph_to_modify.edges if edge.wgts[self.__class__.edge_type()] > self.threshold]
         return graph_to_modify
@@ -276,7 +275,7 @@ class BottomSimilarityEdgeFilter(Modifier):
     def edge_type(cls) -> models.EdgeType:
         return models.EdgeType.SIMILARITY
 
-    def modify(self, graph_to_modify: GraphRepresentation) -> GraphRepresentation:
+    def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         filtered_edges = []
         edge_dict = build_edge_dict(graph_to_modify)
 
@@ -315,7 +314,7 @@ class BottomReplyToEdgeFilter(Modifier):
     def edge_type(cls) -> models.EdgeType:
         return models.EdgeType.REPLY_TO
 
-    def modify(self, graph_to_modify: GraphRepresentation) -> GraphRepresentation:
+    def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         filtered_edges = []
         edge_dict = build_edge_dict(graph_to_modify)
 
@@ -377,11 +376,11 @@ class NodeMerger(Modifier):
     def short_name(cls) -> str:
         return 'nm'
 
-    def modify(self, graph_to_modify: GraphRepresentation) -> GraphRepresentation:
+    def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         clusters = self.merge_nodes(graph_to_modify, textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitType.PAGERANK)
         return graph_to_modify
 
-    def merge_nodes(self, graph: GraphRepresentation, textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitType.PAGERANK):
+    def merge_nodes(self, graph: "GraphRepresentation", textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitType.PAGERANK):
         def clusters(to_replace):
             finalized_replacements = {}
             for k, v in to_replace.items():

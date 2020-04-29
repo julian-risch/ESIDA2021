@@ -1,8 +1,9 @@
+from data.processors import modification
 from data.processors.text import split_comment
 import data.models as models
 from typing import List
 from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator
-from data.processors.modification import PageRanker, PageRankFilter
+from data.processors.modification import PageRanker, PageRankFilter, CentralityDegreeCalculator
 from configparser import ConfigParser
 from common import config
 import logging
@@ -11,7 +12,7 @@ COMPARATORS = [SameArticleComparator,
                SameCommentComparator,
                ReplyToComparator]
 
-MODIFIERS = [PageRanker, PageRankFilter]
+MODIFIERS = [CentralityDegreeCalculator]
 
 logger = logging.getLogger('data.processors.graph')
 
@@ -76,7 +77,4 @@ class GraphRepresentation:
                                                           wgts=weights))
 
     def _modify(self):
-        modifiers = [modifier(conf=self.conf) for modifier in MODIFIERS if modifier.is_on(self.conf)]
-
-        for modifier in modifiers:
-            modifier.modify(self)
+        modification.Modifier.use(modifiers_to_use=MODIFIERS, graph_to_modify=self, conf=self.conf)
