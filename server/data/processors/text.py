@@ -56,7 +56,8 @@ def split_comment(comment: models.CommentCached) -> models.SplitComment:
         if len(text_sentence) < 10:
             continue
         split_weights = [models.SplitWeight(wgt=1.0, tp=split_type) for split_type in split_types]
-        splits.append(models.Split(s=bound, e=bound + len(text_sentence), wgts=split_weights))
+        # splits.append(models.Split(s=bound, e=bound + len(text_sentence), wgts=split_weights))
+        splits.append(models.Split(s=bound, e=bound + len(text_sentence)))
         bound += len(text_sentence) + 1
 
     # FIXME: if needed there must be a way to change comment texts

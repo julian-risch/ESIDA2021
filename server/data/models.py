@@ -140,8 +140,8 @@ class Split(BaseModel):
     # last character of the sentence
     e: int
     # weight / size of split
-    # wgt: Optional[float]
-    wgts: List[SplitWeightType]
+    wgt: Optional[float]
+    # wgts: List[SplitWeightType]
 
 
 class SplitComment(BaseModel):
