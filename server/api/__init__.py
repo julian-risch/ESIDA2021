@@ -35,6 +35,7 @@ class APISubRouter:
 class Server:
     def __init__(self):
         self.app = FastAPI()
+        # this fixes problems for windows hosts
         mimetypes.add_type('application/javascript', '.js')
         logger.debug('Setup Middlewares')
         trusted_hosts = json.loads(config.get('server', 'hosts'))
