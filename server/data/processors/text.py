@@ -50,11 +50,12 @@ def split_comment(comment: models.CommentCached) -> models.SplitComment:
     text_sentences = split_sentences(comment.text)
     splits = []
     bound = 0
+    split_types = [models.SplitType.SIZE, models.SplitType.PAGERANK, models.SplitType.DEGREECENTRALITY, models.SplitType.RECENCY, models.SplitType.VOTES]
     for text_sentence in text_sentences:
         # skip things that are too short.
         if len(text_sentence) < 10:
             continue
-        splits.append(models.Split(s=bound, e=bound + len(text_sentence)))
+        splits.append(models.Split(s=bound, e=bound + len(text_sentence), wgts=[models.SplitWeight(wgt=1.0, tp=split_type) for split_type in split_types]))
         bound += len(text_sentence) + 1
 
     # FIXME: if needed there must be a way to change comment texts
@@ -69,7 +70,8 @@ def split_comment(comment: models.CommentCached) -> models.SplitComment:
 
     return models.SplitComment(
         id=comment.id,
-        splits=splits
+        splits=splits,
+
     )
 
 
