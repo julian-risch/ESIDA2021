@@ -10,7 +10,7 @@ import data.models as models
 from common import config
 
 logger = logging.getLogger('data.db')
-
+print(config.get('cache', 'db_url'))
 DATABASE_URL = config.get('cache', 'db_url')
 
 database = databases.Database(DATABASE_URL)
