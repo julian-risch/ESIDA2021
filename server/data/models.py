@@ -1,6 +1,6 @@
 from pydantic import BaseModel, AnyHttpUrl
 from datetime import datetime
-from typing import List, Optional, Union, NamedTuple, Tuple
+from typing import List, Optional, Union, NamedTuple, Tuple, Dict
 from enum import Enum, IntEnum
 
 
@@ -134,6 +134,19 @@ class SplitWeight(Tuple, NamedTuple):
 SplitWeightType = Tuple[float, SplitType]
 
 
+# class SplitWeights(BaseModel):
+#     # the length of the split
+#     size = Optional[float]
+#     # the page rank value for the split / node
+#     pagerank = Optional[float]
+#     # the degree centrality value for the split / node
+#     degreecentrality = Optional[float]
+#     # the distance (in seconds) to global comparable time (e.g. yongest comment)
+#     recency = Optional[float]
+#     # the number of votes for the comment
+#     votes = Optional[float]
+
+
 class Split(BaseModel):
     # first character of the sentence
     s: int
@@ -141,6 +154,7 @@ class Split(BaseModel):
     e: int
     # weight / size of split
     wgt: Optional[float]
+    # wgts: SplitWeights
     # wgts: List[SplitWeightType]
 
 
@@ -166,10 +180,28 @@ class EdgeWeight(Tuple, NamedTuple):
 EdgeWeightType = Tuple[float, EdgeType, str]
 
 
+# class EdgeWeights(BaseModel):
+#     # is one comment the reply to the other comment?
+#     reply_to = Optional[float]
+#     # belong the two splits to the same article?
+#     same_article = Optional[float]
+#     # cosine similarity between comments
+#     similarity = Optional[float]
+#     # belong the two splits to the same group?
+#     same_group = Optional[float]
+#     # belong the two splits to the same comment?
+#     same_comment = Optional[float]
+#     # distance in seconds between comments
+#     temporal = Optional[float]
+
+
 class Edge(BaseModel):
     src: List[int]  # first is index of comment, second is index of sentence within comment
     tgt: List[int]  # first is index of comment, second is index of sentence within comment
+    # wgts: EdgeWeights
     wgts: List[EdgeWeightType]
+    # wgts: NamedTuple
+    # wgts: Dict[EdgeType, EdgeWeight]
 
 
 class Graph(BaseModel):
