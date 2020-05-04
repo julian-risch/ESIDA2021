@@ -131,9 +131,9 @@ class SimilarityComparator(Comparator):
         self.only_root = self.conf_getboolean('only_root', only_root)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'base_weight: {self.base_weight} and only_root: {self.only_root}')
-
+                     f'base_weight: {self.base_weight} and only_root: {self.only_root}, start loading fast text model...')
         self.model = load_fasttext_model()
+        logger.debug(f'loaded fast text model')
 
     @classmethod
     def short_name(cls) -> str:
