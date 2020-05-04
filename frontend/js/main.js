@@ -10,9 +10,11 @@ emitter.emit(E.NEW_SOURCE_URL,
 );
 
 emitter.emit(E.NEW_SOURCE_URL,
-    150 //https://www.faz.net/aktuell/wissen/medizin-ernaehrung/corona-patienten-italienische-verhaeltnisse-koennen-wir-haendeln-16674388.html
+    'https://www.faz.net/aktuell/wissen/medizin-ernaehrung/corona-patienten-italienische-verhaeltnisse-koennen-wir-haendeln-16674388.html' // id=150
 );
-emitter.emit(E.NEW_SOURCE_URL, 151);
+emitter.emit(E.NEW_SOURCE_URL,
+    'https://www.welt.de/vermischtes/article204780066/Buschbraende-in-Australien-Millionen-Tiere-sterben-Pink-spendet-500-000-Dollar.html' // id=151
+);
 
 setTimeout(() => {
     emitter.emit(E.GRAPH_REQUESTED)
