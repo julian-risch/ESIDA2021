@@ -2,17 +2,18 @@ from data.processors import modification
 from data.processors.text import split_comment
 import data.models as models
 from typing import List
-from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator
-from data.processors.modification import PageRanker, PageRankFilter, CentralityDegreeCalculator
+from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, SimilarityComparator
+from data.processors.modification import PageRanker, PageRankFilter, CentralityDegreeCalculator, SimilarityEdgeFilter
 from configparser import ConfigParser
 from common import config
 import logging
 
 COMPARATORS = [SameArticleComparator,
                SameCommentComparator,
-               ReplyToComparator]
+               ReplyToComparator,
+               SimilarityComparator]
 
-MODIFIERS = [CentralityDegreeCalculator]
+MODIFIERS = [SimilarityEdgeFilter]
 
 logger = logging.getLogger('data.processors.graph')
 
