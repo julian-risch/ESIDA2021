@@ -131,7 +131,7 @@ class SplitWeight(Tuple, NamedTuple):
 
 
 # this is just a hack because Pydantic doesnt understand NamedTuples
-SplitWeightType = Tuple[float, SplitWeight]
+SplitWeightType = Tuple[float, SplitType]
 
 
 class Split(BaseModel):
