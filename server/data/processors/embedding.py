@@ -8,8 +8,6 @@ def load_fasttext_model(path='E:\\cc.de.300.bin'):
 
 
 def vectorize_sentence(model, sentence: str) -> List[float]:
-    if not model:
-        model = load_fasttext_model()
     return model.get_sentence_vector(sentence.replace("\n", " "))
 
 
