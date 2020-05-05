@@ -1,4 +1,4 @@
-from pydantic import BaseModel, AnyHttpUrl
+from pydantic import BaseModel, AnyHttpUrl, BaseConfig
 from datetime import datetime
 from typing import List, Optional, Union, NamedTuple, Tuple, Dict
 from enum import Enum, IntEnum
@@ -106,45 +106,45 @@ class ComparatorConfig(BaseModel):
     ReplyToComparator: Optional[ReplyToComparatorConfig] = None
 
 
-class EdgeType(IntEnum):
-    REPLY_TO = 0
-    SAME_ARTICLE = 1
-    SIMILARITY = 2
-    SAME_GROUP = 3
-    SAME_COMMENT = 4
-    TEMPORAL = 5
+# class EdgeType(IntEnum):
+#     REPLY_TO = 0
+#     SAME_ARTICLE = 1
+#     SIMILARITY = 2
+#     SAME_GROUP = 3
+#     SAME_COMMENT = 4
+#     TEMPORAL = 5
+#
+#
+# class SplitType(IntEnum):
+#     SIZE = 0
+#     PAGERANK = 1
+#     DEGREECENTRALITY = 2
+#     RECENCY = 3
+#     VOTES = 4
 
 
-class SplitType(IntEnum):
-    SIZE = 0
-    PAGERANK = 1
-    DEGREECENTRALITY = 2
-    RECENCY = 3
-    VOTES = 4
-
-
-class SplitWeight(Tuple, NamedTuple):
-    # node weight
-    wgt: float
-    # node weight type
-    tp: SplitType
+# class SplitWeight(Tuple, NamedTuple):
+#     # node weight
+#     wgt: float
+#     # node weight type
+#     tp: SplitType
 
 
 # this is just a hack because Pydantic doesnt understand NamedTuples
-SplitWeightType = Tuple[float, SplitType]
+# SplitWeightType = Tuple[float, SplitType]
 
 
-# class SplitWeights(BaseModel):
-#     # the length of the split
-#     size = Optional[float]
-#     # the page rank value for the split / node
-#     pagerank = Optional[float]
-#     # the degree centrality value for the split / node
-#     degreecentrality = Optional[float]
-#     # the distance (in seconds) to global comparable time (e.g. yongest comment)
-#     recency = Optional[float]
-#     # the number of votes for the comment
-#     votes = Optional[float]
+class SplitWeights:
+    # the length of the split
+    size = Optional[float]
+    # the page rank value for the split / node
+    pagerank = Optional[float]
+    # the degree centrality value for the split / node
+    degreecentrality = Optional[float]
+    # the distance (in seconds) to global comparable time (e.g. yongest comment)
+    recency = Optional[float]
+    # the number of votes for the comment
+    votes = Optional[float]
 
 
 class Split(BaseModel):
@@ -153,9 +153,11 @@ class Split(BaseModel):
     # last character of the sentence
     e: int
     # weight / size of split
-    wgt: Optional[float]
-    # wgts: SplitWeights
+    # wgt: Optional[float]
+    wgts: SplitWeights
     # wgts: List[SplitWeightType]
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class SplitComment(BaseModel):
@@ -167,41 +169,43 @@ class SplitComment(BaseModel):
     splits: List[Split]
 
 
-class EdgeWeight(Tuple, NamedTuple):
-    # edge weight
-    wgt: float
-    # edge type
-    tp: EdgeType
-    # short string of comparator used
-    comp: str
+# class EdgeWeight(Tuple, NamedTuple):
+#     # edge weight
+#     wgt: float
+#     # edge type
+#     tp: EdgeType
+#     # short string of comparator used
+#     comp: str
 
 
 # this is just a hack because Pydantic doesnt understand NamedTuples
-EdgeWeightType = Tuple[float, EdgeType, str]
+# EdgeWeightType = Tuple[float, EdgeType, str]
 
 
-# class EdgeWeights(BaseModel):
-#     # is one comment the reply to the other comment?
-#     reply_to = Optional[float]
-#     # belong the two splits to the same article?
-#     same_article = Optional[float]
-#     # cosine similarity between comments
-#     similarity = Optional[float]
-#     # belong the two splits to the same group?
-#     same_group = Optional[float]
-#     # belong the two splits to the same comment?
-#     same_comment = Optional[float]
-#     # distance in seconds between comments
-#     temporal = Optional[float]
+class EdgeWeights:
+    # is one comment the reply to the other comment?
+    reply_to = Optional[float]
+    # belong the two splits to the same article?
+    same_article = Optional[float]
+    # cosine similarity between comments
+    similarity = Optional[float]
+    # belong the two splits to the same group?
+    same_group = Optional[float]
+    # belong the two splits to the same comment?
+    same_comment = Optional[float]
+    # distance in seconds between comments
+    temporal = Optional[float]
 
 
 class Edge(BaseModel):
     src: List[int]  # first is index of comment, second is index of sentence within comment
     tgt: List[int]  # first is index of comment, second is index of sentence within comment
-    # wgts: EdgeWeights
-    wgts: List[EdgeWeightType]
+    wgts: EdgeWeights
+    # wgts: List[EdgeWeightType]
     # wgts: NamedTuple
     # wgts: Dict[EdgeType, EdgeWeight]
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class Graph(BaseModel):
