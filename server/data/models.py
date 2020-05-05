@@ -134,7 +134,7 @@ class ComparatorConfig(BaseModel):
 # SplitWeightType = Tuple[float, SplitType]
 
 
-class SplitWeights:
+class SplitWeights(BaseModel):
     # the length of the split
     size = Optional[float]
     # the page rank value for the split / node
@@ -158,6 +158,9 @@ class SplitWeights:
         elif key == SplitWeights.votes or key == "votes":
             self.votes = item
 
+    class Config:
+        arbitrary_types_allowed = True
+
 
 class Split(BaseModel):
     # first character of the sentence
@@ -169,8 +172,6 @@ class Split(BaseModel):
     wgts: SplitWeights
 
     # wgts: List[SplitWeightType]
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class SplitComment(BaseModel):
@@ -195,7 +196,7 @@ class SplitComment(BaseModel):
 # EdgeWeightType = Tuple[float, EdgeType, str]
 
 
-class EdgeWeights:
+class EdgeWeights(BaseModel):
     # is one comment the reply to the other comment?
     reply_to = Optional[float]
     # belong the two splits to the same article?
@@ -223,6 +224,9 @@ class EdgeWeights:
         elif key == EdgeWeights.temporal or key == "temporal":
             self.temporal = item
 
+    class Config:
+        arbitrary_types_allowed = True
+
 
 class Edge(BaseModel):
     src: List[int]  # first is index of comment, second is index of sentence within comment
@@ -232,8 +236,6 @@ class Edge(BaseModel):
     # wgts: List[EdgeWeightType]
     # wgts: NamedTuple
     # wgts: Dict[EdgeType, EdgeWeight]
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class Graph(BaseModel):
