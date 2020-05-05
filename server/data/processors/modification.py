@@ -6,6 +6,7 @@ import numpy as np
 # import scipy.sparse as sparse
 import data.models as models
 from data.processors import Modifier
+# from data.processors.graph import GraphRepresentation
 
 logger = logging.getLogger('data.graph.comparator')
 
@@ -35,8 +36,8 @@ def build_edge_dict(graph: "GraphRepresentation"):
 
 
 class PageRanker(Modifier):
-    def pagerank(self, graph: "GraphRepresentation", type_of_edge: models.EdgeType):
-        def edge_list_to_adjacence_matrix(edges, edge_type: models.EdgeType):
+    def pagerank(self, graph: "GraphRepresentation", type_of_edge: models.EdgeWeights):
+        def edge_list_to_adjacence_matrix(edges, edge_type: models.EdgeWeights):
             # arr = np.array([[f'{edge.src[0]}|{edge.src[1]}', f'{edge.tgt[0]}|{edge.tgt[1]}', edge.wgts[edge_type]]
             #                 for edge in edges])
             nodes = set()
@@ -81,7 +82,8 @@ class PageRanker(Modifier):
         # update node of graph with new weights for PageRank
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
-                split.wgts[models.SplitType.PAGERANK] = ranks[node_to_sid(node=None, a=comment.id, b=j)]
+                # split.wgts[models.PAGERANK] = ranks[node_to_sid(node=None, a=comment.id, b=j)]
+                split.wgts[models.SplitWeights.pagerank] = ranks[node_to_sid(node=None, a=comment.id, b=j)]
 
         return graph
 
@@ -107,7 +109,7 @@ class PageRanker(Modifier):
         return 'pr'
 
     def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
-        return self.pagerank(graph_to_modify, type_of_edge=models.EdgeType.SIMILARITY)
+        return self.pagerank(graph_to_modify, type_of_edge=models.EdgeWeights.similarity)
 
 
 class PageRankFilter(Modifier):
@@ -131,11 +133,11 @@ class PageRankFilter(Modifier):
         return 'prf'
 
     @classmethod
-    def split_type(cls) -> models.SplitType:
-        return models.SplitType.PAGERANK
+    def split_type(cls) -> models.SplitWeights:
+        return models.SplitWeights.pagerank
 
     def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
-        page_ranks = {node_to_sid(node=None, a=comment.id, b=j): split.wgts[models.SplitType.PAGERANK]
+        page_ranks = {node_to_sid(node=None, a=comment.id, b=j): split.wgts[models.SplitWeights.pagerank]
                       for comment in graph_to_modify.comments for j, split in enumerate(comment.splits)}
         filtered_ranks = {k: v for k, v in sorted(page_ranks.items(), key=lambda item: item[1], reverse=True)[:self.k]}
 
@@ -150,7 +152,7 @@ class PageRankFilter(Modifier):
 
 
 class CentralityDegreeCalculator(Modifier):
-    def __init__(self, *args, num_iterations: int = None, d: float = None, normalize=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
         Returns a graph with page-ranked node weights
         :param args:
@@ -160,12 +162,8 @@ class CentralityDegreeCalculator(Modifier):
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-        self.num_iterations = self.conf_getint('num_iterations', num_iterations)
-        self.d = self.conf_getint('d', d)
-        self.normalize = self.conf_getboolean('normalize', normalize)
 
-        logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'num_iterations={self.num_iterations}, d={self.d} and normalize={self.normalize}')
+        logger.debug(f'{self.__class__.__name__} initialised')
 
     @classmethod
     def short_name(cls) -> str:
@@ -180,7 +178,7 @@ class CentralityDegreeCalculator(Modifier):
         # update node of graph with new weights for for degree centrality
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
-                split.wgts[models.SplitType.DEGREECENTRALITY] = counter_dict[node_to_sid(node=None, a=comment.id, b=j)]
+                split.wgts[models.SplitWeights.degreecentrality] = counter_dict[node_to_sid(node=None, a=comment.id, b=j)]
 
         return graph
 
@@ -244,12 +242,15 @@ class SimilarityEdgeFilter(Modifier):
         return 'sef'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeType:
-        return models.EdgeType.SIMILARITY
+    def edge_type(cls) -> models.EdgeWeights:
+        return models.EdgeWeights.similarity
 
     def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         # note that edge_type is function call here and in BottomSimilarityEdgeFilter it can be an attribute
-        graph_to_modify.edges = [edge for edge in graph_to_modify.edges if edge.wgts[self.__class__.edge_type()] > self.threshold]
+        for e in graph_to_modify.edges:
+            print(e.wgts[0][0])
+        graph_to_modify.edges = [edge for edge in graph_to_modify.edges if edge.wgts[0][0] > self.threshold]
+        # graph_to_modify.edges = [edge for edge in graph_to_modify.edges if edge.wgts[self.__class__.edge_type()][0] > self.threshold]
         return graph_to_modify
 
 
@@ -272,8 +273,8 @@ class BottomSimilarityEdgeFilter(Modifier):
         return 'bsef'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeType:
-        return models.EdgeType.SIMILARITY
+    def edge_type(cls) -> models.EdgeWeights:
+        return models.EdgeWeights.similarity
 
     def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         filtered_edges = []
@@ -301,7 +302,7 @@ class BottomReplyToEdgeFilter(Modifier):
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-        self.top_edges = self.conf_getint('d', top_edges)
+        self.top_edges = self.conf_getint('top_edges', top_edges)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
                      f'top_edges={self.top_edges}')
@@ -311,8 +312,8 @@ class BottomReplyToEdgeFilter(Modifier):
         return 'brtef'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeType:
-        return models.EdgeType.REPLY_TO
+    def edge_type(cls) -> models.EdgeWeights:
+        return models.EdgeWeights.reply_to
 
     def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         filtered_edges = []
@@ -377,10 +378,10 @@ class NodeMerger(Modifier):
         return 'nm'
 
     def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
-        clusters = self.merge_nodes(graph_to_modify, textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitType.PAGERANK)
+        clusters = self.merge_nodes(graph_to_modify, textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitWeights.pagerank)
         return graph_to_modify
 
-    def merge_nodes(self, graph: "GraphRepresentation", textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitType.PAGERANK):
+    def merge_nodes(self, graph: "GraphRepresentation", textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitWeights.pagerank):
         def clusters(to_replace):
             finalized_replacements = {}
             for k, v in to_replace.items():
@@ -416,19 +417,19 @@ class NodeMerger(Modifier):
         # investigate what can be replaced with what
         for edge in graph.edges:
             if conj == "or":
-                filter_bool = edge.wgts[models.EdgeType.SIMILARITY] > textual \
-                              or edge.wgts[models.EdgeType.REPLY_TO] > structural \
-                              or edge.wgts[models.EdgeType.SAME_COMMENT] > structural \
-                              or edge.wgts[models.EdgeType.SAME_ARTICLE] > structural \
-                              or edge.wgts[models.EdgeType.SAME_GROUP] > structural \
-                              or edge.wgts[models.EdgeType.TEMPORAL] < temporal
+                filter_bool = edge.wgts[models.EdgeWeights.similarity] > textual \
+                              or edge.wgts[models.EdgeWeights.reply_to] > structural \
+                              or edge.wgts[models.EdgeWeights.same_comment] > structural \
+                              or edge.wgts[models.EdgeWeights.same_article] > structural \
+                              or edge.wgts[models.EdgeWeights.same_group] > structural \
+                              or edge.wgts[models.EdgeWeights.temporal] < temporal
             else:
-                filter_bool = edge.wgts[models.EdgeType.SIMILARITY] > textual \
-                              and edge.wgts[models.EdgeType.REPLY_TO] > structural \
-                              and edge.wgts[models.EdgeType.SAME_COMMENT] > structural \
-                              and edge.wgts[models.EdgeType.SAME_ARTICLE] > structural \
-                              and edge.wgts[models.EdgeType.SAME_GROUP] > structural \
-                              and edge.wgts[models.EdgeType.TEMPORAL] < temporal
+                filter_bool = edge.wgts[models.EdgeWeights.similarity] > textual \
+                              and edge.wgts[models.EdgeWeights.reply_to] > structural \
+                              and edge.wgts[models.EdgeWeights.same_comment] > structural \
+                              and edge.wgts[models.EdgeWeights.same_article] > structural \
+                              and edge.wgts[models.EdgeWeights.same_group] > structural \
+                              and edge.wgts[models.EdgeWeights.temporal] < temporal
 
             if filter_bool:
                 source = edge.src
@@ -492,7 +493,7 @@ class NodeMerger(Modifier):
 
     def weights_bigger_as_threshold(self, edge: models.Edge, threshold: float = 0, edge_types=None):
         if edge_types is None:
-            edge_types = [models.EdgeType.SIMILARITY, models.EdgeType.SAME_COMMENT]
+            edge_types = [models.EdgeWeights.similarity, models.EdgeWeights.same_comment]
         choosen_weights = [edge.wgts[edge_type] for edge_type in edge_types]
 
         # boolean_and
