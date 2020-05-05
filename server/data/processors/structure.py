@@ -28,14 +28,16 @@ class SameCommentComparator(Comparator):
         return 'sc'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeType:
-        return models.EdgeType.SAME_COMMENT
+    def edge_type(cls) -> models.EdgeWeights:
+        return models.EdgeWeights.same_comment
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
                 split_a, split_b) -> float:
         if a.id == b.id and ((self.only_consecutive and ((split_a + 1) == split_b)) or not self.only_consecutive):
-            return models.EdgeWeight(wgt=self.base_weight, tp=self.edge_type(), comp=self.short_name())
+            # return models.EdgeWeight(wgt=self.base_weight, tp=self.edge_type(), comp=self.short_name())
+            # models.EdgeWeights.same_comment = self.base_weight
+            return self.base_weight
 
 
 class SameArticleComparator(Comparator):
@@ -52,14 +54,15 @@ class SameArticleComparator(Comparator):
         return 'sa'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeType:
-        return models.EdgeType.SAME_ARTICLE
+    def edge_type(cls) -> models.EdgeWeights:
+        return models.EdgeWeights.same_article
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
                 split_a, split_b) -> float:
         if a.article_id == b.article_id and ((self.only_root and split_a == 0 and split_b == 0) or not self.only_root):
-            return models.EdgeWeight(wgt=self.base_weight, tp=self.edge_type(), comp=self.short_name())
+            # return models.EdgeWeight(wgt=self.base_weight, tp=self.edge_type(), comp=self.short_name())
+            return self.base_weight
 
 
 class ReplyToComparator(Comparator):
@@ -76,8 +79,8 @@ class ReplyToComparator(Comparator):
         return 'rep'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeType:
-        return models.EdgeType.REPLY_TO
+    def edge_type(cls) -> models.EdgeWeights:
+        return models.EdgeWeights.reply_to
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
@@ -85,7 +88,8 @@ class ReplyToComparator(Comparator):
         if ((a.reply_to_id is not None and a.reply_to_id == b.id) or
             (b.reply_to_id is not None and b.reply_to_id == a.id)) and \
                 ((self.only_root and split_a == 0 and split_b == 0) or not self.only_root):
-            return models.EdgeWeight(wgt=self.base_weight, tp=self.edge_type(), comp=self.short_name())
+            # return models.EdgeWeight(wgt=self.base_weight, tp=self.edge_type(), comp=self.short_name())
+            return self.base_weight
 
 
 class TemporalComparator(Comparator):
@@ -103,8 +107,8 @@ class TemporalComparator(Comparator):
         return 'temp'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeType:
-        return models.EdgeType.TEMPORAL
+    def edge_type(cls) -> models.EdgeWeights:
+        return models.EdgeWeights.temporal
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
@@ -120,7 +124,8 @@ class TemporalComparator(Comparator):
 
         weight = time_second_difference(timestring_to_stamp(a.timestamp), timestring_to_stamp(b.timestamp))
 
-        return models.EdgeWeight(wgt=weight, tp=self.edge_type(), comp=self.short_name())
+        # return models.EdgeWeight(wgt=weight, tp=self.edge_type(), comp=self.short_name())
+        return weight
 
 
 class SimilarityComparator(Comparator):
@@ -131,7 +136,7 @@ class SimilarityComparator(Comparator):
         self.only_root = self.conf_getboolean('only_root', only_root)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'base_weight: {self.base_weight} and only_root: {self.only_root}, start loading fast text model...')
+                     f'base_weight: {self.base_weight} and only_root: {self.only_root}, load fasttext model...')
         self.model = load_fasttext_model()
         logger.debug(f'loaded fast text model')
 
@@ -140,8 +145,8 @@ class SimilarityComparator(Comparator):
         return 'sim'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeType:
-        return models.EdgeType.SIMILARITY
+    def edge_type(cls) -> models.EdgeWeights:
+        return models.EdgeWeights.similarity
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
@@ -149,4 +154,5 @@ class SimilarityComparator(Comparator):
 
         weight = cosine_similarity(self.model, a.text, b.text)
 
-        return models.EdgeWeight(wgt=weight, tp=self.edge_type(), comp=self.short_name())
+        # return models.EdgeWeight(wgt=weight, tp=self.edge_type(), comp=self.short_name())
+        return weight
