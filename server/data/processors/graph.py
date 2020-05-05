@@ -3,17 +3,19 @@ from data.processors.text import split_comment
 import data.models as models
 from typing import List
 from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, SimilarityComparator
-from data.processors.modification import PageRanker, PageRankFilter, CentralityDegreeCalculator, SimilarityEdgeFilter
+from data.processors.modification import PageRanker, PageRankFilter, CentralityDegreeCalculator, SimilarityEdgeFilter, BottomReplyToEdgeFilter
 from configparser import ConfigParser
 from common import config
+#from tqdm import tqdm
 import logging
 
 COMPARATORS = [SameArticleComparator,
                SameCommentComparator,
                ReplyToComparator,
-               SimilarityComparator]
+               #SimilarityComparator
+               ]
 
-MODIFIERS = [SimilarityEdgeFilter]
+MODIFIERS = [BottomReplyToEdgeFilter]
 
 logger = logging.getLogger('data.processors.graph')
 
@@ -41,7 +43,7 @@ class GraphRepresentation:
         # construct graph
         self._build_index()
         self._pairwise_comparisons()
-        self._modify()
+        # self._modify()
 
     def __dict__(self) -> models.Graph.__dict__:
         return {
@@ -57,7 +59,7 @@ class GraphRepresentation:
     def _pairwise_comparisons(self):
         comparators = [comparator(conf=self.conf) for comparator in COMPARATORS if comparator.is_on(self.conf)]
 
-        for i in range(len(self.comments)):
+        for i in (range(len(self.comments))):
             comment_i = self.comments[i]
             orig_comment_i = self.orig_comments[i]
             for si in range(len(comment_i.splits)):
@@ -71,7 +73,9 @@ class GraphRepresentation:
                             result = comparator.compare(orig_comment_i, comment_i,
                                                         orig_comment_j, comment_j, si, sj)
                             if result:
-                                weights.append(result)
+                                weights = models.EdgeWeights()
+                                weights[comparator.edge_type()] = result
+                                # weights.append(result)
                         if weights:
                             self.edges.append(models.Edge(src=[i, si],
                                                           tgt=[j, sj],
