@@ -211,18 +211,22 @@ class EdgeWeights(BaseModel):
     temporal: Optional[float] = None
 
     def __setitem__(self, key, item):
-        if key == "reply_to":
-            self.reply_to = item
-        elif key == "same_article":
-            self.same_article = item
-        elif key == "similarity":
-            self.similarity = item
-        elif key == "same_group":
-            self.same_group = item
-        elif key == "same_comment":
-            self.same_comment = item
-        elif key == "temporal":
-            self.temporal = item
+        # if key == "reply_to":
+        #     self.reply_to = item
+        # elif key == "same_article":
+        #     self.same_article = item
+        # elif key == "similarity":
+        #     self.similarity = item
+        # elif key == "same_group":
+        #     self.same_group = item
+        # elif key == "same_comment":
+        #     self.same_comment = item
+        # elif key == "temporal":
+        #     self.temporal = item
+        self.__dict__[key] = item
+
+    def __getitem__(self, key):
+        return self.__dict__[key]
 
     class Config:
         arbitrary_types_allowed = True
