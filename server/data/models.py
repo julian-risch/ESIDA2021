@@ -1,7 +1,7 @@
-from pydantic import BaseModel, AnyHttpUrl, BaseConfig
+from pydantic import BaseModel, AnyHttpUrl
 from datetime import datetime
-from typing import List, Optional, Union, NamedTuple, Tuple, Dict
-from enum import Enum, IntEnum
+from typing import List, Optional, Union
+from enum import Enum
 
 
 class CommentScraped(BaseModel):
@@ -196,6 +196,20 @@ class EdgeWeights:
     same_comment = Optional[float]
     # distance in seconds between comments
     temporal = Optional[float]
+
+    def __setitem__(self, key, item):
+        if key == EdgeWeights.reply_to:
+            self.reply_to = item
+        elif key == EdgeWeights.same_article:
+            self.same_article = item
+        elif key == EdgeWeights.similarity:
+            self.similarity = item
+        elif key == EdgeWeights.same_group:
+            self.same_group = item
+        elif key == EdgeWeights.same_comment:
+            self.same_comment = item
+        elif key == EdgeWeights.temporal:
+            self.temporal = item
 
 
 class Edge(BaseModel):
