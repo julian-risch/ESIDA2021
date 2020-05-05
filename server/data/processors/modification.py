@@ -1,9 +1,8 @@
 import logging
 from collections import defaultdict
 from typing import List
-
 import numpy as np
-# import scipy.sparse as sparse
+import scipy.sparse as sparse
 import data.models as models
 from data.processors import Modifier
 # from data.processors.graph import GraphRepresentation
@@ -53,9 +52,9 @@ class PageRanker(Modifier):
             arr = np.array(arr)
 
             shape = tuple(arr.max(axis=0)[:2] + 1)
-            # coo = sparse.coo_matrix((arr[:, 2], (arr[:, 0], arr[:, 1])), shape=shape,
-            #                         dtype=arr.dtype)
-            return None, None #coo.to_dense(), nodes
+            coo = sparse.coo_matrix((arr[:, 2], (arr[:, 0], arr[:, 1])), shape=shape,
+                                    dtype=arr.dtype)
+            return coo.to_dense(), nodes
 
         # todo: check if adjacence matrix works as intended
         adjacence_matrix, node_sids = edge_list_to_adjacence_matrix(graph.edges, type_of_edge)
