@@ -33,12 +33,12 @@ class Comparator(ABC):
 
     @classmethod
     @abstractmethod
-    def edge_type(cls) -> models.EdgeType:
+    def edge_type(cls) -> models.EdgeWeights:
         raise NotImplementedError
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
-                split_a, split_b) -> models.EdgeWeight:
+                split_a, split_b) -> models.EdgeWeights:
         """
         Returns a similarity score
         :param a: First comment to compare
