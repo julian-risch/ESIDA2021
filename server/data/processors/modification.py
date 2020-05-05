@@ -35,8 +35,8 @@ def build_edge_dict(graph: "GraphRepresentation"):
 
 
 class PageRanker(Modifier):
-    def pagerank(self, graph: "GraphRepresentation", type_of_edge: models.EdgeWeights):
-        def edge_list_to_adjacence_matrix(edges, edge_type: models.EdgeWeights):
+    def pagerank(self, graph: "GraphRepresentation", type_of_edge: str):
+        def edge_list_to_adjacence_matrix(edges, edge_type: str):
             # arr = np.array([[f'{edge.src[0]}|{edge.src[1]}', f'{edge.tgt[0]}|{edge.tgt[1]}', edge.wgts[edge_type]]
             #                 for edge in edges])
             nodes = set()
@@ -108,7 +108,7 @@ class PageRanker(Modifier):
         return 'pr'
 
     def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
-        return self.pagerank(graph_to_modify, type_of_edge=models.EdgeWeights.similarity)
+        return self.pagerank(graph_to_modify, type_of_edge="similarity")
 
 
 class PageRankFilter(Modifier):
@@ -132,8 +132,8 @@ class PageRankFilter(Modifier):
         return 'prf'
 
     @classmethod
-    def split_type(cls) -> models.SplitWeights:
-        return models.SplitWeights.pagerank
+    def split_type(cls) -> str:
+        return "pagerank"
 
     def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         page_ranks = {node_to_sid(node=None, a=comment.id, b=j): split.wgts[models.SplitWeights.pagerank]
@@ -241,8 +241,8 @@ class SimilarityEdgeFilter(Modifier):
         return 'sef'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeWeights:
-        return models.EdgeWeights.similarity
+    def edge_type(cls) -> str:
+        return "similarity"
 
     def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         # note that edge_type is function call here and in BottomSimilarityEdgeFilter it can be an attribute
@@ -272,8 +272,8 @@ class BottomSimilarityEdgeFilter(Modifier):
         return 'bsef'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeWeights:
-        return models.EdgeWeights.similarity
+    def edge_type(cls) -> str:
+        return "similarity"
 
     def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         filtered_edges = []
@@ -311,21 +311,22 @@ class BottomReplyToEdgeFilter(Modifier):
         return 'brtef'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeWeights:
-        return models.EdgeWeights.reply_to
+    def edge_type(cls) -> str:
+        return "reply_to"
 
     def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
         filtered_edges = []
         edge_dict = build_edge_dict(graph_to_modify)
-
         for comment in graph_to_modify.comments:
             for j, split in enumerate(comment.splits):
-                node_edges = edge_dict[node_to_sid(node=None, a=comment.id, b=j)]
+                node_edges = edge_dict[node_to_sid(node=None, a=graph_to_modify.id2idx[comment.id], b=j)]
+                print(node_edges)
                 node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type()], reverse=True)[
                              :self.top_edges]
                 for edge in node_edges:
                     if edge not in filtered_edges:
                         filtered_edges.append(edge)
+        print(self.top_edges, len(filtered_edges))
         graph_to_modify.edges = filtered_edges
 
         return graph_to_modify
