@@ -155,6 +155,7 @@ class Split(BaseModel):
     # weight / size of split
     # wgt: Optional[float]
     wgts: SplitWeights
+
     # wgts: List[SplitWeightType]
     class Config:
         arbitrary_types_allowed = True
@@ -201,6 +202,7 @@ class Edge(BaseModel):
     src: List[int]  # first is index of comment, second is index of sentence within comment
     tgt: List[int]  # first is index of comment, second is index of sentence within comment
     wgts: EdgeWeights
+
     # wgts: List[EdgeWeightType]
     # wgts: NamedTuple
     # wgts: Dict[EdgeType, EdgeWeight]
