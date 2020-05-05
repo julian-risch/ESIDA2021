@@ -141,10 +141,22 @@ class SplitWeights:
     pagerank = Optional[float]
     # the degree centrality value for the split / node
     degreecentrality = Optional[float]
-    # the distance (in seconds) to global comparable time (e.g. yongest comment)
+    # the distance (in seconds) to global comparable time (e.g. youngest comment)
     recency = Optional[float]
     # the number of votes for the comment
     votes = Optional[float]
+
+    def __setitem__(self, key, item):
+        if key == SplitWeights.size:
+            self.size = item
+        elif key == SplitWeights.pagerank:
+            self.pagerank = item
+        elif key == SplitWeights.degreecentrality:
+            self.degreecentrality = item
+        elif key == SplitWeights.recency:
+            self.recency = item
+        elif key == SplitWeights.votes:
+            self.votes = item
 
 
 class Split(BaseModel):
