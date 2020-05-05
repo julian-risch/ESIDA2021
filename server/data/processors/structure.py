@@ -28,8 +28,8 @@ class SameCommentComparator(Comparator):
         return 'sc'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeWeights:
-        return models.EdgeWeights.same_comment
+    def edge_type(cls) -> str:
+        return "same_comment"
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
@@ -54,8 +54,8 @@ class SameArticleComparator(Comparator):
         return 'sa'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeWeights:
-        return models.EdgeWeights.same_article
+    def edge_type(cls) -> str:
+        return "same_article"
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
@@ -79,8 +79,8 @@ class ReplyToComparator(Comparator):
         return 'rep'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeWeights:
-        return models.EdgeWeights.reply_to
+    def edge_type(cls) -> str:
+        return "reply_to"
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
@@ -107,8 +107,8 @@ class TemporalComparator(Comparator):
         return 'temp'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeWeights:
-        return models.EdgeWeights.temporal
+    def edge_type(cls) -> str:
+        return "temporal"
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
@@ -145,8 +145,8 @@ class SimilarityComparator(Comparator):
         return 'sim'
 
     @classmethod
-    def edge_type(cls) -> models.EdgeWeights:
-        return models.EdgeWeights.similarity
+    def edge_type(cls) -> str:
+        return "similarity"
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
