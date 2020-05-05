@@ -50,14 +50,22 @@ def split_comment(comment: models.CommentCached) -> models.SplitComment:
     text_sentences = split_sentences(comment.text)
     splits = []
     bound = 0
-    split_types = [models.SplitType.SIZE, models.SplitType.PAGERANK, models.SplitType.DEGREECENTRALITY, models.SplitType.RECENCY, models.SplitType.VOTES]
+    # split_types = [models.SplitType.SIZE, models.SplitType.PAGERANK, models.SplitType.DEGREECENTRALITY, models.SplitType.RECENCY, models.SplitType.VOTES]
+
     for text_sentence in text_sentences:
         # skip things that are too short.
         if len(text_sentence) < 10:
             continue
-        split_weights = [models.SplitWeight(wgt=1.0, tp=split_type) for split_type in split_types]
-        # splits.append(models.Split(s=bound, e=bound + len(text_sentence), wgts=split_weights))
-        splits.append(models.Split(s=bound, e=bound + len(text_sentence)))
+        # split_weights = [models.SplitWeight(wgt=1.0, tp=split_type) for split_type in split_types]
+        split_weights = models.SplitWeights()
+        split_weights.recency = 1
+        split_weights.degreecentrality = 1
+        split_weights.pagerank = 1
+        split_weights.size = 1
+        split_weights.votes = 1
+
+        splits.append(models.Split(s=bound, e=bound + len(text_sentence), wgts=split_weights))
+        # splits.append(models.Split(s=bound, e=bound + len(text_sentence)))
         bound += len(text_sentence) + 1
 
     # FIXME: if needed there must be a way to change comment texts
