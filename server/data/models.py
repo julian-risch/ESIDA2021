@@ -136,15 +136,15 @@ class ComparatorConfig(BaseModel):
 
 class SplitWeights(BaseModel):
     # the length of the split
-    size = Optional[float]
+    size: Optional[float] = None
     # the page rank value for the split / node
-    pagerank = Optional[float]
+    pagerank: Optional[float] = None
     # the degree centrality value for the split / node
-    degreecentrality = Optional[float]
+    degreecentrality: Optional[float] = None
     # the distance (in seconds) to global comparable time (e.g. youngest comment)
-    recency = Optional[float]
+    recency: Optional[float] = None
     # the number of votes for the comment
-    votes = Optional[float]
+    votes: Optional[float] = None
 
     def __setitem__(self, key, item):
         if key == SplitWeights.size or key == "size":
@@ -198,17 +198,17 @@ class SplitComment(BaseModel):
 
 class EdgeWeights(BaseModel):
     # is one comment the reply to the other comment?
-    reply_to = Optional[float]
+    reply_to: Optional[float] = None
     # belong the two splits to the same article?
-    same_article = Optional[float]
+    same_article: Optional[float] = None
     # cosine similarity between comments
-    similarity = Optional[float]
+    similarity: Optional[float] = None
     # belong the two splits to the same group?
-    same_group = Optional[float]
+    same_group: Optional[float] = None
     # belong the two splits to the same comment?
-    same_comment = Optional[float]
+    same_comment: Optional[float] = None
     # distance in seconds between comments
-    temporal = Optional[float]
+    temporal: Optional[float] = None
 
     def __setitem__(self, key, item):
         if key == EdgeWeights.reply_to or key == "reply_to":
