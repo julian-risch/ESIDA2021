@@ -43,7 +43,7 @@ class GraphRepresentation:
         # construct graph
         self._build_index()
         self._pairwise_comparisons()
-        # self._modify()
+        self._modify()
 
     def __dict__(self) -> models.Graph.__dict__:
         return {
