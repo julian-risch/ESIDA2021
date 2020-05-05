@@ -377,10 +377,10 @@ class NodeMerger(Modifier):
         return 'nm'
 
     def modify(self, graph_to_modify: "GraphRepresentation") -> "GraphRepresentation":
-        clusters = self.merge_nodes(graph_to_modify, textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitWeights.pagerank)
+        clusters = self.merge_nodes(graph_to_modify, textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight="pagerank")
         return graph_to_modify
 
-    def merge_nodes(self, graph: "GraphRepresentation", textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight=models.SplitWeights.pagerank):
+    def merge_nodes(self, graph: "GraphRepresentation", textual=0.8, structural=0.8, temporal=3600, conj="and", representive_weight="pagerank"):
         def clusters(to_replace):
             finalized_replacements = {}
             for k, v in to_replace.items():
