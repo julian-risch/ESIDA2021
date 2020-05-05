@@ -147,15 +147,15 @@ class SplitWeights(BaseModel):
     votes: Optional[float] = None
 
     def __setitem__(self, key, item):
-        if key == SplitWeights.size or key == "size":
+        if key == "size":
             self.size = item
-        elif key == SplitWeights.pagerank or key == "pagerank":
+        elif key == "pagerank":
             self.pagerank = item
-        elif key == SplitWeights.degreecentrality or key == "degreecentrality":
+        elif key == "degreecentrality":
             self.degreecentrality = item
-        elif key == SplitWeights.recency or key == "recency":
+        elif key == "recency":
             self.recency = item
-        elif key == SplitWeights.votes or key == "votes":
+        elif key == "votes":
             self.votes = item
 
     class Config:
@@ -211,17 +211,17 @@ class EdgeWeights(BaseModel):
     temporal: Optional[float] = None
 
     def __setitem__(self, key, item):
-        if key == EdgeWeights.reply_to or key == "reply_to":
+        if key == "reply_to":
             self.reply_to = item
-        elif key == EdgeWeights.same_article or key == "same_article":
+        elif key == "same_article":
             self.same_article = item
-        elif key == EdgeWeights.similarity or key == "similarity":
+        elif key == "similarity":
             self.similarity = item
-        elif key == EdgeWeights.same_group or key == "same_group":
+        elif key == "same_group":
             self.same_group = item
-        elif key == EdgeWeights.same_comment or key == "same_comment":
+        elif key == "same_comment":
             self.same_comment = item
-        elif key == EdgeWeights.temporal or key == "temporal":
+        elif key == "temporal":
             self.temporal = item
 
     class Config:
