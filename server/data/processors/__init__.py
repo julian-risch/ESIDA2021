@@ -33,7 +33,7 @@ class Comparator(ABC):
 
     @classmethod
     @abstractmethod
-    def edge_type(cls) -> models.EdgeWeights:
+    def edge_type(cls) -> str:
         raise NotImplementedError
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
