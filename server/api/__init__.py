@@ -10,14 +10,22 @@ from common import config, get_logger_config
 from api.routes import ping, platforms, graph
 import uvicorn
 import json
-# import resource
 import time
 import logging
 import mimetypes
+
 mimetypes.init()
 
-
 logger = logging.getLogger('comex.api.server')
+
+try:
+    from resource import getrusage, RUSAGE_SELF
+except ImportError as e:
+    logger.warning(e)
+
+
+    def getrusage(*args):
+        return 0.0, 0.0
 
 
 class APISubRouter:
@@ -80,6 +88,6 @@ class TimingMiddleware(BaseHTTPMiddleware):
 
     @staticmethod
     def _get_cpu_time():
-        # resources = resource.getrusage(resource.RUSAGE_SELF)
+        resources = getrusage(RUSAGE_SELF)
         # add up user time (ru_utime) and system time (ru_stime)
-        return 1.0#resources[0] + resources[1]
+        return resources[0] + resources[1]
