@@ -1,10 +1,10 @@
-from data.processors import modification
+from data.processors import modifiers
 from data.processors.text import split_comment
 import data.models as models
 from typing import List
 from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, \
     SimilarityComparator
-from data.processors.modification import PageRanker, CentralityDegreeCalculator
+from data.processors.modifiers import PageRanker, CentralityDegreeCalculator
 from data.processors.filters import PageRankFilter, SimilarityEdgeFilter, BottomReplyToEdgeFilter
 from configparser import ConfigParser
 from common import config
@@ -43,9 +43,9 @@ class GraphRepresentation:
         self.orig_comments = comments
 
         # data for models.Graph
-        self.comments = [split_comment(comment) for comment in comments]
+        self.comments: List[models.SplitComment] = [split_comment(comment) for comment in comments]
         self.id2idx = {}
-        self.edges = []
+        self.edges: List[models.Edge] = []
         self.nodes = []
 
         logger.debug(f'{len(self.comments)} comments turned '

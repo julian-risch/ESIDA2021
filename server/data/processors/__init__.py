@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from common import config
 import data.models as models
-from data.processors.graph import GraphRepresentation
+from typing import List, Union, Optional
 
 
 class Comparator(ABC):
@@ -89,10 +89,9 @@ class Modifier(ABC):
             return param
         return self.conf.get(self.__class__.__name__, key)
 
-    def modify(self, graph: GraphRepresentation):
+    @abstractmethod
+    def modify(self, graph):  # FIXME: GraphRepresentation (typing not possible due to circular import?)
         """
         Returns the modified, original, graph
-        :param graph: The graph for modification
-        :return: The modified graph
         """
         raise NotImplementedError

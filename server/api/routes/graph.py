@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from common import init_logging, except2str
 from pydantic import HttpUrl
-from data.models import Graph, ComparatorConfig
+from data.models import Graph, GraphConfig
 import data.models as m
 from typing import List, Optional
 import data.cache as cache
@@ -30,7 +30,7 @@ def catch_errors(func):
 async def get_graph(article_ids: List[int] = None,
                     urls: List[HttpUrl] = None,
                     override_cache: bool = False, ignore_cache: bool = False,
-                    conf: ComparatorConfig = None):
+                    conf: GraphConfig = None):
     if conf is not None:
         conf = conf.dict(exclude_unset=True)
         logger.debug(f'Graph request included config: {conf}')

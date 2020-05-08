@@ -10,40 +10,40 @@ class CommentScraped(BaseModel):
     comment_id: str
     timestamp: datetime
     text: Union[str, List[str]]
-    reply_to: Optional[str] = None
+    reply_to: Optional[str]
 
     # Optional details from FAZ and TAZ
-    num_replies: Optional[int] = None
-    user_id: Optional[str] = None
+    num_replies: Optional[int]
+    user_id: Optional[str]
 
     # Optional details from SPON
-    upvotes: Optional[int] = None
-    downvotes: Optional[int] = None
-    love: Optional[int] = None
+    upvotes: Optional[int]
+    downvotes: Optional[int]
+    love: Optional[int]
 
     # Optional details from Welt
-    likes: Optional[int] = None
-    recommended: Optional[int] = None
+    likes: Optional[int]
+    recommended: Optional[int]
 
     # Optional details from ZON
-    leseempfehlungen: Optional[int] = None
+    leseempfehlungen: Optional[int]
 
     # Optional details from Tagesschau
-    title: Optional[str] = None
+    title: Optional[str]
 
 
 class CommentCached(CommentScraped):
     id: int
     article_id: int
-    reply_to_id: Optional[int] = None
+    reply_to_id: Optional[int]
 
 
 class ArticleScraped(BaseModel):
     url: AnyHttpUrl
     title: str
-    subtitle: Optional[str] = None
-    summary: Optional[str] = None
-    author: Optional[str] = None
+    subtitle: Optional[str]
+    summary: Optional[str]
+    author: Optional[str]
     text: str
     published_time: datetime
     scrape_time: datetime = datetime.now()
@@ -69,17 +69,17 @@ class ScrapeResultStatus(str, Enum):
 
 class ScrapeResultDetails(BaseModel):
     status: ScrapeResultStatus = ScrapeResultStatus.OK
-    error: Optional[str] = None
+    error: Optional[str]
 
 
 class ScrapeResult(BaseModel):
     detail: ScrapeResultDetails = ScrapeResultDetails()
-    payload: Optional[CommentedArticle] = None
+    payload: Optional[CommentedArticle]
 
 
 class CacheResult(BaseModel):
     detail: ScrapeResultDetails = ScrapeResultDetails()
-    payload: Optional[ArticleCached] = None
+    payload: Optional[ArticleCached]
 
 
 class ComparatorConfigBase(BaseModel):
@@ -101,23 +101,64 @@ class ReplyToComparatorConfig(ComparatorConfigBase):
     only_root: bool = True
 
 
-class ComparatorConfig(BaseModel):
-    SameCommentComparator: Optional[SameCommentComparatorConfig] = None
-    SameArticleComparator: Optional[SameArticleComparatorConfig] = None
-    ReplyToComparator: Optional[ReplyToComparatorConfig] = None
+class SimilarityComparatorConfig(ComparatorConfigBase):
+    base_weight: float = 0.1
+    only_root: bool = True
+    max_similarity: float = 0.5
 
 
-class SplitWeights:
+class TemporalComparatorConfig(ComparatorConfigBase):
+    base_weight: float = 0.1
+    only_root: bool = True
+    max_time: int = 1000
+
+
+class PageRankerConfig(ComparatorConfigBase):
+    num_iterations: int = 100
+    d: float = 0.85
+    normalize: bool = True
+
+
+class CentralityDegreeCalculatorConfig(ComparatorConfigBase):
+    pass
+
+
+class BottomSimilarityEdgeFilterConfig(ComparatorConfigBase):
+    top_edges: int = 5
+
+
+class BottomReplyToEdgeFilterConfig(ComparatorConfigBase):
+    top_edges: int = 5
+
+
+class SimilarityEdgeFilterConfig(ComparatorConfigBase):
+    threshold: float = 0.7
+
+
+class GraphConfig(BaseModel):
+    SameCommentComparator: Optional[SameCommentComparatorConfig]
+    SameArticleComparator: Optional[SameArticleComparatorConfig]
+    ReplyToComparator: Optional[ReplyToComparatorConfig]
+    SimilarityComparator: Optional[SimilarityComparatorConfig]
+    TemporalComparator: Optional[TemporalComparatorConfig]
+    PageRanker: Optional[PageRankerConfig]
+    CentralityDegreeCalculator: Optional[CentralityDegreeCalculatorConfig]
+    BottomReplyToEdgeFilter: Optional[BottomReplyToEdgeFilterConfig]
+    BottomSimilarityEdgeFilter: Optional[BottomSimilarityEdgeFilterConfig]
+    SimilarityEdgeFilter: Optional[SimilarityEdgeFilterConfig]
+
+
+class SplitWeights(BaseModel):
     # the length of the split
-    size: Optional[float] = None
+    size: Optional[float]
     # the page rank value for the split / node
-    pagerank: Optional[float] = None
+    pagerank: Optional[float]
     # the degree centrality value for the split / node
-    degree_centrality: Optional[float] = None
+    degree_centrality: Optional[float]
     # the distance (in seconds) to global comparable time (e.g. youngest comment)
-    recency: Optional[float] = None
+    recency: Optional[float]
     # the number of votes for the comment
-    votes: Optional[float] = None
+    votes: Optional[float]
 
 
 class Split(BaseModel):
@@ -133,7 +174,7 @@ class SplitComment(BaseModel):
     # database ID of the comment
     id: int
     # ID of the cluster the comment belongs to
-    grp_id: Optional[int] = None
+    grp_id: Optional[int]
     # List of sentences (splits) the comment is comprised of
     splits: List[Split]
 
@@ -160,8 +201,8 @@ class Edge(BaseModel):
 
 
 class Graph(BaseModel):
-    article_ids: Optional[List[int]] = None
-    graph_id: Optional[int] = None
+    article_ids: Optional[List[int]]
+    graph_id: Optional[int]
 
     comments: List[SplitComment]
     id2idx: dict
