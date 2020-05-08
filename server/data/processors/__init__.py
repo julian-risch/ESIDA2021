@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from common import config
 import data.models as models
+from data.processors.graph import GraphRepresentation
 
 
 class Comparator(ABC):
@@ -11,34 +12,42 @@ class Comparator(ABC):
     def is_on(cls, conf=None):
         return (conf or config).getboolean(cls.__name__, 'active', fallback=True)
 
-    def conf_getboolean(self, key, param):
+    def conf_getboolean(self, key: str, param: bool) -> bool:
         if param is not None:
             return param
         return self.conf.getboolean(self.__class__.__name__, key)
 
-    def conf_getfloat(self, key, param):
+    def conf_getfloat(self, key: str, param: float) -> float:
         if param is not None:
             return param
         return self.conf.getfloat(self.__class__.__name__, key)
 
-    def conf_get(self, key, param):
+    def conf_getint(self, key: str, param: int) -> int:
+        if param is not None:
+            return param
+        return self.conf.getint(self.__class__.__name__, key)
+
+    def conf_get(self, key: str, param: str) -> str:
         if param is not None:
             return param
         return self.conf.get(self.__class__.__name__, key)
 
-    @classmethod
+    def update_edge_weights(self, edge: models.EdgeWeights,
+                            a: models.CommentCached, _a: models.SplitComment,
+                            b: models.CommentCached, _b: models.SplitComment,
+                            split_a, split_b):
+        weight = self.compare(a, _a, b, _b, split_a, split_b)
+        if weight:
+            self._set_weight(edge, weight)
+
     @abstractmethod
-    def short_name(cls) -> str:
+    def _set_weight(self, edge: models.EdgeWeights, weight: float):
         raise NotImplementedError
 
-    @classmethod
     @abstractmethod
-    def edge_type(cls) -> str:
-        raise NotImplementedError
-
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
-                split_a, split_b) -> models.EdgeWeights:
+                split_a, split_b) -> float:
         """
         Returns a similarity score
         :param a: First comment to compare
@@ -47,7 +56,7 @@ class Comparator(ABC):
         :param _b: Split version of second comment
         :param split_a: index of sentence within comment a
         :param split_b: index of sentence within comment b
-        :return: edge type and weight
+        :return: edge weight
         """
         raise NotImplementedError
 
@@ -60,41 +69,30 @@ class Modifier(ABC):
     def is_on(cls, conf=None):
         return (conf or config).getboolean(cls.__name__, 'active', fallback=True)
 
-    @classmethod
-    def use(cls, modifiers_to_use, graph_to_modify, conf=None):
-        modifiers = [modifier(conf=conf) for modifier in modifiers_to_use if modifier.is_on(conf)]
-        for modifier in modifiers:
-            modifier.modify(graph_to_modify)
-
-    def conf_getboolean(self, key, param):
+    def conf_getboolean(self, key: str, param: bool) -> bool:
         if param is not None:
             return param
         return self.conf.getboolean(self.__class__.__name__, key)
 
-    def conf_getfloat(self, key, param):
+    def conf_getfloat(self, key: str, param: float) -> float:
         if param is not None:
             return param
         return self.conf.getfloat(self.__class__.__name__, key)
 
-    def conf_getint(self, key, param):
+    def conf_getint(self, key: str, param: int) -> int:
         if param is not None:
             return param
         return self.conf.getint(self.__class__.__name__, key)
 
-    def conf_get(self, key, param):
+    def conf_get(self, key: str, param: str) -> str:
         if param is not None:
             return param
         return self.conf.get(self.__class__.__name__, key)
 
-    @classmethod
-    @abstractmethod
-    def short_name(cls) -> str:
-        raise NotImplementedError
-
-    def modify(self, graph_to_modify):
+    def modify(self, graph: GraphRepresentation):
         """
         Returns the modified, original, graph
-        :param graph_to_modify: The graph for modification
+        :param graph: The graph for modification
         :return: The modified graph
         """
         raise NotImplementedError

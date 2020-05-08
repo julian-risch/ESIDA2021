@@ -2,20 +2,31 @@ from data.processors import modification
 from data.processors.text import split_comment
 import data.models as models
 from typing import List
-from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, SimilarityComparator
-from data.processors.modification import PageRanker, PageRankFilter, CentralityDegreeCalculator, SimilarityEdgeFilter, BottomReplyToEdgeFilter
+from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, \
+    SimilarityComparator
+from data.processors.modification import PageRanker, CentralityDegreeCalculator
+from data.processors.filters import PageRankFilter, SimilarityEdgeFilter, BottomReplyToEdgeFilter
 from configparser import ConfigParser
 from common import config
-#from tqdm import tqdm
 import logging
 
-COMPARATORS = [SameArticleComparator,
-               SameCommentComparator,
-               ReplyToComparator,
-               #SimilarityComparator
-               ]
+COMPARATORS = [
+    SameArticleComparator,
+    SameCommentComparator,
+    ReplyToComparator,
+    SimilarityComparator
+]
 
-MODIFIERS = [BottomReplyToEdgeFilter]
+MODIFIERS = [
+    PageRanker,
+    CentralityDegreeCalculator
+]
+
+FILTERS = [
+    BottomReplyToEdgeFilter,
+    PageRankFilter,
+    SimilarityEdgeFilter,
+]
 
 logger = logging.getLogger('data.processors.graph')
 
@@ -68,18 +79,23 @@ class GraphRepresentation:
                     orig_comment_j = self.orig_comments[j]
                     # if comparing sentences within the same comment, skip lower triangle
                     for sj in range(si + 1 if i == j else 0, len(comment_j.splits)):
-                        weights = []
+                        edge_weights = models.EdgeWeights()
                         for comparator in comparators:
-                            result = comparator.compare(orig_comment_i, comment_i,
-                                                        orig_comment_j, comment_j, si, sj)
-                            if result:
-                                weights = models.EdgeWeights()
-                                weights[comparator.edge_type()] = result
-                                # weights.append(result)
-                        if weights:
+                            comparator.update_edge_weights(edge_weights,
+                                                           orig_comment_i, comment_i,
+                                                           orig_comment_j, comment_j, si, sj)
+                        if edge_weights.dict(exclude_unset=True):
                             self.edges.append(models.Edge(src=[i, si],
                                                           tgt=[j, sj],
-                                                          wgts=weights))
+                                                          wgts=edge_weights))
 
     def _modify(self):
-        modification.Modifier.use(modifiers_to_use=MODIFIERS, graph_to_modify=self, conf=self.conf)
+        modifiers = [modifier(conf=self.conf) for modifier in MODIFIERS if modifier.is_on(self.conf)]
+
+        for modifier in modifiers:
+            modifier.modify(self)
+
+        filters = [_filter(conf=self.conf) for _filter in FILTERS if _filter.is_on(self.conf)]
+
+        for _filter in filters:
+            _filter.modify(self)

@@ -1,7 +1,8 @@
 from pydantic import BaseModel, AnyHttpUrl
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 from enum import Enum
+from dataclasses import dataclass
 
 
 class CommentScraped(BaseModel):
@@ -106,60 +107,17 @@ class ComparatorConfig(BaseModel):
     ReplyToComparator: Optional[ReplyToComparatorConfig] = None
 
 
-# class EdgeType(IntEnum):
-#     REPLY_TO = 0
-#     SAME_ARTICLE = 1
-#     SIMILARITY = 2
-#     SAME_GROUP = 3
-#     SAME_COMMENT = 4
-#     TEMPORAL = 5
-#
-#
-# class SplitType(IntEnum):
-#     SIZE = 0
-#     PAGERANK = 1
-#     DEGREECENTRALITY = 2
-#     RECENCY = 3
-#     VOTES = 4
-
-
-# class SplitWeight(Tuple, NamedTuple):
-#     # node weight
-#     wgt: float
-#     # node weight type
-#     tp: SplitType
-
-
-# this is just a hack because Pydantic doesnt understand NamedTuples
-# SplitWeightType = Tuple[float, SplitType]
-
-
-class SplitWeights(BaseModel):
+class SplitWeights:
     # the length of the split
     size: Optional[float] = None
     # the page rank value for the split / node
     pagerank: Optional[float] = None
     # the degree centrality value for the split / node
-    degreecentrality: Optional[float] = None
+    degree_centrality: Optional[float] = None
     # the distance (in seconds) to global comparable time (e.g. youngest comment)
     recency: Optional[float] = None
     # the number of votes for the comment
     votes: Optional[float] = None
-
-    def __setitem__(self, key, item):
-        if key == "size":
-            self.size = item
-        elif key == "pagerank":
-            self.pagerank = item
-        elif key == "degreecentrality":
-            self.degreecentrality = item
-        elif key == "recency":
-            self.recency = item
-        elif key == "votes":
-            self.votes = item
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class Split(BaseModel):
@@ -168,10 +126,7 @@ class Split(BaseModel):
     # last character of the sentence
     e: int
     # weight / size of split
-    # wgt: Optional[float]
     wgts: SplitWeights
-
-    # wgts: List[SplitWeightType]
 
 
 class SplitComment(BaseModel):
@@ -183,63 +138,25 @@ class SplitComment(BaseModel):
     splits: List[Split]
 
 
-# class EdgeWeight(Tuple, NamedTuple):
-#     # edge weight
-#     wgt: float
-#     # edge type
-#     tp: EdgeType
-#     # short string of comparator used
-#     comp: str
-
-
-# this is just a hack because Pydantic doesnt understand NamedTuples
-# EdgeWeightType = Tuple[float, EdgeType, str]
-
-
 class EdgeWeights(BaseModel):
     # is one comment the reply to the other comment?
-    reply_to: Optional[float] = None
+    reply_to: Optional[float]
     # belong the two splits to the same article?
-    same_article: Optional[float] = None
+    same_article: Optional[float]
     # cosine similarity between comments
-    similarity: Optional[float] = None
+    similarity: Optional[float]
     # belong the two splits to the same group?
-    same_group: Optional[float] = None
+    same_group: Optional[float]
     # belong the two splits to the same comment?
-    same_comment: Optional[float] = None
+    same_comment: Optional[float]
     # distance in seconds between comments
-    temporal: Optional[float] = None
-
-    def __setitem__(self, key, item):
-        # if key == "reply_to":
-        #     self.reply_to = item
-        # elif key == "same_article":
-        #     self.same_article = item
-        # elif key == "similarity":
-        #     self.similarity = item
-        # elif key == "same_group":
-        #     self.same_group = item
-        # elif key == "same_comment":
-        #     self.same_comment = item
-        # elif key == "temporal":
-        #     self.temporal = item
-        self.__dict__[key] = item
-
-    def __getitem__(self, key):
-        return self.__dict__[key]
-
-    class Config:
-        arbitrary_types_allowed = True
+    temporal: Optional[float]
 
 
 class Edge(BaseModel):
-    src: List[int]  # first is index of comment, second is index of sentence within comment
-    tgt: List[int]  # first is index of comment, second is index of sentence within comment
+    src: Tuple[int, int]  # first is index of comment, second is index of sentence within comment
+    tgt: Tuple[int, int]  # first is index of comment, second is index of sentence within comment
     wgts: EdgeWeights
-
-    # wgts: List[EdgeWeightType]
-    # wgts: NamedTuple
-    # wgts: Dict[EdgeType, EdgeWeight]
 
 
 class Graph(BaseModel):
