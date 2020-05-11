@@ -2,6 +2,21 @@ from abc import ABC, abstractmethod
 from common import config
 import data.models as models
 from typing import List, Union, Optional
+import logging
+
+logger = logging.getLogger('data.graph.processor')
+
+
+class GraphRepresentationType(ABC):
+    def __init__(self, comments: List[models.CommentCached]):
+        # full text comments might be needed by comparator
+        self.orig_comments = comments
+
+        # data for models.Graph
+        self.comments: List[models.SplitComment] = []
+        self.id2idx = {}
+        self.edges: List[models.Edge] = []
+        self.nodes = []
 
 
 class Comparator(ABC):
@@ -37,7 +52,9 @@ class Comparator(ABC):
                             b: models.CommentCached, _b: models.SplitComment,
                             split_a, split_b):
         weight = self.compare(a, _a, b, _b, split_a, split_b)
+        logger.debug(f'update: {edge}')
         if weight:
+            logger.debug(f'attempting: {weight}')
             self._set_weight(edge, weight)
 
     @abstractmethod
@@ -90,7 +107,7 @@ class Modifier(ABC):
         return self.conf.get(self.__class__.__name__, key)
 
     @abstractmethod
-    def modify(self, graph):  # FIXME: GraphRepresentation (typing not possible due to circular import?)
+    def modify(self, graph: GraphRepresentationType):
         """
         Returns the modified, original, graph
         """

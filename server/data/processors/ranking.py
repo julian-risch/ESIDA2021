@@ -1,25 +1,25 @@
 import logging
 from collections import defaultdict
-from typing import List, Callable
+from typing import List, Callable, Tuple
 import numpy as np
 import scipy.sparse as sparse
 import data.models as models
-from data.processors import Modifier
-#from data.processors.graph import GraphRepresentation
+from data.processors import Modifier, GraphRepresentationType
 
 logger = logging.getLogger('data.graph.modification')
 
 
 # helper functions
-def node_to_sid(node: List[int] = None, a: int = None, b: int = None) -> str:
+def node_to_sid(node: Tuple[int, int] = None, a: int = None, b: int = None) -> str:
     if node:
         return f'{node[0]}|{node[1]}'
     else:
         return f'{a}|{b}'
 
 
-def sid_to_nodes(sid: str = None) -> List[int]:
-    return [int(node_id) for node_id in sid.split('|')]
+def sid_to_nodes(sid: str = None) -> Tuple[int, int]:
+    s = sid.split('|')
+    return int(s[0]), int(s[1])
 
 
 def build_edge_dict(graph):
@@ -71,7 +71,7 @@ class PageRanker(Modifier):
         logger.debug(f'{self.__class__.__name__} initialised with '
                      f'num_iterations={self.num_iterations}, d={self.d} and normalize={self.normalize}')
 
-    def modify(self, graph):
+    def modify(self, graph: GraphRepresentationType):
 
         adjacence_matrix, node_sids = edge_list_to_adjacency_matrix(graph.edges, lambda e: e.similarity)
 
@@ -114,7 +114,7 @@ class CentralityDegreeCalculator(Modifier):
 
         logger.debug(f'{self.__class__.__name__} initialised')
 
-    def modify(self, graph):
+    def modify(self, graph: GraphRepresentationType):
         counter_dict = defaultdict(int)
         for edge in graph.edges:
             counter_dict[node_to_sid(edge.tgt)] += 1
@@ -170,65 +170,65 @@ class NodeMerger(Modifier):
     def short_name(cls) -> str:
         return 'nm'
 
-    def modify(self, graph_to_modify):
-        clusters = self.merge_nodes(graph_to_modify, textual=0.8, structural=0.8, temporal=3600, conj="and",
-                                    representive_weight="pagerank")
-        return graph_to_modify
+    @staticmethod
+    def clusters(to_replace):
+        finalized_replacements = {}
+        for k, v in to_replace.items():
+            for k2, v2 in to_replace.items():
+                if v == k2:
+                    finalized_replacements[k] = v2
 
-    def merge_nodes(self, graph, textual=0.8, structural=0.8, temporal=3600, conj="and",
-                    representive_weight="pagerank"):
-        def clusters(to_replace):
-            finalized_replacements = {}
-            for k, v in to_replace.items():
-                for k2, v2 in to_replace.items():
-                    if v == k2:
-                        finalized_replacements[k] = v2
+            if k not in finalized_replacements:
+                finalized_replacements[k] = v
 
-                if k not in finalized_replacements:
-                    finalized_replacements[k] = v
+        cluster = defaultdict(list)
+        for k, v in to_replace.items():
+            cluster[v].append(k)
 
-            cluster = defaultdict(list)
-            for k, v in to_replace.items():
-                cluster[v].append(k)
+        for k, v in cluster.items():
+            for k2, v2 in cluster.items():
+                if k != k2 and k in v2:
+                    cluster[k2].extend(v)
+                    cluster[k].clear()
+        # print(cluster)
+        # replacement -> [to_be_replaced_1, ..., to_be_replaced_n]
+        cluster = {k: l for k, l in cluster.items() if len(l) > 0}
 
-            for k, v in cluster.items():
-                for k2, v2 in cluster.items():
-                    if k != k2 and k in v2:
-                        cluster[k2].extend(v)
-                        cluster[k].clear()
-            # print(cluster)
-            # replacement -> [to_be_replaced_1, ..., to_be_replaced_n]
-            cluster = {k: l for k, l in cluster.items() if len(l) > 0}
+        # to_be_replaced -> replacement
+        finalized_replacements = {v: k for k, l in cluster.items() for v in l}
 
-            # to_be_replaced -> replacement
-            finalized_replacements = {v: k for k, l in cluster.items() for v in l}
+        return cluster, finalized_replacements
 
-            return cluster, finalized_replacements
-
-        edge_dict = build_edge_dict(graph)
+    def modify(self, graph: GraphRepresentationType):
+        # FIXME: these variables should be class variables and configurable with config
+        textual = 0.8
+        structural = 0.8
+        temporal = 3600
+        conj = "and",
+        representive_weight = "pagerank"
 
         replacements = {}
 
         # investigate what can be replaced with what
         for edge in graph.edges:
             if conj == "or":
-                filter_bool = edge.wgts[models.EdgeWeights.similarity] > textual \
-                              or edge.wgts[models.EdgeWeights.reply_to] > structural \
-                              or edge.wgts[models.EdgeWeights.same_comment] > structural \
-                              or edge.wgts[models.EdgeWeights.same_article] > structural \
-                              or edge.wgts[models.EdgeWeights.same_group] > structural \
-                              or edge.wgts[models.EdgeWeights.temporal] < temporal
+                filter_bool = edge.wgts.similarity > textual \
+                              or edge.wgts.reply_to > structural \
+                              or edge.wgts.same_comment > structural \
+                              or edge.wgts.same_article > structural \
+                              or edge.wgts.same_group > structural \
+                              or edge.wgts.temporal < temporal
             else:
-                filter_bool = edge.wgts[models.EdgeWeights.similarity] > textual \
-                              and edge.wgts[models.EdgeWeights.reply_to] > structural \
-                              and edge.wgts[models.EdgeWeights.same_comment] > structural \
-                              and edge.wgts[models.EdgeWeights.same_article] > structural \
-                              and edge.wgts[models.EdgeWeights.same_group] > structural \
-                              and edge.wgts[models.EdgeWeights.temporal] < temporal
+                filter_bool = edge.wgts.similarity > textual \
+                              and edge.wgts.reply_to > structural \
+                              and edge.wgts.same_comment > structural \
+                              and edge.wgts.same_article > structural \
+                              and edge.wgts.same_group > structural \
+                              and edge.wgts.temporal < temporal
 
             if filter_bool:
-                source = edge.src
-                target = edge.tgt
+                source: Tuple[int, int] = edge.src
+                target: Tuple[int, int] = edge.tgt
 
                 if source is None or target is None:
                     continue
@@ -254,7 +254,7 @@ class NodeMerger(Modifier):
                 replacements[node_to_sid(drop)] = node_to_sid(use)
 
         # use only replacements that cannot be replaced by others
-        cluster, final_replacements = clusters(replacements)
+        cluster, final_replacements = self.clusters(replacements)
         #   # replace nodes in edges
         for edge in graph.edges:
             if node_to_sid(edge.src) in final_replacements.keys():
@@ -267,8 +267,6 @@ class NodeMerger(Modifier):
         graph.edges = list([e for e in graph.edges if not (e.src is None or e.tgt is None)
                             and self.weights_bigger_as_threshold(e, threshold=0)
                             and node_to_sid(e.src) != node_to_sid(e.tgt)])
-
-        return cluster
 
     def weights_bigger_as_threshold(self, edge: models.Edge, threshold: float = 0, edge_types=None):
         if edge_types is None:

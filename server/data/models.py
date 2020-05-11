@@ -160,6 +160,9 @@ class SplitWeights(BaseModel):
     # the number of votes for the comment
     votes: Optional[float]
 
+    def __getitem__(self, item):
+        return self.__root__[item]
+
 
 class Split(BaseModel):
     # first character of the sentence
@@ -192,6 +195,9 @@ class EdgeWeights(BaseModel):
     same_comment: Optional[float]
     # distance in seconds between comments
     temporal: Optional[float]
+
+    def __getitem__(self, item):
+        return self.__root__[item]
 
 
 class Edge(BaseModel):

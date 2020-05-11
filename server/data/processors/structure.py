@@ -2,7 +2,6 @@ import logging
 from datetime import datetime
 import data.models as models
 from data.processors import Comparator
-from data.processors.embedding import cosine_similarity, load_fasttext_model
 
 logger = logging.getLogger('data.graph.comparator')
 
@@ -101,26 +100,3 @@ class TemporalComparator(Comparator):
 
         if weight < self.max_time:
             return (weight / self.max_time) * self.base_weight
-
-
-class SimilarityComparator(Comparator):
-    def __init__(self, *args, max_similarity: float = None, base_weight=None, only_root: bool = None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.max_similarity = self.conf_getfloat('max_similarity', max_similarity)
-        self.base_weight = self.conf_getfloat('base_weight', base_weight)
-        self.only_root = self.conf_getboolean('only_root', only_root)
-
-        logger.debug(f'{self.__class__.__name__} initialised with max_similarity: {self.max_similarity} '
-                     f'base_weight: {self.base_weight} and only_root: {self.only_root}, load fasttext model...')
-        self.model = load_fasttext_model()
-        logger.debug(f'loaded fast text model')
-
-    def _set_weight(self, edge: models.EdgeWeights, weight: float):
-        edge.similarity = weight
-
-    def compare(self, a: models.CommentCached, _a: models.SplitComment,
-                b: models.CommentCached, _b: models.SplitComment,
-                split_a, split_b) -> float:
-        weight = cosine_similarity(self.model, a.text, b.text)
-        if weight < self.max_similarity: #
-            return ((1.0 - weight) / (1.0 - self.max_similarity)) * self.base_weight

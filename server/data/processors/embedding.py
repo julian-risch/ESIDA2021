@@ -1,6 +1,11 @@
 import numpy as np
 import fasttext as ft
 from typing import List, Dict
+from data.processors import Comparator
+import data.models as models
+import logging
+
+logger = logging.getLogger('data.graph.embedding')
 
 
 def load_fasttext_model(path='E:\\cc.de.300.bin'):
@@ -38,3 +43,26 @@ def cosine_similarity(model, text_a: str, text_b: str):
     if self_norm == 0 or other_norm == 0:
         return 0
     return np.dot(a, b) / (self_norm * other_norm)
+
+
+class SimilarityComparator(Comparator):
+    def __init__(self, *args, max_similarity: float = None, base_weight=None, only_root: bool = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.max_similarity = self.conf_getfloat('max_similarity', max_similarity)
+        self.base_weight = self.conf_getfloat('base_weight', base_weight)
+        self.only_root = self.conf_getboolean('only_root', only_root)
+
+        logger.debug(f'{self.__class__.__name__} initialised with max_similarity: {self.max_similarity} '
+                     f'base_weight: {self.base_weight} and only_root: {self.only_root}, load fasttext model...')
+        self.model = load_fasttext_model()
+        logger.debug(f'loaded fast text model')
+
+    def _set_weight(self, edge: models.EdgeWeights, weight: float):
+        edge.similarity = weight
+
+    def compare(self, a: models.CommentCached, _a: models.SplitComment,
+                b: models.CommentCached, _b: models.SplitComment,
+                split_a, split_b) -> float:
+        weight = cosine_similarity(self.model, a.text, b.text)
+        if weight < self.max_similarity:  #
+            return ((1.0 - weight) / (1.0 - self.max_similarity)) * self.base_weight

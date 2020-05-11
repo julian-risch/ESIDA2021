@@ -5,7 +5,7 @@ from typing import Union, Optional, Tuple, List, Any, Coroutine
 from data.models import Graph
 from data.processors import Modifier
 from data.processors.graph import GraphRepresentation
-from data.processors.modifiers import PageRankFilter, PageRanker
+from data.processors.ranking import PageRankFilter, PageRanker
 
 MODIFIERS = [PageRanker, PageRankFilter]
 

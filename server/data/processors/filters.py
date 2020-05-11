@@ -5,7 +5,7 @@ import numpy as np
 import scipy.sparse as sparse
 import data.models as models
 from data.processors import Modifier
-from data.processors.modifiers import sid_to_nodes, build_edge_dict, node_to_sid
+from data.processors.ranking import sid_to_nodes, build_edge_dict, node_to_sid
 
 logger = logging.getLogger('data.graph.filters')
 

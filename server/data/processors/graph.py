@@ -1,10 +1,11 @@
-from data.processors import modifiers
+from data.processors import ranking
 from data.processors.text import split_comment
 import data.models as models
 from typing import List
-from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, \
-    SimilarityComparator
-from data.processors.modifiers import PageRanker, CentralityDegreeCalculator
+from data.processors import GraphRepresentationType
+from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator
+from data.processors.embedding import SimilarityComparator
+from data.processors.ranking import PageRanker, CentralityDegreeCalculator
 from data.processors.filters import PageRankFilter, SimilarityEdgeFilter, BottomReplyToEdgeFilter
 from configparser import ConfigParser
 from common import config
@@ -18,35 +19,30 @@ COMPARATORS = [
 ]
 
 MODIFIERS = [
+    # edge and node weighting
     PageRanker,
-    CentralityDegreeCalculator
-]
+    CentralityDegreeCalculator,
 
-FILTERS = [
+    # filtering
     BottomReplyToEdgeFilter,
     PageRankFilter,
-    SimilarityEdgeFilter,
+    SimilarityEdgeFilter
 ]
 
 logger = logging.getLogger('data.processors.graph')
 
 
-class GraphRepresentation:
+class GraphRepresentation(GraphRepresentationType):
     def __init__(self, comments: List[models.CommentCached], conf: dict = None):
+        super().__init__(comments)
+
         # create a temporary copy of the global config
         self.conf = ConfigParser()
         self.conf.read_dict(config)
         if conf is not None:
             self.conf.read_dict(conf)
 
-        # full text comments might be needed by comparator
-        self.orig_comments = comments
-
-        # data for models.Graph
         self.comments: List[models.SplitComment] = [split_comment(comment) for comment in comments]
-        self.id2idx = {}
-        self.edges: List[models.Edge] = []
-        self.nodes = []
 
         logger.debug(f'{len(self.comments)} comments turned '
                      f'into {len([s for c in self.comments for s in c.splits])} splits')
@@ -94,8 +90,3 @@ class GraphRepresentation:
 
         for modifier in modifiers:
             modifier.modify(self)
-
-        filters = [_filter(conf=self.conf) for _filter in FILTERS if _filter.is_on(self.conf)]
-
-        for _filter in filters:
-            _filter.modify(self)
