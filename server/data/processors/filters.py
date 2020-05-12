@@ -5,7 +5,7 @@ import numpy as np
 import scipy.sparse as sparse
 import data.models as models
 from data.processors import Modifier
-from data.processors.ranking import sid_to_nodes, build_edge_dict, node_to_sid
+from data.processors.ranking import build_edge_dict
 
 logger = logging.getLogger('data.graph.filters')
 
@@ -37,7 +37,7 @@ class BottomReplyToEdgeFilter(Modifier):
         edge_dict = build_edge_dict(graph_to_modify)
         for comment in graph_to_modify.comments:
             for j, split in enumerate(comment.splits):
-                node_edges = edge_dict[node_to_sid(node=None, a=graph_to_modify.id2idx[comment.id], b=j)]
+                node_edges = edge_dict[(graph_to_modify.id2idx[comment.id], j)]
                 print(node_edges)
                 node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type()], reverse=True)[
                              :self.top_edges]
@@ -113,7 +113,7 @@ class BottomSimilarityEdgeFilter(Modifier):
         # for node_id in graph.id2idx.keys():
         for comment in graph_to_modify.comments:
             for j, split in enumerate(comment.splits):
-                node_edges = edge_dict[node_to_sid(node=None, a=comment.id, b=j)]
+                node_edges = edge_dict[(comment.id, j)]
                 node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type()], reverse=True)[
                              :self.top_edges]
                 for edge in node_edges:
@@ -149,17 +149,15 @@ class PageRankFilter(Modifier):
         return "pagerank"
 
     def modify(self, graph_to_modify):
-        page_ranks = {node_to_sid(node=None, a=comment.id, b=j): split.wgts[models.SplitWeights.pagerank]
+        page_ranks = {(comment.id, j): split.wgts[models.SplitWeights.pagerank]
                       for comment in graph_to_modify.comments for j, split in enumerate(comment.splits)}
         filtered_ranks = {k: v for k, v in sorted(page_ranks.items(), key=lambda item: item[1], reverse=True)[:self.k]}
 
         if self.strict:
             graph_to_modify.edges = [edge for edge in graph_to_modify.edges
-                                     if node_to_sid(edge.src) in filtered_ranks and node_to_sid(
-                    edge.tgt) in filtered_ranks]
+                                     if edge.src in filtered_ranks and edge.tgt in filtered_ranks]
         else:
             graph_to_modify.edges = [edge for edge in graph_to_modify.edges
-                                     if
-                                     node_to_sid(edge.src) in filtered_ranks or node_to_sid(edge.tgt) in filtered_ranks]
+                                     if edge.src in filtered_ranks or edge.tgt in filtered_ranks]
 
         return graph_to_modify
