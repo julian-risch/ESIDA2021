@@ -120,7 +120,7 @@ class CentralityDegreeCalculator(Modifier):
             counter_dict[node_to_sid(edge.tgt)] += 1
             counter_dict[node_to_sid(edge.src)] += 1
 
-        # update node of graph with new weights for for degree centrality
+        # update node of graph with new weights for degree centrality
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
                 split.wgts.degree_centrality = counter_dict[node_to_sid(node=None, a=comment.id, b=j)]
