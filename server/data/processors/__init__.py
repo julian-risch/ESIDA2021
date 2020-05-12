@@ -52,9 +52,12 @@ class Comparator(ABC):
                             b: models.CommentCached, _b: models.SplitComment,
                             split_a, split_b):
         weight = self.compare(a, _a, b, _b, split_a, split_b)
-        logger.debug(f'update: {edge}')
+
+        # do not log edges with only None types
+        if edge.same_comment or edge.similarity or edge.temporal or edge.same_group or edge.temporal or edge.reply_to:
+            logger.debug(f'update: {edge}')
         if weight:
-            logger.debug(f'attempting: {weight}')
+            logger.debug(f'attempting: {weight} on {self.__class__.__name__}')
             self._set_weight(edge, weight)
 
     @abstractmethod
