@@ -3,7 +3,7 @@ from data.processors.text import split_comment
 import data.models as models
 from typing import List
 from data.processors import GraphRepresentationType
-from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator
+from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, TemporalComparator
 from data.processors.embedding import SimilarityComparator
 from data.processors.ranking import PageRanker, CentralityDegreeCalculator
 from data.processors.filters import PageRankFilter, SimilarityEdgeFilter, BottomReplyToEdgeFilter
@@ -15,7 +15,8 @@ COMPARATORS = [
     SameArticleComparator,
     SameCommentComparator,
     ReplyToComparator,
-    SimilarityComparator
+    SimilarityComparator,
+    TemporalComparator
 ]
 
 MODIFIERS = [
@@ -36,13 +37,19 @@ class GraphRepresentation(GraphRepresentationType):
     def __init__(self, comments: List[models.CommentCached], conf: dict = None):
         super().__init__(comments)
 
+
         # create a temporary copy of the global config
         self.conf = ConfigParser()
         self.conf.read_dict(config)
         if conf is not None:
             self.conf.read_dict(conf)
-
         self.comments: List[models.SplitComment] = [split_comment(comment) for comment in comments]
+
+        # config: configuration from DEFAULT.ini
+        # self.conf: configuration from code
+
+        # FIXME: for testing purposes due the code config overrides the configuration from file
+        self.conf = config
 
         logger.debug(f'{len(self.comments)} comments turned '
                      f'into {len([s for c in self.comments for s in c.splits])} splits')
@@ -65,7 +72,6 @@ class GraphRepresentation(GraphRepresentationType):
 
     def _pairwise_comparisons(self):
         comparators = [comparator(conf=self.conf) for comparator in COMPARATORS if comparator.is_on(self.conf)]
-
         for i in (range(len(self.comments))):
             comment_i = self.comments[i]
             orig_comment_i = self.orig_comments[i]
@@ -76,6 +82,7 @@ class GraphRepresentation(GraphRepresentationType):
                     # if comparing sentences within the same comment, skip lower triangle
                     for sj in range(si + 1 if i == j else 0, len(comment_j.splits)):
                         edge_weights = models.EdgeWeights()
+
                         for comparator in comparators:
                             comparator.update_edge_weights(edge_weights,
                                                            orig_comment_i, comment_i,
@@ -87,6 +94,10 @@ class GraphRepresentation(GraphRepresentationType):
 
     def _modify(self):
         modifiers = [modifier(conf=self.conf) for modifier in MODIFIERS if modifier.is_on(self.conf)]
+        print(modifiers)
 
+        nr_unfiltered = len(self.edges)
         for modifier in modifiers:
             modifier.modify(self)
+
+        logger.debug(f'{nr_unfiltered-len(self.edges)} edges removed')

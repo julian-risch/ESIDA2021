@@ -23,6 +23,7 @@ try:
 except ImportError as e:
     logger.warning(e)
 
+    RUSAGE_SELF = None
 
     def getrusage(*args):
         return 0.0, 0.0

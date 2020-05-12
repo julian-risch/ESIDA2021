@@ -196,8 +196,10 @@ class EdgeWeights(BaseModel):
     # distance in seconds between comments
     TEMPORAL: Optional[float]
 
+    # this method allows dictionary access, e.g. edge.wgts["reply_to"]
     def __getitem__(self, item):
-        return self.__root__[item]
+        # FIXME: was __root_ before, but doesnt work this way
+        return self.__dict__[item]
 
 
 class Edge(BaseModel):
