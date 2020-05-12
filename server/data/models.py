@@ -198,7 +198,7 @@ class EdgeWeights(BaseModel):
 
     # this method allows dictionary access, e.g. edge.wgts["reply_to"]
     def __getitem__(self, item):
-        # FIXME: was __root_ before, but doesnt work this way
+        # https://pydantic-docs.helpmanual.io/usage/models/
         return self.__dict__[item]
 
 

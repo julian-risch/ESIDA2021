@@ -24,29 +24,19 @@ class BottomReplyToEdgeFilter(Modifier):
         logger.debug(f'{self.__class__.__name__} initialised with '
                      f'top_edges={self.top_edges}')
 
-    @classmethod
-    def short_name(cls) -> str:
-        return 'brtef'
-
-    @classmethod
-    def edge_type(cls) -> str:
-        return "reply_to"
-
-    def modify(self, graph_to_modify):
+    def modify(self, graph: GraphRepresentationType):
         filtered_edges = []
-        edge_dict = build_edge_dict(graph_to_modify)
-        for comment in graph_to_modify.comments:
+        edge_dict = build_edge_dict(graph)
+        for comment in graph.comments:
             for j, split in enumerate(comment.splits):
-                node_edges = edge_dict[(graph_to_modify.id2idx[comment.id], j)]
-                node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type()], reverse=True)[
+                node_edges = edge_dict[(graph.id2idx[comment.id], j)]
+                node_edges = sorted(node_edges, key=lambda e: e.wgts.REPLY_TO, reverse=True)[
                              :self.top_edges]
                 for edge in node_edges:
                     if edge not in filtered_edges:
                         filtered_edges.append(edge)
 
-        graph_to_modify.edges = filtered_edges
-
-        return graph_to_modify
+        graph.edges = filtered_edges
 
 
 class BottomSimilarityEdgeFilter(Modifier):
@@ -63,30 +53,22 @@ class BottomSimilarityEdgeFilter(Modifier):
         logger.debug(f'{self.__class__.__name__} initialised with '
                      f'top_edges={self.top_edges}')
 
-    @classmethod
-    def short_name(cls) -> str:
-        return 'bsef'
-
-    @classmethod
-    def edge_type(cls) -> str:
-        return "similarity"
-
-    def modify(self, graph_to_modify):
+    def modify(self, graph: GraphRepresentationType):
         filtered_edges = []
-        edge_dict = build_edge_dict(graph_to_modify)
+        edge_dict = build_edge_dict(graph)
 
         # for node_id in graph.id2idx.keys():
-        for comment in graph_to_modify.comments:
+        for comment in graph.comments:
             for j, split in enumerate(comment.splits):
-                node_edges = edge_dict[(graph_to_modify.id2idx[comment.id], j)]
-                node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type()], reverse=True)[
+                node_edges = edge_dict[(graph.id2idx[comment.id], j)]
+                node_edges = sorted(node_edges, key=lambda e: e.wgts.SIMILARITY, reverse=True)[
                              :self.top_edges]
                 for edge in node_edges:
                     if edge not in filtered_edges:
                         filtered_edges.append(edge)
-        graph_to_modify.edges = filtered_edges
+        graph.edges = filtered_edges
 
-        return graph_to_modify
+        return graph
 
 
 # todo: add bottom edge filters for other edge types
