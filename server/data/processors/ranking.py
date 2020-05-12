@@ -42,6 +42,7 @@ def edge_list_to_adjacency_matrix(edges, get_weight: Callable[[models.EdgeWeight
 
     arr = np.array(arr)
 
+    # Fixme: TypeError: '>=' not supported between instances of 'tuple' and 'float'
     shape = tuple(arr.max(axis=0)[:2] + 1)
     coo = sparse.coo_matrix((arr[:, 2], (arr[:, 0], arr[:, 1])), shape=shape,
                             dtype=arr.dtype)
@@ -49,7 +50,7 @@ def edge_list_to_adjacency_matrix(edges, get_weight: Callable[[models.EdgeWeight
 
 
 class PageRanker(Modifier):
-    def __init__(self, *args, num_iterations: int = None, d: float = None, normalize=None, **kwargs):
+    def __init__(self, *args, num_iterations: int = None, d: float = None, normalize=None, edge_type=None, **kwargs):
         """
         Returns a graph with page-ranked node weights
         :param args:
@@ -62,13 +63,13 @@ class PageRanker(Modifier):
         self.num_iterations = self.conf_getint('num_iterations', num_iterations)
         self.d = self.conf_getfloat('d', d)
         self.normalize = self.conf_getboolean('normalize', normalize)
+        self.edge_type = self.conf_get('edge_type', edge_type)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
                      f'num_iterations={self.num_iterations}, d={self.d} and normalize={self.normalize}')
 
     def modify(self, graph: GraphRepresentationType):
-
-        adjacence_matrix, node_sids = edge_list_to_adjacency_matrix(graph.edges, lambda e: e.similarity)
+        adjacence_matrix, node_sids = edge_list_to_adjacency_matrix(graph.edges, lambda e: e.wgts[self.edge_type])
 
         m = adjacence_matrix / adjacence_matrix.sum(axis=0, keepdims=1)
         n = m.shape[1]
