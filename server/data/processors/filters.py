@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 import scipy.sparse as sparse
 import data.models as models
-from data.processors import Modifier
+from data.processors import Modifier, GraphRepresentationType
 from data.processors.ranking import build_edge_dict
 
 logger = logging.getLogger('data.graph.filters')
@@ -38,49 +38,14 @@ class BottomReplyToEdgeFilter(Modifier):
         for comment in graph_to_modify.comments:
             for j, split in enumerate(comment.splits):
                 node_edges = edge_dict[(graph_to_modify.id2idx[comment.id], j)]
-                print(node_edges)
                 node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type()], reverse=True)[
                              :self.top_edges]
                 for edge in node_edges:
                     if edge not in filtered_edges:
                         filtered_edges.append(edge)
-        print(self.top_edges, len(filtered_edges))
+
         graph_to_modify.edges = filtered_edges
 
-        return graph_to_modify
-
-
-# todo: add bottom edge filters for other edge types
-
-
-class SimilarityEdgeFilter(Modifier):
-    def __init__(self, *args, threshold=None, **kwargs):
-        """
-        Removes all edges of the specific type below a threshold
-        :param args:
-        :threshold: value for edges to filter
-        :param kwargs:
-        """
-        super().__init__(*args, **kwargs)
-        self.threshold = self.conf_getfloat("threshold", threshold)
-
-        logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'threshold={self.threshold}')
-
-    @classmethod
-    def short_name(cls) -> str:
-        return 'sef'
-
-    @classmethod
-    def edge_type(cls) -> str:
-        return "similarity"
-
-    def modify(self, graph_to_modify):
-        # note that edge_type is function call here and in BottomSimilarityEdgeFilter it can be an attribute
-        for e in graph_to_modify.edges:
-            print(e.wgts[0][0])
-        graph_to_modify.edges = [edge for edge in graph_to_modify.edges if edge.wgts[0][0] > self.threshold]
-        # graph_to_modify.edges = [edge for edge in graph_to_modify.edges if edge.wgts[self.__class__.edge_type()][0] > self.threshold]
         return graph_to_modify
 
 
@@ -113,7 +78,7 @@ class BottomSimilarityEdgeFilter(Modifier):
         # for node_id in graph.id2idx.keys():
         for comment in graph_to_modify.comments:
             for j, split in enumerate(comment.splits):
-                node_edges = edge_dict[(comment.id, j)]
+                node_edges = edge_dict[(graph_to_modify.id2idx[comment.id], j)]
                 node_edges = sorted(node_edges, key=lambda e: e.wgts[self.__class__.edge_type()], reverse=True)[
                              :self.top_edges]
                 for edge in node_edges:
@@ -121,6 +86,38 @@ class BottomSimilarityEdgeFilter(Modifier):
                         filtered_edges.append(edge)
         graph_to_modify.edges = filtered_edges
 
+        return graph_to_modify
+
+# todo: add bottom edge filters for other edge types
+
+
+class SimilarityEdgeFilter(Modifier):
+    def __init__(self, *args, threshold=None, **kwargs):
+        """
+        Removes all edges of the specific type below a threshold
+        :param args:
+        :threshold: value for edges to filter
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.threshold = self.conf_getfloat("threshold", threshold)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'threshold={self.threshold}')
+
+    @classmethod
+    def short_name(cls) -> str:
+        return 'sef'
+
+    @classmethod
+    def edge_type(cls) -> str:
+        return "similarity"
+
+    def modify(self, graph_to_modify: GraphRepresentationType):
+        # note that edge_type is function call here and in BottomSimilarityEdgeFilter it can be an attribute
+
+        graph_to_modify.edges = [edge for edge in graph_to_modify.edges if edge.wgts.similarity > self.threshold]
+        # graph_to_modify.edges = [edge for edge in graph_to_modify.edges if edge.wgts[self.__class__.edge_type()][0] > self.threshold]
         return graph_to_modify
 
 
