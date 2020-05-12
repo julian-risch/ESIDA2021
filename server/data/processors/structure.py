@@ -93,10 +93,7 @@ class TemporalComparator(Comparator):
                 return (x - y).total_seconds()
             return int((y - x).total_seconds())
 
-        def timestring_to_stamp(timestring):
-            return datetime.strptime(timestring, "%Y-%m-%d %H:%M:%S")
-
-        weight = time_second_difference(timestring_to_stamp(a.timestamp), timestring_to_stamp(b.timestamp))
+        weight = time_second_difference(a.timestamp, b.timestamp)
 
         if weight < self.max_time:
             return (weight / self.max_time) * self.base_weight
