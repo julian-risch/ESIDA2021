@@ -58,7 +58,7 @@ class SimilarityComparator(Comparator):
         logger.debug(f'loaded fast text model')
 
     def _set_weight(self, edge: models.EdgeWeights, weight: float):
-        edge.similarity = weight
+        edge.SIMILARITY = weight
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,

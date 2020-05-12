@@ -150,15 +150,15 @@ class GraphConfig(BaseModel):
 
 class SplitWeights(BaseModel):
     # the length of the split
-    size: Optional[float]
+    SIZE: Optional[float]
     # the page rank value for the split / node
-    pagerank: Optional[float]
+    PAGERANK: Optional[float]
     # the degree centrality value for the split / node
-    degree_centrality: Optional[float]
+    DEGREE_CENTRALITY: Optional[float]
     # the distance (in seconds) to global comparable time (e.g. youngest comment)
-    recency: Optional[float]
+    RECENCY: Optional[float]
     # the number of votes for the comment
-    votes: Optional[float]
+    VOTES: Optional[float]
 
     def __getitem__(self, item):
         return self.__root__[item]
@@ -184,17 +184,17 @@ class SplitComment(BaseModel):
 
 class EdgeWeights(BaseModel):
     # is one comment the reply to the other comment?
-    reply_to: Optional[float]
+    REPLY_TO: Optional[float]
     # belong the two splits to the same article?
-    same_article: Optional[float]
+    SAME_ARTICLE: Optional[float]
     # cosine similarity between comments
-    similarity: Optional[float]
+    SIMILARITY: Optional[float]
     # belong the two splits to the same group?
-    same_group: Optional[float]
+    SAME_GROUP: Optional[float]
     # belong the two splits to the same comment?
-    same_comment: Optional[float]
+    SAME_COMMENT: Optional[float]
     # distance in seconds between comments
-    temporal: Optional[float]
+    TEMPORAL: Optional[float]
 
     def __getitem__(self, item):
         return self.__root__[item]

@@ -6,7 +6,7 @@ import scipy.sparse as sparse
 import data.models as models
 from data.processors import Modifier, GraphRepresentationType
 
-logger = logging.getLogger('data.graph.modification')
+logger = logging.getLogger('data.graph.ranking')
 
 
 # helper functions
@@ -73,7 +73,7 @@ class PageRanker(Modifier):
 
     def modify(self, graph: GraphRepresentationType):
 
-        adjacence_matrix, node_sids = edge_list_to_adjacency_matrix(graph.edges, lambda e: e.similarity)
+        adjacence_matrix, node_sids = edge_list_to_adjacency_matrix(graph.edges, lambda e: e.SIMILARITY)
 
         m = adjacence_matrix / adjacence_matrix.sum(axis=0, keepdims=1)
         n = m.shape[1]
@@ -97,7 +97,7 @@ class PageRanker(Modifier):
         # update node of graph with new weights for PageRank
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
-                split.wgts.pagerank = ranks[node_to_sid(node=None, a=comment.id, b=j)]
+                split.wgts.PAGERANK = ranks[node_to_sid(node=None, a=comment.id, b=j)]
 
 
 class CentralityDegreeCalculator(Modifier):
@@ -123,7 +123,7 @@ class CentralityDegreeCalculator(Modifier):
         # update node of graph with new weights for for degree centrality
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
-                split.wgts.degree_centrality = counter_dict[node_to_sid(node=None, a=comment.id, b=j)]
+                split.wgts.DEGREE_CENTRALITY = counter_dict[node_to_sid(node=None, a=comment.id, b=j)]
 
 
 class Representives:
@@ -212,19 +212,19 @@ class NodeMerger(Modifier):
         # investigate what can be replaced with what
         for edge in graph.edges:
             if conj == "or":
-                filter_bool = edge.wgts.similarity > textual \
-                              or edge.wgts.reply_to > structural \
-                              or edge.wgts.same_comment > structural \
-                              or edge.wgts.same_article > structural \
-                              or edge.wgts.same_group > structural \
-                              or edge.wgts.temporal < temporal
+                filter_bool = edge.wgts.SIMILARITY > textual \
+                              or edge.wgts.REPLY_TO > structural \
+                              or edge.wgts.SAME_COMMENT > structural \
+                              or edge.wgts.SAME_ARTICLE > structural \
+                              or edge.wgts.SAME_GROUP > structural \
+                              or edge.wgts.TEMPORAL < temporal
             else:
-                filter_bool = edge.wgts.similarity > textual \
-                              and edge.wgts.reply_to > structural \
-                              and edge.wgts.same_comment > structural \
-                              and edge.wgts.same_article > structural \
-                              and edge.wgts.same_group > structural \
-                              and edge.wgts.temporal < temporal
+                filter_bool = edge.wgts.SIMILARITY > textual \
+                              and edge.wgts.REPLY_TO > structural \
+                              and edge.wgts.SAME_COMMENT > structural \
+                              and edge.wgts.SAME_ARTICLE > structural \
+                              and edge.wgts.SAME_GROUP > structural \
+                              and edge.wgts.TEMPORAL < temporal
 
             if filter_bool:
                 source: Tuple[int, int] = edge.src
@@ -270,7 +270,7 @@ class NodeMerger(Modifier):
 
     def weights_bigger_as_threshold(self, edge: models.Edge, threshold: float = 0, edge_types=None):
         if edge_types is None:
-            edge_types = [models.EdgeWeights.similarity, models.EdgeWeights.same_comment]
+            edge_types = [models.EdgeWeights.SIMILARITY, models.EdgeWeights.SAME_COMMENT]
         choosen_weights = [edge.wgts[edge_type] for edge_type in edge_types]
 
         # boolean_and

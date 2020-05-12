@@ -149,7 +149,7 @@ class PageRankFilter(Modifier):
         return "pagerank"
 
     def modify(self, graph_to_modify):
-        page_ranks = {node_to_sid(node=None, a=comment.id, b=j): split.wgts[models.SplitWeights.pagerank]
+        page_ranks = {node_to_sid(node=None, a=comment.id, b=j): split.wgts[models.SplitWeights.PAGERANK]
                       for comment in graph_to_modify.comments for j, split in enumerate(comment.splits)}
         filtered_ranks = {k: v for k, v in sorted(page_ranks.items(), key=lambda item: item[1], reverse=True)[:self.k]}
 

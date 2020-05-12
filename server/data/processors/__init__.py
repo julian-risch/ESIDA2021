@@ -4,7 +4,7 @@ import data.models as models
 from typing import List, Union, Optional
 import logging
 
-logger = logging.getLogger('data.graph.processor')
+logger = logging.getLogger('data.processor')
 
 
 class GraphRepresentationType(ABC):
@@ -47,15 +47,16 @@ class Comparator(ABC):
             return param
         return self.conf.get(self.__class__.__name__, key)
 
-    def update_edge_weights(self, edge: models.EdgeWeights,
+    def update_edge_weights(self, edge_weights: models.EdgeWeights,
                             a: models.CommentCached, _a: models.SplitComment,
                             b: models.CommentCached, _b: models.SplitComment,
                             split_a, split_b):
         weight = self.compare(a, _a, b, _b, split_a, split_b)
-        logger.debug(f'update: {edge}')
+        # logger.debug(f'update: {self.__class__.__name__} - {weight} - {edge}')
         if weight:
-            logger.debug(f'attempting: {weight}')
-            self._set_weight(edge, weight)
+            # logger.debug(f'setting weight {weight} from {self.__class__.__name__}')
+            self._set_weight(edge_weights, weight)
+            # logger.debug(f'setting weight {weight} from {self.__class__.__name__} - {edge_weights}')
 
     @abstractmethod
     def _set_weight(self, edge: models.EdgeWeights, weight: float):

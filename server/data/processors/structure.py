@@ -3,7 +3,7 @@ from datetime import datetime
 import data.models as models
 from data.processors import Comparator
 
-logger = logging.getLogger('data.graph.comparator')
+logger = logging.getLogger('data.graph.structure')
 
 
 class SameCommentComparator(Comparator):
@@ -23,7 +23,7 @@ class SameCommentComparator(Comparator):
                      f'base_weight: {self.base_weight} and only_consecutive: {self.only_consecutive}')
 
     def _set_weight(self, edge: models.EdgeWeights, weight: float):
-        edge.same_comment = weight
+        edge.SAME_COMMENT = weight
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
@@ -42,7 +42,7 @@ class SameArticleComparator(Comparator):
                      f'base_weight: {self.base_weight} and only_root: {self.only_root}')
 
     def _set_weight(self, edge: models.EdgeWeights, weight: float):
-        edge.same_article = weight
+        edge.SAME_ARTICLE = weight
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
@@ -61,7 +61,7 @@ class ReplyToComparator(Comparator):
                      f'base_weight: {self.base_weight} and only_root: {self.only_root}')
 
     def _set_weight(self, edge: models.EdgeWeights, weight: float):
-        edge.reply_to = weight
+        edge.REPLY_TO = weight
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
@@ -83,7 +83,7 @@ class TemporalComparator(Comparator):
                      f'base_weight: {self.base_weight} and only_root: {self.only_root}')
 
     def _set_weight(self, edge: models.EdgeWeights, weight: float):
-        edge.temporal = weight
+        edge.TEMPORAL = weight
 
     def compare(self, a: models.CommentCached, _a: models.SplitComment,
                 b: models.CommentCached, _b: models.SplitComment,
