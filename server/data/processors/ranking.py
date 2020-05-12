@@ -10,27 +10,25 @@ logger = logging.getLogger('data.graph.modification')
 
 
 # helper functions
-def node_to_sid(node: Tuple[int, int] = None, a: int = None, b: int = None) -> str:
-    if node:
-        return f'{node[0]}|{node[1]}'
-    else:
-        return f'{a}|{b}'
-
-
-def sid_to_nodes(sid: str = None) -> Tuple[int, int]:
-    s = sid.split('|')
-    return int(s[0]), int(s[1])
+# def node_to_sid(node: Tuple[int, int] = None, a: int = None, b: int = None) -> str:
+#     if node:
+#         return f'{node[0]}|{node[1]}'
+#     else:
+#         return f'{a}|{b}'
+#
+#
+# def sid_to_nodes(sid: str = None) -> Tuple[int, int]:
+#     s = sid.split('|')
+#     return int(s[0]), int(s[1])
 
 
 def build_edge_dict(graph):
     dic = defaultdict(list)
     for e in graph.edges:
-        src = node_to_sid(e.src)
-        tgt = node_to_sid(e.tgt)
-        if e not in dic[src]:
-            dic[src].append(e)
-        if e not in dic[tgt]:
-            dic[tgt].append(e)
+        if e not in dic[e.src]:
+            dic[e.src].append(e)
+        if e not in dic[e.tgt]:
+            dic[e.tgt].append(e)
     return dic
 
 
@@ -38,12 +36,9 @@ def edge_list_to_adjacency_matrix(edges, get_weight: Callable[[models.EdgeWeight
     nodes = set()
     arr = []
     for edge in edges:
-        node_to_sid()
-        src_sid = node_to_sid(edge.src)
-        tgt_sid = node_to_sid(edge.tgt)
-        nodes.add(src_sid)
-        nodes.add(tgt_sid)
-        arr.extend(np.array([src_sid, tgt_sid, get_weight(edge)]))
+        nodes.add(edge.src)
+        nodes.add(edge.tgt)
+        arr.extend(np.array([edge.src, edge.tgt, get_weight(edge)]))
 
     arr = np.array(arr)
 
@@ -97,7 +92,7 @@ class PageRanker(Modifier):
         # update node of graph with new weights for PageRank
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
-                split.wgts.pagerank = ranks[node_to_sid(node=None, a=comment.id, b=j)]
+                split.wgts.pagerank = ranks[(comment.id, j)]
 
 
 class CentralityDegreeCalculator(Modifier):
@@ -117,13 +112,12 @@ class CentralityDegreeCalculator(Modifier):
     def modify(self, graph: GraphRepresentationType):
         counter_dict = defaultdict(int)
         for edge in graph.edges:
-            counter_dict[node_to_sid(edge.tgt)] += 1
-            counter_dict[node_to_sid(edge.src)] += 1
-
+            counter_dict[edge.tgt] += 1
+            counter_dict[edge.src] += 1
         # update node of graph with new weights for degree centrality
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
-                split.wgts.degree_centrality = counter_dict[node_to_sid(node=None, a=comment.id, b=j)]
+                split.wgts.degree_centrality = counter_dict[(graph.id2idx[comment.id], j)]
 
 
 class Representives:
@@ -251,22 +245,22 @@ class NodeMerger(Modifier):
                 if use == drop:
                     raise UserWarning("use and drop same!")
 
-                replacements[node_to_sid(drop)] = node_to_sid(use)
+                replacements[drop] = use
 
         # use only replacements that cannot be replaced by others
         cluster, final_replacements = self.clusters(replacements)
         #   # replace nodes in edges
         for edge in graph.edges:
-            if node_to_sid(edge.src) in final_replacements.keys():
-                edge.src = sid_to_nodes(final_replacements[edge.src])
+            if edge.src in final_replacements.keys():
+                edge.src = final_replacements[edge.src]
 
-            if node_to_sid(edge.tgt) in final_replacements.keys():
-                edge.tgt = sid_to_nodes(final_replacements[edge.tgt])
+            if edge.tgt in final_replacements.keys():
+                edge.tgt = final_replacements[edge.tgt]
 
         #   # final filtering
         graph.edges = list([e for e in graph.edges if not (e.src is None or e.tgt is None)
                             and self.weights_bigger_as_threshold(e, threshold=0)
-                            and node_to_sid(e.src) != node_to_sid(e.tgt)])
+                            and e.src != e.tgt])
 
     def weights_bigger_as_threshold(self, edge: models.Edge, threshold: float = 0, edge_types=None):
         if edge_types is None:
