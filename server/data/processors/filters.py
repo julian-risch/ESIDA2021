@@ -42,36 +42,6 @@ class GenericBottomEdgeFilter(Modifier):
         return graph
 
 
-# class BottomSimilarityEdgeFilter(Modifier):
-#     def __init__(self, *args, top_edges=None, **kwargs):
-#         """
-#         Filters all edges except top edges for specific edge type
-#         :param args:
-#         :param top_edges: the number of top edges to keep for each node
-#         :param kwargs:
-#         """
-#         super().__init__(*args, **kwargs)
-#         self.top_edges = self.conf_getint('d', top_edges)
-#
-#         logger.debug(f'{self.__class__.__name__} initialised with '
-#                      f'top_edges={self.top_edges}')
-#
-#     def modify(self, graph: GraphRepresentationType):
-#         filtered_edges = []
-#         edge_dict = build_edge_dict(graph)
-#
-#         # for node_id in graph.id2idx.keys():
-#         for comment in graph.comments:
-#             for j, split in enumerate(comment.splits):
-#                 node_edges = edge_dict[(graph.id2idx[comment.id], j)]
-#                 node_edges = sorted(node_edges, key=lambda e: filter_none(e.wgts.SIMILARITY), reverse=True)[
-#                              :self.top_edges]
-#                 for edge in node_edges:
-#                     if edge not in filtered_edges:
-#                         filtered_edges.append(edge)
-#         graph.edges = filtered_edges
-#
-#         return graph
 class BottomSimilarityFilter(GenericBottomEdgeFilter):
     def __init__(self, *args, top_edges=None, **kwargs):
         GenericBottomEdgeFilter.__init__(self, *args, top_edges=top_edges, edge_type="SIMILARITY", **kwargs)
@@ -124,28 +94,6 @@ class GenericEdgeFilter(Modifier):
         return graph
 
 
-# class SimilarityEdgeFilter(Modifier):
-#     def __init__(self, *args, threshold=None, **kwargs):
-#         """
-#         Removes all edges of the specific type below a threshold
-#         :param args:
-#         :threshold: value for edges to filter
-#         :param kwargs:
-#         """
-#         super().__init__(*args, **kwargs)
-#         self.threshold = self.conf_getfloat("threshold", threshold)
-#
-#         logger.debug(f'{self.__class__.__name__} initialised with '
-#                      f'threshold={self.threshold}')
-#
-#     @classmethod
-#     def short_name(cls) -> str:
-#         return 'sef'
-#
-#     def modify(self, graph: GraphRepresentationType):
-#         graph.edges = [edge for edge in graph.edges if edge.wgts.SIMILARITY and edge.wgts.SIMILARITY > self.threshold]
-#         # graph.edges = [edge for edge in graph.edges if edge.wgts[self.__class__.edge_type()][0] > self.threshold]
-#         return graph
 class SimilarityEdgeFilter(GenericEdgeFilter):
     def __init__(self, *args, threshold=None, **kwargs):
         super().__init__(*args, threshold=threshold, edge_type="SIMILARITY", **kwargs)
