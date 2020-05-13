@@ -199,8 +199,8 @@ class EdgeWeights(BaseModel):
     # this method allows dictionary access, e.g. edge.wgts["reply_to"]
     def __getitem__(self, item):
         # https://pydantic-docs.helpmanual.io/usage/models/
-        return self.__dict__[item]
-
+        # return self.__dict__[item]
+        return self.dict()[item]
 
 class Edge(BaseModel):
     src: Tuple[int, int]  # first is index of comment, second is index of sentence within comment
