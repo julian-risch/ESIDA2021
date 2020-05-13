@@ -6,7 +6,7 @@ from data.processors import GraphRepresentationType
 from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, TemporalComparator
 from data.processors.embedding import SimilarityComparator
 from data.processors.ranking import PageRanker, CentralityDegreeCalculator
-from data.processors.filters import PageRankFilter, SimilarityEdgeFilter, BottomReplyToEdgeFilter
+from data.processors.filters import PageRankFilter, SimilarityEdgeFilter, ReplyToEdgeFilter, BottomReplyToEdgeFilter, OrEdgeFilter, GenericBottomEdgeFilter
 from configparser import ConfigParser
 from common import config
 import logging
@@ -27,7 +27,10 @@ MODIFIERS = [
     # filtering
     BottomReplyToEdgeFilter,
     PageRankFilter,
-    SimilarityEdgeFilter
+    SimilarityEdgeFilter,
+    ReplyToEdgeFilter,
+    OrEdgeFilter,
+    GenericBottomEdgeFilter
 ]
 
 logger = logging.getLogger('data.processors.graph')
@@ -94,7 +97,7 @@ class GraphRepresentation(GraphRepresentationType):
 
     def _modify(self):
         modifiers = [modifier(conf=self.conf) for modifier in MODIFIERS if modifier.is_on(self.conf)]
-        print(modifiers)
+        logger.debug(modifiers)
 
         nr_unfiltered = len(self.edges)
         for modifier in modifiers:
