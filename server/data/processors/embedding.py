@@ -4,12 +4,14 @@ from typing import List, Dict
 from data.processors import Comparator
 import data.models as models
 import logging
+from common import config
 
+FASTTEXT_PATH = config.get('TextProcessing', 'fasttext_path')
 logger = logging.getLogger('data.graph.embedding')
 
 
-def load_fasttext_model(path='E:\\cc.de.300.bin'):
-    return ft.load_model(path)
+def load_fasttext_model():
+    return ft.load_model(FASTTEXT_PATH)
 
 
 def vectorize_sentence(model, sentence: str) -> List[float]:
