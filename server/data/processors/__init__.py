@@ -16,7 +16,7 @@ class GraphRepresentationType(ABC):
         self.comments: List[models.SplitComment] = []
         self.id2idx = {}
         self.edges: List[models.Edge] = []
-        self.nodes = []
+        # self.nodes = []
 
 
 class Comparator(ABC):
