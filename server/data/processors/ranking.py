@@ -1,5 +1,6 @@
 import logging
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
+from operator import itemgetter
 from typing import List, Callable, Tuple
 import numpy as np
 import scipy.sparse as sparse
@@ -19,16 +20,46 @@ def build_edge_dict(graph):
     return dic
 
 
-def edge_list_to_adjacency_matrix(edges, get_weight: Callable[[models.EdgeWeights], float]):
+def edge_list_to_adjacency_matrix(edges, get_weight: Callable[[models.EdgeWeights], float], edge_type):
     nodes = set()
     arr = []
+    d = defaultdict(list)
+    for e in edges:
+        if e.src not in d:
+            d[e.src].append(e)
+        if e.tgt not in d:
+            d[e.tgt].append(e)
+    od = OrderedDict(sorted(d.items()))
+
+    # fixme: not working yet
+    array = []
+    for src, edge_list in od.items():
+        wgts = []
+
+
+        e_dict = {}
+        for e in edge_list:
+            if e.src == src:
+                e_dict[e.tgt] = e.wgts
+            else:
+                e_dict[e.src] = e.wgts
+
+        for key in od.keys():
+            if key not in e_dict:
+                wgts.append(0)
+            else:
+                wgts.append(e_dict[key].wgts[edge_type])
+        array.append(wgts)
+    print(array)
+
     for edge in edges:
         nodes.add(edge.src)
         nodes.add(edge.tgt)
-        arr.extend(np.array([edge.src, edge.tgt, get_weight(edge)]))
+        arr.extend(np.array([f'{edge.src[0]}|{edge.src[1]}', f'{edge.tgt[0]}|{edge.tgt[1]}', get_weight(edge)]))
 
     arr = np.array(arr)
 
+    print(arr)
     # Fixme: TypeError: '>=' not supported between instances of 'tuple' and 'float'
     shape = tuple(arr.max(axis=0)[:2] + 1)
     coo = sparse.coo_matrix((arr[:, 2], (arr[:, 0], arr[:, 1])), shape=shape,
@@ -56,7 +87,7 @@ class PageRanker(Modifier):
                      f'num_iterations={self.num_iterations}, d={self.d} and normalize={self.normalize}')
 
     def modify(self, graph: GraphRepresentationType):
-        adjacence_matrix, node_sids = edge_list_to_adjacency_matrix(graph.edges, lambda e: e.wgts[self.edge_type])
+        adjacence_matrix, node_sids = edge_list_to_adjacency_matrix(graph.edges, lambda e: e.wgts[self.edge_type], edge_type=self.edge_type)
 
         m = adjacence_matrix / adjacence_matrix.sum(axis=0, keepdims=1)
         n = m.shape[1]
@@ -80,7 +111,7 @@ class PageRanker(Modifier):
         # update node of graph with new weights for PageRank
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
-                split.wgts.pagerank = ranks[(comment.id, j)]
+                split.wgts.PAGERANK = ranks[(comment.id, j)]
 
 
 class CentralityDegreeCalculator(Modifier):
