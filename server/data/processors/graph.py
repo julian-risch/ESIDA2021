@@ -7,7 +7,7 @@ from data.processors.structure import SameArticleComparator, SameCommentComparat
 from data.processors.embedding import SimilarityComparator
 from data.processors.ranking import PageRanker, CentralityDegreeCalculator
 from data.processors.filters import PageRankFilter, SimilarityEdgeFilter, ReplyToEdgeFilter, BottomReplyToEdgeFilter, \
-    OrEdgeFilter, GenericBottomEdgeFilter, GenericNodeWeightFilter
+    OrEdgeFilter, GenericBottomEdgeFilter, GenericNodeWeightFilter, GenericNodeWeightBottomFilter
 from configparser import ConfigParser
 from common import config
 import logging
@@ -32,7 +32,8 @@ MODIFIERS = [
     ReplyToEdgeFilter,
     OrEdgeFilter,
     GenericBottomEdgeFilter,
-    GenericNodeWeightFilter
+    GenericNodeWeightFilter,
+    GenericNodeWeightBottomFilter
 ]
 
 logger = logging.getLogger('data.processors.graph')
