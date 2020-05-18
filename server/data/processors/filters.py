@@ -203,3 +203,54 @@ class PageRankFilter(Modifier):
         else:
             graph.edges = [edge for edge in graph.edges
                            if edge.src in filtered_ranks or edge.tgt in filtered_ranks]
+
+
+class GenericStrictNodeWeightFilter(Modifier):
+    def __init__(self, *args, threshold=None, node_weight_type=None, **kwargs):
+        """
+        Removes all edges of the specific type below a threshold
+        :param args:
+        :threshold: value for edges to filter
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.threshold = self.conf_getfloat("threshold", threshold)
+        self.node_weight_type = self.conf_getfloat("node_weight_type", node_weight_type)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'threshold={self.threshold}'
+                     f'and node_weight_type={self.node_weight_type}')
+
+    def modify(self, graph: GraphRepresentationType):
+        relevant_nodes = [(comment.id, split_id) for comment in graph.comments
+                          for split_id, split in enumerate(comment.splits)
+                          if split.wgts[self.node_weight_type] >= self.threshold]
+
+        graph.edges = [edge for edge in graph.edges
+                       if edge.src in relevant_nodes and edge.tgt in relevant_nodes]
+        return graph
+
+    class GenericRelaxedNodeWeightFilter(Modifier):
+        def __init__(self, *args, threshold=None, node_weight_type=None, **kwargs):
+            """
+            Removes all edges between nodes whose weights of specified type are smaller as the threshold
+            :param args:
+            :threshold: value for edges to filter
+            :param kwargs:
+            """
+            super().__init__(*args, **kwargs)
+            self.threshold = self.conf_getfloat("threshold", threshold)
+            self.node_weight_type = self.conf_getfloat("node_weight_type", node_weight_type)
+
+            logger.debug(f'{self.__class__.__name__} initialised with '
+                         f'threshold={self.threshold}'
+                         f'and node_weight_type={self.node_weight_type}')
+
+        def modify(self, graph: GraphRepresentationType):
+            relevant_nodes = [(comment.id, split_id) for comment in graph.comments
+                              for split_id, split in enumerate(comment.splits)
+                              if split.wgts[self.node_weight_type] >= self.threshold]
+
+            graph.edges = [edge for edge in graph.edges
+                           if edge.src in relevant_nodes or edge.tgt in relevant_nodes]
+            return graph
