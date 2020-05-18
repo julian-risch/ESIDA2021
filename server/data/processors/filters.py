@@ -205,8 +205,8 @@ class PageRankFilter(Modifier):
                            if edge.src in filtered_ranks or edge.tgt in filtered_ranks]
 
 
-class GenericStrictNodeWeightFilter(Modifier):
-    def __init__(self, *args, threshold=None, node_weight_type=None, **kwargs):
+class GenericNodeWeightFilter(Modifier):
+    def __init__(self, *args, threshold=None, node_weight_type=None, strict=None, **kwargs):
         """
         Removes all edges of the specific type below a threshold
         :param args:
@@ -216,9 +216,11 @@ class GenericStrictNodeWeightFilter(Modifier):
         super().__init__(*args, **kwargs)
         self.threshold = self.conf_getfloat("threshold", threshold)
         self.node_weight_type = self.conf_get("node_weight_type", node_weight_type)
+        self.strict = self.conf_getboolean("strict", strict)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'threshold={self.threshold}'
+                     f'threshold={self.threshold}, '
+                     f'strict_mode ={strict} '
                      f'and node_weight_type={self.node_weight_type}')
 
     def modify(self, graph: GraphRepresentationType):
@@ -226,92 +228,79 @@ class GenericStrictNodeWeightFilter(Modifier):
                           for split_id, split in enumerate(comment.splits)
                           if split.wgts[self.node_weight_type] >= self.threshold]
 
-        graph.edges = [edge for edge in graph.edges
-                       if edge.src in relevant_nodes and edge.tgt in relevant_nodes]
+        if self.strict:
+            graph.edges = [edge for edge in graph.edges
+                           if edge.src in relevant_nodes and edge.tgt in relevant_nodes]
+        else:
+            graph.edges = [edge for edge in graph.edges
+                           if edge.src in relevant_nodes and edge.tgt in relevant_nodes]
+
         return graph
 
 
-class StrictSizeFilter(GenericStrictNodeWeightFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="SIZE", **kwargs)
+class StrictSizeFilter(GenericNodeWeightFilter):
+    def __init__(self, *args, threshold=None, strict=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="SIZE", strict=strict, **kwargs)
 
 
-class StrictPageRankFilter(GenericStrictNodeWeightFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="PAGERANK", **kwargs)
+class StrictPageRankFilter(GenericNodeWeightFilter):
+    def __init__(self, *args, threshold=None, strict=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="PAGERANK", strict=strict, **kwargs)
 
 
-class StrictDegreeCentralityFilter(GenericStrictNodeWeightFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="DEGREE_CENTRALITY", **kwargs)
+class StrictDegreeCentralityFilter(GenericNodeWeightFilter):
+    def __init__(self, *args, threshold=None, strict=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="DEGREE_CENTRALITY", strict=strict, **kwargs)
 
 
-class StrictRecencyFilter(GenericStrictNodeWeightFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="RECENCY", **kwargs)
+class StrictRecencyFilter(GenericNodeWeightFilter):
+    def __init__(self, *args, threshold=None, strict=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="RECENCY", strict=strict, **kwargs)
 
 
-class StrictVotesFilter(GenericStrictNodeWeightFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="VOTES", **kwargs)
+class StrictVotesFilter(GenericNodeWeightFilter):
+    def __init__(self, *args, threshold=None, strict=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="VOTES", strict=strict, **kwargs)
 
 
-class StrictToxicityFilter(GenericStrictNodeWeightFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="TOXICITY", **kwargs)
+class StrictToxicityFilter(GenericNodeWeightFilter):
+    def __init__(self, *args, threshold=None, strict=None,**kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="TOXICITY", strict=strict, **kwargs)
 
 
-class GenericRelaxedNodeWeightFilter(Modifier):
-    def __init__(self, *args, threshold=None, node_weight_type=None, **kwargs):
+class GenericBottomFilter(Modifier):
+    def __init__(self, *args, k=None, strict=None, **kwargs):
         """
-        Removes all edges between nodes whose weights of specified type are smaller as the threshold
+        Remove edges from a graph not connected to top-k nodes
         :param args:
-        :threshold: value for edges to filter
+        :k: top k page-ranked items to choose
+        :strict: filter edges strictly (only allow edges between top-k nodes) or not (edge only needs on top-k node)
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-        self.threshold = self.conf_getfloat("threshold", threshold)
-        self.node_weight_type = self.conf_get("node_weight_type", node_weight_type)
+        self.k = self.conf_getint("k", k)
+        self.strict = self.conf_getboolean('strict', strict)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'threshold={self.threshold}'
-                     f'and node_weight_type={self.node_weight_type}')
+                     f'k={self.k} and strict={self.strict}')
+
+    @classmethod
+    def short_name(cls) -> str:
+        return 'prf'
+
+    @classmethod
+    def split_type(cls) -> str:
+        return "pagerank"
 
     def modify(self, graph: GraphRepresentationType):
-        relevant_nodes = [(graph.id2idx[comment.id], split_id) for comment in graph.comments
-                          for split_id, split in enumerate(comment.splits)
-                          if split.wgts[self.node_weight_type] > self.threshold]
+        page_ranks = {(comment.id, j): split.wgts.PAGERANK
+                      for comment in graph.comments for j, split in enumerate(comment.splits)}
+        filtered_ranks = {k: v for k, v in sorted(page_ranks.items(),
+                                                  key=lambda item: item[1], reverse=True)[:self.k]}
 
-        graph.edges = [edge for edge in graph.edges
-                       if edge.src in relevant_nodes or edge.tgt in relevant_nodes]
-        return graph
-
-
-class RelaxedSizeFilter(GenericRelaxedNodeWeightFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="SIZE", **kwargs)
-
-
-class RelaxedPageRankFilter(GenericRelaxedNodeWeightFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="PAGERANK", **kwargs)
-
-
-class RelaxedDegreeCentralityFilter(GenericRelaxedNodeWeightFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="DEGREE_CENTRALITY", **kwargs)
-
-
-class RelaxedRecencyFilter(GenericRelaxedNodeWeightFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="RECENCY", **kwargs)
-
-
-class RelaxedVotesFilter(GenericRelaxedNodeWeightFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="VOTES", **kwargs)
-
-
-class RelaxedToxicityFilter(GenericRelaxedNodeWeightFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="TOXICITY", **kwargs)
+        if self.strict:
+            graph.edges = [edge for edge in graph.edges
+                           if edge.src in filtered_ranks and edge.tgt in filtered_ranks]
+        else:
+            graph.edges = [edge for edge in graph.edges
+                           if edge.src in filtered_ranks or edge.tgt in filtered_ranks]
