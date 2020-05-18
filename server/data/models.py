@@ -163,7 +163,8 @@ class SplitWeights(BaseModel):
     TOXICITY: Optional[float]
 
     def __getitem__(self, item):
-        return self.__root__[item]
+        # return self.__root__[item]
+        return self.dict()[item]
 
 
 class Split(BaseModel):
