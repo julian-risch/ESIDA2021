@@ -210,19 +210,19 @@ class GenericStrictNodeWeightFilter(Modifier):
         """
         Removes all edges of the specific type below a threshold
         :param args:
-        :threshold: value for edges to filter
+        :threshold: threshold weight value for nodes to filter from edges
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
         self.threshold = self.conf_getfloat("threshold", threshold)
-        self.node_weight_type = self.conf_getfloat("node_weight_type", node_weight_type)
+        self.node_weight_type = self.conf_get("node_weight_type", node_weight_type)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
                      f'threshold={self.threshold}'
                      f'and node_weight_type={self.node_weight_type}')
 
     def modify(self, graph: GraphRepresentationType):
-        relevant_nodes = [(comment.id, split_id) for comment in graph.comments
+        relevant_nodes = [(graph.id2idx[comment.id], split_id) for comment in graph.comments
                           for split_id, split in enumerate(comment.splits)
                           if split.wgts[self.node_weight_type] >= self.threshold]
 
@@ -230,27 +230,88 @@ class GenericStrictNodeWeightFilter(Modifier):
                        if edge.src in relevant_nodes and edge.tgt in relevant_nodes]
         return graph
 
-    class GenericRelaxedNodeWeightFilter(Modifier):
-        def __init__(self, *args, threshold=None, node_weight_type=None, **kwargs):
-            """
-            Removes all edges between nodes whose weights of specified type are smaller as the threshold
-            :param args:
-            :threshold: value for edges to filter
-            :param kwargs:
-            """
-            super().__init__(*args, **kwargs)
-            self.threshold = self.conf_getfloat("threshold", threshold)
-            self.node_weight_type = self.conf_getfloat("node_weight_type", node_weight_type)
 
-            logger.debug(f'{self.__class__.__name__} initialised with '
-                         f'threshold={self.threshold}'
-                         f'and node_weight_type={self.node_weight_type}')
+class StrictSizeFilter(GenericStrictNodeWeightFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="SIZE", **kwargs)
 
-        def modify(self, graph: GraphRepresentationType):
-            relevant_nodes = [(comment.id, split_id) for comment in graph.comments
-                              for split_id, split in enumerate(comment.splits)
-                              if split.wgts[self.node_weight_type] >= self.threshold]
 
-            graph.edges = [edge for edge in graph.edges
-                           if edge.src in relevant_nodes or edge.tgt in relevant_nodes]
-            return graph
+class StrictPageRankFilter(GenericStrictNodeWeightFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="PAGERANK", **kwargs)
+
+
+class StrictDegreeCentralityFilter(GenericStrictNodeWeightFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="DEGREE_CENTRALITY", **kwargs)
+
+
+class StrictRecencyFilter(GenericStrictNodeWeightFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="RECENCY", **kwargs)
+
+
+class StrictVotesFilter(GenericStrictNodeWeightFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="VOTES", **kwargs)
+
+
+class StrictToxicityFilter(GenericStrictNodeWeightFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="TOXICITY", **kwargs)
+
+
+class GenericRelaxedNodeWeightFilter(Modifier):
+    def __init__(self, *args, threshold=None, node_weight_type=None, **kwargs):
+        """
+        Removes all edges between nodes whose weights of specified type are smaller as the threshold
+        :param args:
+        :threshold: value for edges to filter
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.threshold = self.conf_getfloat("threshold", threshold)
+        self.node_weight_type = self.conf_get("node_weight_type", node_weight_type)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'threshold={self.threshold}'
+                     f'and node_weight_type={self.node_weight_type}')
+
+    def modify(self, graph: GraphRepresentationType):
+        relevant_nodes = [(graph.id2idx[comment.id], split_id) for comment in graph.comments
+                          for split_id, split in enumerate(comment.splits)
+                          if split.wgts[self.node_weight_type] > self.threshold]
+
+        graph.edges = [edge for edge in graph.edges
+                       if edge.src in relevant_nodes or edge.tgt in relevant_nodes]
+        return graph
+
+
+class RelaxedSizeFilter(GenericRelaxedNodeWeightFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="SIZE", **kwargs)
+
+
+class RelaxedPageRankFilter(GenericRelaxedNodeWeightFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="PAGERANK", **kwargs)
+
+
+class RelaxedDegreeCentralityFilter(GenericRelaxedNodeWeightFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="DEGREE_CENTRALITY", **kwargs)
+
+
+class RelaxedRecencyFilter(GenericRelaxedNodeWeightFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="RECENCY", **kwargs)
+
+
+class RelaxedVotesFilter(GenericRelaxedNodeWeightFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="VOTES", **kwargs)
+
+
+class RelaxedToxicityFilter(GenericRelaxedNodeWeightFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="TOXICITY", **kwargs)
