@@ -105,7 +105,7 @@ class CentralityDegreeCalculator(Modifier):
         # update node of graph with new weights for degree centrality
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
-                split.wgts.degree_centrality = counter_dict[(graph.id2idx[comment.id], j)]
+                split.wgts.DEGREE_CENTRALITY = counter_dict[(graph.id2idx[comment.id], j)]
 
 
 class Representives:
