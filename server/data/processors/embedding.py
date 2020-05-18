@@ -6,6 +6,7 @@ import data.models as models
 import logging
 from common import config
 import re
+import tensorflow as tf
 
 FASTTEXT_PATH = config.get('TextProcessing', 'fasttext_path')
 logger = logging.getLogger('data.graph.embedding')
@@ -84,6 +85,9 @@ class ToxicityRanker(Modifier):
         self.ft_model = ft_model
         self.n_features = ft_model.get_dimension()
         self.window_length = self.conf_getint('window_length', window_length)
+        # todo: add model name
+        self.model_name = ...
+        self.toxicity_model = tf.keras.models.load_model(filepath='models/' + self.model_name+'.hdf')
 
     def normalize(self, s):
         # transform to lowercase characters
@@ -143,6 +147,8 @@ class ToxicityRanker(Modifier):
         # x = self.orig_comment_to_data(graph.orig_comments)
 
         x = self.graph_comments_to_data(graph)
+
+
 
         for comment in graph.comments:
             for split in comment.splits:
