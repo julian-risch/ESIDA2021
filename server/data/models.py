@@ -159,6 +159,8 @@ class SplitWeights(BaseModel):
     RECENCY: Optional[float]
     # the number of votes for the comment
     VOTES: Optional[float]
+    # the toxicity of the comment
+    TOXICITY: Optional[float]
 
     def __getitem__(self, item):
         return self.__root__[item]

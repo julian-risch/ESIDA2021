@@ -1,10 +1,11 @@
 import numpy as np
 import fasttext as ft
 from typing import List, Dict
-from data.processors import Comparator
+from data.processors import Comparator, Modifier, GraphRepresentationType
 import data.models as models
 import logging
 from common import config
+import re
 
 FASTTEXT_PATH = config.get('TextProcessing', 'fasttext_path')
 logger = logging.getLogger('data.graph.embedding')
@@ -68,3 +69,82 @@ class SimilarityComparator(Comparator):
         weight = cosine_similarity(self.model, a.text, b.text)
         if weight < self.max_similarity:  #
             return ((1.0 - weight) / (1.0 - self.max_similarity)) * self.base_weight
+
+
+class ToxicityRanker(Modifier):
+    def __init__(self, *args, ft_model, window_length=40, **kwargs):
+        """
+        Returns a graph with toxicity node weights
+        :param args:
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+
+        logger.debug(f'{self.__class__.__name__} initialised')
+        self.ft_model = ft_model
+        self.n_features = ft_model.get_dimension()
+        self.window_length = self.conf_getint('window_length', window_length)
+
+    def normalize(self, s):
+        # transform to lowercase characters
+        s = str(s)
+        s = s.lower()
+        # Isolate punctuation
+        s = re.sub(r'([\'\"\.\(\)\!\?\-\\\/\,])', r' \1 ', s)
+        # Remove some special characters
+        s = re.sub(r'([\;\:\|\n])', ' ', s)
+        return s
+
+    def text_to_vector(self, text):
+        """
+        Given a string, normalizes it, then splits it into words and finally converts
+        it to a sequence of word vectors.
+        """
+        text = self.normalize(text)
+        words = text.split()
+        window = words[-self.window_length:]
+        x = np.zeros((self.window_length, self.n_features))
+        for i, word in enumerate(window):
+            x[i, :] = self.ft_model.get_word_vector(word).astype('float32')
+        return x
+
+    def orig_comment_to_data(self, comments: List[models.CommentCached]):
+        """
+        Convert a given list of original_comment to a dataset of inputs for the NN.
+        """
+        x = np.zeros((len(comments), self.window_length, self.n_features), dtype='float32')
+
+        for i, comment in enumerate(comments):
+            x[i, :] = self.text_to_vector(comment.text)
+        return x
+
+    def graph_comments_to_data(self, graph: GraphRepresentationType):
+        """
+        Convert a graph with slitted comments to a dataset of inputs for the NN.
+        """
+        number_of_data_points = 0
+        for comment in graph.comments:
+            for _ in comment.splits:
+                number_of_data_points += 1
+
+        x = np.zeros((number_of_data_points, self.window_length, self.n_features), dtype='float32')
+
+        index = 0
+        for comment in graph.comments:
+            for split in comment.splits:
+                # todo: check if comment id is the correct id, otherwise call graph.id2idx[comment.id]
+                text = graph.orig_comments[comment.id][split.s, split.e]
+                x[index, :] = self.text_to_vector(text)
+                index += 1
+        return x
+
+    def modify(self, graph: GraphRepresentationType):
+        # alternative for orig_comments
+        # x = self.orig_comment_to_data(graph.orig_comments)
+
+        x = self.graph_comments_to_data(graph)
+
+        for comment in graph.comments:
+            for split in comment.splits:
+                # todo: add toxicity score for split
+                split.wgts.TOXICITY = ...
