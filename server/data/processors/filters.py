@@ -5,6 +5,9 @@ from data.processors.ranking import build_edge_dict
 logger = logging.getLogger('data.graph.filters')
 
 
+#
+# Edge Filters
+#
 class GenericBottomEdgeFilter(Modifier):
     def __init__(self, *args, top_edges=None, edge_type=None, **kwargs):
         """
@@ -151,10 +154,6 @@ class OrEdgeFilter(Modifier):
                      f'temporal_threshold={self.temporal_threshold} '
                      )
 
-    @classmethod
-    def short_name(cls) -> str:
-        return 'rtef'
-
     def modify(self, graph: GraphRepresentationType):
         graph.edges = [edge for edge in graph.edges
                        if (edge.wgts.REPLY_TO and 0 < self.reply_to_threshold < edge.wgts.REPLY_TO
@@ -173,6 +172,9 @@ class OrEdgeFilter(Modifier):
         return graph
 
 
+#
+# Node Filters
+#
 class GenericNodeWeightFilter(Modifier):
     def __init__(self, *args, threshold=None, node_weight_type=None, strict=None, **kwargs):
         """
