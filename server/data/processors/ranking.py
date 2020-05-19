@@ -6,7 +6,8 @@ import numpy as np
 import scipy.sparse as sparse
 import data.models as models
 from data.processors import Modifier, GraphRepresentationType
-
+from scipy import sparse
+from fast_pagerank import pagerank, pagerank_power
 logger = logging.getLogger('data.graph.ranking')
 
 
@@ -21,7 +22,7 @@ def build_edge_dict(graph):
 
 
 def edge_list_to_adjacency_matrix(edges, get_weight: Callable[[models.EdgeWeights], float], edge_type):
-    nodes = set()
+    nodes = []
     arr = []
     d = defaultdict(list)
     for e in edges:
@@ -30,13 +31,11 @@ def edge_list_to_adjacency_matrix(edges, get_weight: Callable[[models.EdgeWeight
         if e.tgt not in d:
             d[e.tgt].append(e)
     od = OrderedDict(sorted(d.items()))
-
+    nodes.extend(od.keys())
     # fixme: not working yet
-    array = []
+    adja_matrix = []
     for src, edge_list in od.items():
         wgts = []
-
-
         e_dict = {}
         for e in edge_list:
             if e.src == src:
@@ -48,23 +47,29 @@ def edge_list_to_adjacency_matrix(edges, get_weight: Callable[[models.EdgeWeight
             if key not in e_dict:
                 wgts.append(0)
             else:
-                wgts.append(e_dict[key].wgts[edge_type])
-        array.append(wgts)
-    print(array)
+                weight = e_dict[key][edge_type]
+                if weight is None:
+                    weight = 0
+                wgts.append(weight)
 
-    for edge in edges:
-        nodes.add(edge.src)
-        nodes.add(edge.tgt)
-        arr.extend(np.array([f'{edge.src[0]}|{edge.src[1]}', f'{edge.tgt[0]}|{edge.tgt[1]}', get_weight(edge)]))
+        adja_matrix.append(np.array(wgts))
 
-    arr = np.array(arr)
+    adja_matrix = np.array(adja_matrix)
 
-    print(arr)
+    return adja_matrix, nodes
+    # for edge in edges:
+    #     nodes.add(edge.src)
+    #     nodes.add(edge.tgt)
+    #     arr.extend(np.array([f'{edge.src[0]}|{edge.src[1]}', f'{edge.tgt[0]}|{edge.tgt[1]}', get_weight(edge)]))
+    #
+    # arr = np.array(arr)
+    #
+    # print(arr)
     # Fixme: TypeError: '>=' not supported between instances of 'tuple' and 'float'
-    shape = tuple(arr.max(axis=0)[:2] + 1)
-    coo = sparse.coo_matrix((arr[:, 2], (arr[:, 0], arr[:, 1])), shape=shape,
-                            dtype=arr.dtype)
-    return coo.to_dense(), nodes
+    # shape = tuple(arr.max(axis=0)[:2] + 1)
+    # coo = sparse.coo_matrix((arr[:, 2], (arr[:, 0], arr[:, 1])), shape=shape,
+    #                         dtype=arr.dtype)
+    # return coo.to_dense(), nodes
 
 
 class PageRanker(Modifier):
@@ -86,20 +91,24 @@ class PageRanker(Modifier):
         logger.debug(f'{self.__class__.__name__} initialised with '
                      f'num_iterations={self.num_iterations}, d={self.d} and normalize={self.normalize}')
 
-    def modify(self, graph: GraphRepresentationType):
-        adjacence_matrix, node_sids = edge_list_to_adjacency_matrix(graph.edges, lambda e: e.wgts[self.edge_type], edge_type=self.edge_type)
+    def page_rank_numpy(self, graph: GraphRepresentationType):
+        adjacence_matrix, node_sids = edge_list_to_adjacency_matrix(graph.edges, lambda e: e.wgts[self.edge_type],
+                                                                    edge_type=self.edge_type)
 
         m = adjacence_matrix / adjacence_matrix.sum(axis=0, keepdims=1)
         n = m.shape[1]
         v = np.random.rand(n, 1)
+
         v = v / np.linalg.norm(v, 1)
         m_hat = (self.d * m + (1 - self.d) / n)
+        print(m_hat)
         for i in range(self.num_iterations):
             v = m_hat @ v
+
         ranks = {n: r[0] for n, r in zip(node_sids, v)}
 
         ranks = {k: v for k, v in sorted(ranks.items(), key=lambda item: item[1], reverse=True)}
-
+        print(">", ranks.values())
         if self.normalize:
             values = list(ranks.values())
             v_max = np.max(values)
@@ -112,6 +121,41 @@ class PageRanker(Modifier):
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
                 split.wgts.PAGERANK = ranks[(comment.id, j)]
+
+    def page_rank_fast(self, graph: GraphRepresentationType):
+        def edge_list_to_adjacency_list(edge_type):
+            adjacency_weights = []
+            adjacency_edges = []
+
+            node_counter = 0
+            node_index = {}
+            for c in graph.comments:
+                for split_id, _ in enumerate(c.splits):
+                    node_index[(graph.id2idx[c.id], split_id)] = node_counter
+                    node_counter += 1
+            for e in graph.edges:
+                weight = e.wgts[edge_type]
+                if weight:
+                    adjacency_edges.append([node_index[e.src], node_index[e.tgt]])
+                    adjacency_weights.append(weight)
+
+            return np.array(adjacency_edges), adjacency_weights, node_index
+
+        adjacency_matrix, weights, int_index = edge_list_to_adjacency_list(self.edge_type)
+        csr_graph = sparse.csr_matrix((weights, (adjacency_matrix[:, 0], adjacency_matrix[:, 1])),
+                                      shape=(len(int_index.keys()), len(int_index.keys())))
+        pr = pagerank(csr_graph, p=self.d)
+        # pr = pagerank_power(G, p=0.85, tol=1e-6, max_iter=self.num_iterations)
+
+        # update node of graph with new weights for PageRank
+        counter = 0
+        for comment in graph.comments:
+            for j, split in enumerate(comment.splits):
+                split.wgts.PAGERANK = pr[counter]
+                counter += 1
+
+    def modify(self, graph: GraphRepresentationType):
+        self.page_rank_fast(graph)
 
 
 class CentralityDegreeCalculator(Modifier):
