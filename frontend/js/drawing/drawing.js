@@ -71,7 +71,7 @@ class Comments {
 
         this.LINKS = parent.append('g')
             .attr('stroke', CONFIG.COLOURS.EDGE_STROKE_DEFAULT)
-            .attr('stroke-opacity', 0.6)
+            .attr('stroke-opacity', 0.9)
             .selectAll('line')
             .data(this.edges)
             .join('line')
