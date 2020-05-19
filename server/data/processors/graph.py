@@ -6,8 +6,9 @@ from data.processors import GraphRepresentationType
 from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, TemporalComparator
 from data.processors.embedding import SimilarityComparator
 from data.processors.ranking import PageRanker, CentralityDegreeCalculator
-from data.processors.filters import PageRankFilter, SimilarityEdgeFilter, ReplyToEdgeFilter, BottomReplyToEdgeFilter, \
-    OrEdgeFilter, GenericBottomEdgeFilter, GenericNodeWeightFilter, GenericNodeWeightBottomFilter, PageRankBottomFilter
+from data.processors.filters import *
+
+
 from configparser import ConfigParser
 from common import config
 import logging
@@ -26,14 +27,14 @@ MODIFIERS = [
     CentralityDegreeCalculator,
 
     # filtering
-    BottomReplyToEdgeFilter,
-    PageRankBottomFilter,
-    SimilarityEdgeFilter,
-    ReplyToEdgeFilter,
-    OrEdgeFilter,
-    GenericBottomEdgeFilter,
-    GenericNodeWeightFilter,
-    GenericNodeWeightBottomFilter
+    GenericEdgeFilter, SimilarityEdgeFilter, ReplyToEdgeFilter, SameCommentEdgeFilter, SameArticleEdgeFilter,
+    SameGroupEdgeFilter, TemporalEdgeFilter, OrEdgeFilter,
+    GenericBottomEdgeFilter, BottomSimilarityEdgeFilter, BottomReplyToEdgeFilter, BottomTemporalEdgeFilter,
+    BottomSameCommentFilter, BottomSameArticleEdgeFilter, BottomSameGroupEdgeFilter,
+    GenericNodeWeightFilter, SizeFilter, PageRankFilter, DegreeCentralityFilter,
+    RecencyFilter, VotesFilter, ToxicityFilter,
+    GenericNodeWeightBottomFilter, SizeBottomFilter, PageRankBottomFilter, DegreeCentralityBottomFilter,
+    RecencyBottomFilter, VotesBottomFilter, ToxicityBottomFilter
 ]
 
 logger = logging.getLogger('data.processors.graph')

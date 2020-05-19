@@ -144,7 +144,7 @@ class GenericBottomEdgeFilter(Modifier):
         return graph
 
 
-class BottomSimilarityFilter(GenericBottomEdgeFilter):
+class BottomSimilarityEdgeFilter(GenericBottomEdgeFilter):
     def __init__(self, *args, top_edges=None, **kwargs):
         GenericBottomEdgeFilter.__init__(self, *args, top_edges=top_edges, edge_type="SIMILARITY", **kwargs)
 
