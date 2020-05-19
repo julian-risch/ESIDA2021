@@ -1,4 +1,5 @@
 import logging
+import re
 from collections import defaultdict
 from typing import List, Callable, Tuple
 import numpy as np
@@ -6,6 +7,8 @@ import data.models as models
 from data.processors import Modifier, GraphRepresentationType
 from scipy import sparse
 from fast_pagerank import pagerank, pagerank_power
+import tensorflow as tf
+import keras
 logger = logging.getLogger('data.graph.ranking')
 
 
@@ -190,6 +193,90 @@ class CentralityDegreeCalculator(Modifier):
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
                 split.wgts.DEGREE_CENTRALITY = counter_dict[(graph.id2idx[comment.id], j)]
+
+
+class ToxicityRanker(Modifier):
+    def __init__(self, *args, ft_model, window_length=40, **kwargs):
+        """
+        Returns a graph with toxicity node weights
+        :param args:
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+
+        logger.debug(f'{self.__class__.__name__} initialised')
+        self.ft_model = ft_model
+        self.n_features = ft_model.get_dimension()
+        self.window_length = self.conf_getint('window_length', window_length)
+        # todo: add model name
+        self.model_name = ...
+        self.toxicity_model = tf.keras.models.load_model(filepath='models/' + self.model_name+'.hdf')
+
+    def normalize(self, s):
+        # transform to lowercase characters
+        s = str(s)
+        s = s.lower()
+        # Isolate punctuation
+        s = re.sub(r'([\'\"\.\(\)\!\?\-\\\/\,])', r' \1 ', s)
+        # Remove some special characters
+        s = re.sub(r'([\;\:\|\n])', ' ', s)
+        return s
+
+    def text_to_vector(self, text):
+        """
+        Given a string, normalizes it, then splits it into words and finally converts
+        it to a sequence of word vectors.
+        """
+        text = self.normalize(text)
+        words = text.split()
+        window = words[-self.window_length:]
+        x = np.zeros((self.window_length, self.n_features))
+        for i, word in enumerate(window):
+            x[i, :] = self.ft_model.get_word_vector(word).astype('float32')
+        return x
+
+    def orig_comment_to_data(self, comments: List[models.CommentCached]):
+        """
+        Convert a given list of original_comment to a dataset of inputs for the NN.
+        """
+        x = np.zeros((len(comments), self.window_length, self.n_features), dtype='float32')
+
+        for i, comment in enumerate(comments):
+            x[i, :] = self.text_to_vector(comment.text)
+        return x
+
+    def graph_comments_to_data(self, graph: GraphRepresentationType):
+        """
+        Convert a graph with slitted comments to a dataset of inputs for the NN.
+        """
+        number_of_data_points = 0
+        for comment in graph.comments:
+            for _ in comment.splits:
+                number_of_data_points += 1
+
+        x = np.zeros((number_of_data_points, self.window_length, self.n_features), dtype='float32')
+
+        index = 0
+        for comment in graph.comments:
+            for split in comment.splits:
+                # todo: check if comment id is the correct id, otherwise do not call graph.id2idx[comment.id]
+                text = graph.orig_comments[graph.id2idx[comment.id]][split.s, split.e]
+                x[index, :] = self.text_to_vector(text)
+                index += 1
+        return x
+
+    def modify(self, graph: GraphRepresentationType):
+        # alternative for orig_comments
+        # x = self.orig_comment_to_data(graph.orig_comments)
+
+        x = self.graph_comments_to_data(graph)
+        predictions = self.toxicity_model.predict(x)
+
+        split_counter = 0
+        for comment in graph.comments:
+            for split in comment.splits:
+                split.wgts.TOXICITY = predictions[split_counter]
+                split_counter += 1
 
 
 class Representives:
