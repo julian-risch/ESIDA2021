@@ -67,7 +67,6 @@ class PageRanker(Modifier):
         else:
             pr = pagerank(csr_graph, p=self.d)
 
-
         # update node of graph with new weights for PageRank
         counter = 0
         for comment in graph.comments:
