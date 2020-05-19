@@ -262,7 +262,6 @@ class GenericNodeWeightBottomFilter(Modifier):
                    for comment in graph.comments for j, split in enumerate(comment.splits)}
         filtered_ranks = {k: v for k, v in sorted(weights.items(),
                                                   key=lambda item: item[1], reverse=True)[:self.top_k]}
-        print(filtered_ranks)
         if self.strict:
             graph.edges = [edge for edge in graph.edges
                            if edge.src in filtered_ranks and edge.tgt in filtered_ranks]

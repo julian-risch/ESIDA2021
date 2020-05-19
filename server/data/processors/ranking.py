@@ -20,7 +20,8 @@ def build_edge_dict(graph):
 
 
 class PageRanker(Modifier):
-    def __init__(self, *args, num_iterations: int = None, d: float = None, normalize=None, edge_type=None, **kwargs):
+    def __init__(self, *args, num_iterations: int = None, d: float = None, edge_type=None,
+                 user_power_mode=None, **kwargs):
         """
         Returns a graph with page-ranked node weights
         :param args:
@@ -32,11 +33,11 @@ class PageRanker(Modifier):
         super().__init__(*args, **kwargs)
         self.num_iterations = self.conf_getint('num_iterations', num_iterations)
         self.d = self.conf_getfloat('d', d)
-        self.normalize = self.conf_getboolean('normalize', normalize)
         self.edge_type = self.conf_get('edge_type', edge_type)
+        self.use_power_mode = self.conf_getboolean('use_power_mode', user_power_mode)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'num_iterations={self.num_iterations}, d={self.d} and normalize={self.normalize}')
+                     f'num_iterations={self.num_iterations}, d={self.d} and use_power_mode={self.use_power_mode}')
 
     def page_rank_fast(self, graph: GraphRepresentationType):
         def edge_list_to_adjacency_list(edge_type):
@@ -60,8 +61,12 @@ class PageRanker(Modifier):
         adjacency_matrix, weights, int_index = edge_list_to_adjacency_list(self.edge_type)
         csr_graph = sparse.csr_matrix((weights, (adjacency_matrix[:, 0], adjacency_matrix[:, 1])),
                                       shape=(len(int_index.keys()), len(int_index.keys())))
-        pr = pagerank(csr_graph, p=self.d)
-        # pr = pagerank_power(G, p=0.85, tol=1e-6, max_iter=self.num_iterations)
+
+        if self.use_power_mode:
+            pr = pagerank_power(csr_graph, p=self.d, tol=1e-6, max_iter=self.num_iterations)
+        else:
+            pr = pagerank(csr_graph, p=self.d)
+
 
         # update node of graph with new weights for PageRank
         counter = 0
