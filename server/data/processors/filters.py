@@ -8,6 +8,105 @@ logger = logging.getLogger('data.graph.filters')
 #
 # Edge Filters
 #
+
+class GenericEdgeFilter(Modifier):
+    def __init__(self, *args, threshold=None, edge_type=None, **kwargs):
+        """
+        Removes all edges of the specific type below a threshold
+        :param args:
+        :threshold: value for edges to filter
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.threshold = self.conf_getfloat("threshold", threshold)
+        self.edge_type = self.conf_getfloat("edge_type", edge_type)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'threshold={self.threshold}'
+                     f'and edge_type={self.edge_type}')
+
+    def modify(self, graph: GraphRepresentationType):
+        graph.edges = [edge for edge in graph.edges
+                       if edge.wgts[self.edge_type] and edge.wgts[self.edge_type] > self.threshold]
+        return graph
+
+
+class SimilarityEdgeFilter(GenericEdgeFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_type="SIMILARITY", **kwargs)
+
+
+class ReplyToEdgeFilter(GenericEdgeFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_type="REPLY_TO", **kwargs)
+
+
+class SameCommentEdgeFilter(GenericEdgeFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_type="SAME_COMMENT", **kwargs)
+
+
+class SameArticleEdgeFilter(GenericEdgeFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_type="SAME_ARTICLE", **kwargs)
+
+
+class SameGroupEdgeFilter(GenericEdgeFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_type="SAME_GROUP", **kwargs)
+
+
+class TemporalEdgeFilter(GenericEdgeFilter):
+    def __init__(self, *args, threshold=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_type="TEMPORAL", **kwargs)
+
+
+class OrEdgeFilter(Modifier):
+    def __init__(self, *args, reply_to_threshold=None, same_comment_threshold=None, same_article_threshold=None,
+                 similarity_threshold=None, same_group_threshold=None, temporal_threshold=None, **kwargs):
+        """
+        Combination of other filters allows AND operation. This is experimental for OR operation.
+        The edge is removed if not at least one condition is true.
+        :param args:
+        :threshold: value for edges to filter
+        :param kwargs:
+        """
+
+        super().__init__(*args, **kwargs)
+        self.reply_to_threshold = self.conf_getfloat("reply_to_threshold", reply_to_threshold)
+        self.same_comment_threshold = self.conf_getfloat("same_comment_threshold", same_comment_threshold)
+        self.same_article_threshold = self.conf_getfloat("same_article_threshold", same_article_threshold)
+        self.similarity_threshold = self.conf_getfloat("similarity_threshold", similarity_threshold)
+        self.same_group_threshold = self.conf_getfloat("same_group_threshold", same_group_threshold)
+        self.temporal_threshold = self.conf_getfloat("temporal_threshold", temporal_threshold)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'reply_to_threshold={self.reply_to_threshold} '
+                     f'same_comment_threshold={self.same_comment_threshold} '
+                     f'same_article_threshold={self.same_article_threshold} '
+                     f'similarity_threshold={self.similarity_threshold} '
+                     f'same_group_threshold={self.same_group_threshold} '
+                     f'temporal_threshold={self.temporal_threshold} '
+                     )
+
+    def modify(self, graph: GraphRepresentationType):
+        graph.edges = [edge for edge in graph.edges
+                       if (edge.wgts.REPLY_TO and 0 < self.reply_to_threshold < edge.wgts.REPLY_TO
+                           and edge.wgts.REPLY_TO)
+                       or (edge.wgts.SAME_COMMENT and 0 < self.same_comment_threshold < edge.wgts.SAME_COMMENT
+                           and edge.wgts.SAME_COMMENT)
+                       or (edge.wgts.SAME_ARTICLE and 0 < self.same_article_threshold < edge.wgts.SAME_ARTICLE
+                           and edge.wgts.SAME_ARTICLE)
+                       or (edge.wgts.SIMILARITY and 0 < self.similarity_threshold < edge.wgts.SIMILARITY
+                           and edge.wgts.SIMILARITY)
+                       or (edge.wgts.SAME_GROUP and 0 < self.same_group_threshold < edge.wgts.SAME_GROUP
+                           and edge.wgts.SAME_GROUP)
+                       or (edge.wgts.TEMPORAL and 0 < self.temporal_threshold < edge.wgts.TEMPORAL
+                           and edge.wgts.TEMPORAL)
+                       ]
+        return graph
+
+
 class GenericBottomEdgeFilter(Modifier):
     def __init__(self, *args, top_edges=None, edge_type=None, **kwargs):
         """
@@ -75,110 +174,13 @@ class BottomSameGroupEdgeFilter(GenericBottomEdgeFilter):
         GenericBottomEdgeFilter.__init__(*args, top_edges=top_edges, edge_type="SAME_GROUP", **kwargs)
 
 
-class GenericEdgeFilter(Modifier):
-    def __init__(self, *args, threshold=None, edge_type=None, **kwargs):
-        """
-        Removes all edges of the specific type below a threshold
-        :param args:
-        :threshold: value for edges to filter
-        :param kwargs:
-        """
-        super().__init__(*args, **kwargs)
-        self.threshold = self.conf_getfloat("threshold", threshold)
-        self.edge_type = self.conf_getfloat("edge_type", edge_type)
-
-        logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'threshold={self.threshold}'
-                     f'and edge_type={self.edge_type}')
-
-    def modify(self, graph: GraphRepresentationType):
-        graph.edges = [edge for edge in graph.edges
-                       if edge.wgts[self.edge_type] and edge.wgts[self.edge_type] > self.threshold]
-        return graph
-
-
-class SimilarityEdgeFilter(GenericEdgeFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="SIMILARITY", **kwargs)
-
-
-class ReplyToEdgeFilter(GenericEdgeFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="REPLY_TO", **kwargs)
-
-
-class SameCommentEdgeFilter(GenericEdgeFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="SAME_COMMENT", **kwargs)
-
-
-class SameArticleEdgeFilter(GenericEdgeFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="SAME_ARTICLE", **kwargs)
-
-
-class SameGroupEdgeFilter(GenericEdgeFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="SAME_GROUP", **kwargs)
-
-
-class TemporalEdgeFilter(GenericEdgeFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="TEMPORAL", **kwargs)
-
-
-class OrEdgeFilter(Modifier):
-    def __init__(self, *args, reply_to_threshold=None, same_comment_threshold=None, same_article_threshold=None,
-                 similarity_threshold=None, same_group_threshold=None, temporal_threshold=None, **kwargs):
-        """
-        Removes all edges of the specific type below a threshold
-        :param args:
-        :threshold: value for edges to filter
-        :param kwargs:
-        """
-
-        super().__init__(*args, **kwargs)
-        self.reply_to_threshold = self.conf_getfloat("reply_to_threshold", reply_to_threshold)
-        self.same_comment_threshold = self.conf_getfloat("same_comment_threshold", same_comment_threshold)
-        self.same_article_threshold = self.conf_getfloat("same_article_threshold", same_article_threshold)
-        self.similarity_threshold = self.conf_getfloat("similarity_threshold", similarity_threshold)
-        self.same_group_threshold = self.conf_getfloat("same_group_threshold", same_group_threshold)
-        self.temporal_threshold = self.conf_getfloat("temporal_threshold", temporal_threshold)
-
-        logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'reply_to_threshold={self.reply_to_threshold} '
-                     f'same_comment_threshold={self.same_comment_threshold} '
-                     f'same_article_threshold={self.same_article_threshold} '
-                     f'similarity_threshold={self.similarity_threshold} '
-                     f'same_group_threshold={self.same_group_threshold} '
-                     f'temporal_threshold={self.temporal_threshold} '
-                     )
-
-    def modify(self, graph: GraphRepresentationType):
-        graph.edges = [edge for edge in graph.edges
-                       if (edge.wgts.REPLY_TO and 0 < self.reply_to_threshold < edge.wgts.REPLY_TO
-                           and edge.wgts.REPLY_TO)
-                       or (edge.wgts.SAME_COMMENT and 0 < self.same_comment_threshold < edge.wgts.SAME_COMMENT
-                           and edge.wgts.SAME_COMMENT)
-                       or (edge.wgts.SAME_ARTICLE and 0 < self.same_article_threshold < edge.wgts.SAME_ARTICLE
-                           and edge.wgts.SAME_ARTICLE)
-                       or (edge.wgts.SIMILARITY and 0 < self.similarity_threshold < edge.wgts.SIMILARITY
-                           and edge.wgts.SIMILARITY)
-                       or (edge.wgts.SAME_GROUP and 0 < self.same_group_threshold < edge.wgts.SAME_GROUP
-                           and edge.wgts.SAME_GROUP)
-                       or (edge.wgts.TEMPORAL and 0 < self.temporal_threshold < edge.wgts.TEMPORAL
-                           and edge.wgts.TEMPORAL)
-                       ]
-        return graph
-
-
 #
 # Node Filters
 #
 class GenericNodeWeightFilter(Modifier):
     def __init__(self, *args, threshold=None, node_weight_type=None, strict=None, **kwargs):
         """
-        Removes all edges of the specific type below a threshold
+        Removes all edges connected to nodes of the specific type below a threshold
         :param args:
         :threshold: threshold weight value for nodes to filter from edges
         :param kwargs:
