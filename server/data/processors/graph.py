@@ -5,7 +5,7 @@ from typing import List
 from data.processors import GraphRepresentationType
 from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, TemporalComparator
 from data.processors.embedding import SimilarityComparator
-from data.processors.ranking import PageRanker, CentralityDegreeCalculator
+from data.processors.ranking import PageRanker, CentralityDegreeCalculator, SizeRanker, VotesRanker, RecencyRanker
 from data.processors.filters import *
 
 
@@ -25,6 +25,9 @@ MODIFIERS = [
     # edge and node weighting
     PageRanker,
     CentralityDegreeCalculator,
+    SizeRanker,
+    VotesRanker,
+    RecencyRanker,
 
     # filtering
     GenericEdgeFilter, SimilarityEdgeFilter, ReplyToEdgeFilter, SameCommentEdgeFilter, SameArticleEdgeFilter,
@@ -54,8 +57,7 @@ class GraphRepresentation(GraphRepresentationType):
 
         # config: configuration from DEFAULT.ini
         # self.conf: configuration from code
-
-        # FIXME: for testing purposes due the code config overrides the configuration from file
+        # FIXME: delete, due this is only for testing purposes because the code config overrides the configuration from file
         self.conf = config
 
         logger.debug(f'{len(self.comments)} comments turned '

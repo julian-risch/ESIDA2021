@@ -19,6 +19,95 @@ def build_edge_dict(graph):
     return dic
 
 
+class SizeRanker(Modifier):
+    def __init__(self, *args, **kwargs):
+        """
+        Returns a graph with page-ranked node weights
+        :param args:
+        :param num_iterations: number of iteration for PageRank
+        :d: d parameter for PageRank
+        :normalize: normalize the PageRank values?
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+
+        logger.debug(f'{self.__class__.__name__} initialised')
+
+    def modify(self, graph: GraphRepresentationType):
+        for comment in graph.comments:
+            for split in comment.splits:
+                split.wgts.SIZE = split.e-split.s
+
+
+class VotesRanker(Modifier):
+    def __init__(self, *args, use_upvotes=None, use_downvotes=None, **kwargs):
+        """
+        Returns a graph with page-ranked node weights
+        :param args:
+        :param num_iterations: number of iteration for PageRank
+        :d: d parameter for PageRank
+        :normalize: normalize the PageRank values?
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.use_upvotes = self.conf_getboolean('use_upvotes', use_upvotes)
+        self.use_downvotes = self.conf_getboolean('use_downvotes', use_downvotes)
+        logger.debug(f'{self.__class__.__name__} initialised '
+                     f'use_upvotes={self.use_upvotes}'
+                     f'use_downvotes={self.use_downvotes}')
+
+    def modify(self, graph: GraphRepresentationType):
+        for comment in graph.comments:
+            vote_sum = 0
+            orig_comment = graph.orig_comments[graph.id2idx[comment.id]]
+            if self.use_upvotes:
+                if orig_comment.upvotes:
+                    vote_sum += orig_comment.upvotes
+                if orig_comment.leseempfehlungen:
+                    vote_sum += orig_comment.leseempfehlungen
+                if orig_comment.likes:
+                    vote_sum += orig_comment.likes
+                if orig_comment.love:
+                    vote_sum += orig_comment.love
+                if orig_comment.recommended:
+                    vote_sum += orig_comment.recommended
+            if self.use_downvotes:
+                if orig_comment.downvotes:
+                    vote_sum += orig_comment.downvotes
+
+            for split in comment.splits:
+                split.wgts.VOTES = vote_sum
+
+
+class RecencyRanker(Modifier):
+    def __init__(self, *args, use_yongest=None, **kwargs):
+        """
+        Returns a graph with page-ranked node weights
+        :param args:
+        :param num_iterations: number of iteration for PageRank
+        :d: d parameter for PageRank
+        :normalize: normalize the PageRank values?
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.use_yongest = self.conf_getboolean('use_yongest', use_yongest)
+        logger.debug(f'{self.__class__.__name__} initialised')
+
+    def modify(self, graph: GraphRepresentationType):
+        if self.use_yongest:
+            agr_timestamp = max([graph.orig_comments[graph.id2idx[comment.id]].timestamp for comment in graph.comments])
+            comparison_factor = -1
+        else:
+            agr_timestamp = min([graph.orig_comments[graph.id2idx[comment.id]].timestamp for comment in graph.comments])
+            comparison_factor = 1
+
+        for comment in graph.comments:
+            orig_comment = graph.orig_comments[graph.id2idx[comment.id]]
+            for split in comment.splits:
+                split.wgts.RECENCY = comparison_factor*(orig_comment.timestamp-agr_timestamp).total_seconds()
+                print(split.wgts.RECENCY)
+
+
 class PageRanker(Modifier):
     def __init__(self, *args, num_iterations: int = None, d: float = None, edge_type=None,
                  user_power_mode=None, **kwargs):
