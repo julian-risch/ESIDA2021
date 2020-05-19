@@ -1,9 +1,7 @@
 import logging
-from collections import defaultdict, OrderedDict
-from operator import itemgetter
+from collections import defaultdict
 from typing import List, Callable, Tuple
 import numpy as np
-import scipy.sparse as sparse
 import data.models as models
 from data.processors import Modifier, GraphRepresentationType
 from scipy import sparse
@@ -39,7 +37,6 @@ class PageRanker(Modifier):
 
         logger.debug(f'{self.__class__.__name__} initialised with '
                      f'num_iterations={self.num_iterations}, d={self.d} and normalize={self.normalize}')
-
 
     def page_rank_fast(self, graph: GraphRepresentationType):
         def edge_list_to_adjacency_list(edge_type):
