@@ -9,6 +9,9 @@ from scipy import sparse
 from fast_pagerank import pagerank, pagerank_power
 import tensorflow as tf
 import keras
+
+from data.processors.embedding import load_fasttext_model
+
 logger = logging.getLogger('data.graph.ranking')
 
 
@@ -108,7 +111,6 @@ class RecencyRanker(Modifier):
             orig_comment = graph.orig_comments[graph.id2idx[comment.id]]
             for split in comment.splits:
                 split.wgts.RECENCY = comparison_factor*(orig_comment.timestamp-agr_timestamp).total_seconds()
-                print(split.wgts.RECENCY)
 
 
 class PageRanker(Modifier):
@@ -196,7 +198,7 @@ class CentralityDegreeCalculator(Modifier):
 
 
 class ToxicityRanker(Modifier):
-    def __init__(self, *args, ft_model, window_length=40, **kwargs):
+    def __init__(self, *args, window_length=40, **kwargs):
         """
         Returns a graph with toxicity node weights
         :param args:
@@ -204,13 +206,17 @@ class ToxicityRanker(Modifier):
         """
         super().__init__(*args, **kwargs)
 
-        logger.debug(f'{self.__class__.__name__} initialised')
+        logger.debug(f'{self.__class__.__name__} initialised. Load ft model...')
+
+        ft_model = load_fasttext_model()
         self.ft_model = ft_model
         self.n_features = ft_model.get_dimension()
         self.window_length = self.conf_getint('window_length', window_length)
-        # todo: add model name
-        self.model_name = ...
-        self.toxicity_model = tf.keras.models.load_model(filepath='models/' + self.model_name+'.hdf')
+        logger.debug(f'ft model loaded. Load toxicity model...')
+        model_name = 'trained_model_25-05-2020'
+        self.toxicity_model = tf.keras.models.load_model(filepath=f'models/{model_name}')
+        logger.debug(f'toxicity model loaded.')
+
 
     def normalize(self, s):
         # transform to lowercase characters
@@ -270,7 +276,10 @@ class ToxicityRanker(Modifier):
         # x = self.orig_comment_to_data(graph.orig_comments)
 
         x = self.graph_comments_to_data(graph)
-        predictions = self.toxicity_model.predict(x)
+
+        predictions = self.toxicity_model.predict(x, verbose=0, batch_size=512)
+
+        print(predictions[0])
 
         split_counter = 0
         for comment in graph.comments:
