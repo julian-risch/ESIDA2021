@@ -280,7 +280,8 @@ class ToxicityRanker(Modifier):
         split_counter = 0
         for comment in graph.comments:
             for split in comment.splits:
-                split.wgts.TOXICITY = predictions[split_counter][1]
+                # use probability for not being toxic
+                split.wgts.TOXICITY = predictions[split_counter][0]
                 split_counter += 1
 
 

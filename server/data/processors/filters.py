@@ -1,6 +1,7 @@
 import logging
 from data.processors import Modifier, GraphRepresentationType
 from data.processors.ranking import build_edge_dict
+import operator
 
 logger = logging.getLogger('data.graph.filters')
 
@@ -10,7 +11,7 @@ logger = logging.getLogger('data.graph.filters')
 #
 
 class GenericEdgeFilter(Modifier):
-    def __init__(self, *args, threshold=None, edge_type=None, **kwargs):
+    def __init__(self, *args, threshold=None, edge_type=None, smaller_as, **kwargs):
         """
         Removes all edges of the specific type below a threshold
         :param args:
@@ -20,45 +21,52 @@ class GenericEdgeFilter(Modifier):
         super().__init__(*args, **kwargs)
         self.threshold = self.conf_getfloat("threshold", threshold)
         self.edge_type = self.conf_getfloat("edge_type", edge_type)
+        self.smaller_as = self.conf_getboolean("smaller_as", smaller_as)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'threshold={self.threshold}'
+                     f'threshold={self.threshold} '
+                     f'smaller_as={self.smaller_as} '
                      f'and edge_type={self.edge_type}')
 
     def modify(self, graph: GraphRepresentationType):
+        if self.smaller_as:
+            operator_filter = operator.le
+        else:
+            operator_filter = operator.ge
+
         graph.edges = [edge for edge in graph.edges
-                       if edge.wgts[self.edge_type] and edge.wgts[self.edge_type] > self.threshold]
+                       if edge.wgts[self.edge_type] and operator_filter(edge.wgts[self.edge_type], self.threshold)]
         return graph
 
 
 class SimilarityEdgeFilter(GenericEdgeFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="SIMILARITY", **kwargs)
+    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_type="SIMILARITY",  smaller_as=smaller_as, **kwargs)
 
 
 class ReplyToEdgeFilter(GenericEdgeFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="REPLY_TO", **kwargs)
+    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_type="REPLY_TO",  smaller_as=smaller_as, **kwargs)
 
 
 class SameCommentEdgeFilter(GenericEdgeFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="SAME_COMMENT", **kwargs)
+    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_type="SAME_COMMENT",  smaller_as=smaller_as, **kwargs)
 
 
 class SameArticleEdgeFilter(GenericEdgeFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="SAME_ARTICLE", **kwargs)
+    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_type="SAME_ARTICLE",  smaller_as=smaller_as, **kwargs)
 
 
 class SameGroupEdgeFilter(GenericEdgeFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="SAME_GROUP", **kwargs)
+    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_type="SAME_GROUP",  smaller_as=smaller_as, **kwargs)
 
 
 class TemporalEdgeFilter(GenericEdgeFilter):
-    def __init__(self, *args, threshold=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="TEMPORAL", **kwargs)
+    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_type="TEMPORAL", smaller_as=smaller_as, **kwargs)
 
 
 class OrEdgeFilter(Modifier):
@@ -129,6 +137,7 @@ class GenericBottomEdgeFilter(Modifier):
                 return 0
             else:
                 return wgt_type
+
         filtered_edges = []
         edge_dict = build_edge_dict(graph)
         for comment in graph.comments:
@@ -178,7 +187,7 @@ class BottomSameGroupEdgeFilter(GenericBottomEdgeFilter):
 # Node Filters
 #
 class GenericNodeWeightFilter(Modifier):
-    def __init__(self, *args, threshold=None, node_weight_type=None, strict=None, **kwargs):
+    def __init__(self, *args, threshold=None, node_weight_type=None, strict=None, smaller_as=None, **kwargs):
         """
         Removes all edges connected to nodes of the specific type below a threshold
         :param args:
@@ -189,16 +198,24 @@ class GenericNodeWeightFilter(Modifier):
         self.threshold = self.conf_getfloat("threshold", threshold)
         self.node_weight_type = self.conf_get("node_weight_type", node_weight_type)
         self.strict = self.conf_getboolean("strict", strict)
+        self.smaller_as = self.conf_getboolean("smaller_as", smaller_as)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
                      f'threshold={self.threshold}, '
-                     f'strict_mode={strict} '
+                     f'strict_mode={self.strict} '
+                     f'smaller_as={self.smaller_as} '
                      f'and node_weight_type={self.node_weight_type}')
 
     def modify(self, graph: GraphRepresentationType):
+
+        if self.smaller_as:
+            operator_filter = operator.le
+        else:
+            operator_filter = operator.ge
+
         relevant_nodes = [(graph.id2idx[comment.id], split_id) for comment in graph.comments
                           for split_id, split in enumerate(comment.splits)
-                          if split.wgts[self.node_weight_type] >= self.threshold]
+                          if operator_filter(split.wgts[self.node_weight_type], self.threshold)]
 
         if self.strict:
             graph.edges = [edge for edge in graph.edges
@@ -211,33 +228,39 @@ class GenericNodeWeightFilter(Modifier):
 
 
 class SizeFilter(GenericNodeWeightFilter):
-    def __init__(self, *args, threshold=None, strict=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="SIZE", strict=strict, **kwargs)
+    def __init__(self, *args, threshold=None, strict=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="SIZE", strict=strict, smaller_as=smaller_as,
+                         **kwargs)
 
 
 class PageRankFilter(GenericNodeWeightFilter):
-    def __init__(self, *args, threshold=None, strict=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="PAGERANK", strict=strict, **kwargs)
+    def __init__(self, *args, threshold=None, strict=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="PAGERANK", strict=strict, smaller_as=smaller_as,
+                         **kwargs)
 
 
 class DegreeCentralityFilter(GenericNodeWeightFilter):
-    def __init__(self, *args, threshold=None, strict=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="DEGREE_CENTRALITY", strict=strict, **kwargs)
+    def __init__(self, *args, threshold=None, strict=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="DEGREE_CENTRALITY", strict=strict,
+                         smaller_as=smaller_as, **kwargs)
 
 
 class RecencyFilter(GenericNodeWeightFilter):
-    def __init__(self, *args, threshold=None, strict=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="RECENCY", strict=strict, **kwargs)
+    def __init__(self, *args, threshold=None, strict=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="RECENCY", strict=strict, smaller_as=smaller_as,
+                         **kwargs)
 
 
 class VotesFilter(GenericNodeWeightFilter):
-    def __init__(self, *args, threshold=None, strict=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="VOTES", strict=strict, **kwargs)
+    def __init__(self, *args, threshold=None, strict=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="VOTES", strict=strict, smaller_as=smaller_as,
+                         **kwargs)
 
 
 class ToxicityFilter(GenericNodeWeightFilter):
-    def __init__(self, *args, threshold=None, strict=None, **kwargs):
-        super().__init__(*args, threshold=threshold, node_weight_type="TOXICITY", strict=strict, **kwargs)
+    def __init__(self, *args, threshold=None, strict=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, node_weight_type="TOXICITY", strict=strict, smaller_as=smaller_as,
+                         **kwargs)
 
 
 class GenericNodeWeightBottomFilter(Modifier):
