@@ -5,7 +5,7 @@ from typing import List
 from data.processors import GraphRepresentationType
 from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, TemporalComparator
 from data.processors.embedding import SimilarityComparator
-from data.processors.ranking import PageRanker, CentralityDegreeCalculator, SizeRanker, VotesRanker, RecencyRanker
+from data.processors.ranking import PageRanker, CentralityDegreeCalculator, SizeRanker, VotesRanker, RecencyRanker, ToxicityRanker
 from data.processors.filters import *
 
 
@@ -28,6 +28,7 @@ MODIFIERS = [
     SizeRanker,
     VotesRanker,
     RecencyRanker,
+    ToxicityRanker,
 
     # filtering
     GenericEdgeFilter, SimilarityEdgeFilter, ReplyToEdgeFilter, SameCommentEdgeFilter, SameArticleEdgeFilter,
