@@ -198,7 +198,7 @@ class CentralityDegreeCalculator(Modifier):
 
 
 class ToxicityRanker(Modifier):
-    def __init__(self, *args, window_length=40, **kwargs):
+    def __init__(self, *args, window_length=125, **kwargs):
         """
         Returns a graph with toxicity node weights
         :param args:
@@ -216,7 +216,6 @@ class ToxicityRanker(Modifier):
         model_name = 'trained_model_25-05-2020'
         self.toxicity_model = tf.keras.models.load_model(filepath=f'models/{model_name}')
         logger.debug(f'toxicity model loaded.')
-
 
     def normalize(self, s):
         # transform to lowercase characters
@@ -265,8 +264,7 @@ class ToxicityRanker(Modifier):
         index = 0
         for comment in graph.comments:
             for split in comment.splits:
-                # todo: check if comment id is the correct id, otherwise do not call graph.id2idx[comment.id]
-                text = graph.orig_comments[graph.id2idx[comment.id]][split.s, split.e]
+                text = graph.orig_comments[graph.id2idx[comment.id]].text[int(split.s): int(split.e)]
                 x[index, :] = self.text_to_vector(text)
                 index += 1
         return x
@@ -279,12 +277,10 @@ class ToxicityRanker(Modifier):
 
         predictions = self.toxicity_model.predict(x, verbose=0, batch_size=512)
 
-        print(predictions[0])
-
         split_counter = 0
         for comment in graph.comments:
             for split in comment.splits:
-                split.wgts.TOXICITY = predictions[split_counter]
+                split.wgts.TOXICITY = predictions[split_counter][1]
                 split_counter += 1
 
 
