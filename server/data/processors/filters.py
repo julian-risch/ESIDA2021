@@ -192,7 +192,7 @@ class GenericNodeWeightFilter(Modifier):
 
         logger.debug(f'{self.__class__.__name__} initialised with '
                      f'threshold={self.threshold}, '
-                     f'strict_mode ={strict} '
+                     f'strict_mode={strict} '
                      f'and node_weight_type={self.node_weight_type}')
 
     def modify(self, graph: GraphRepresentationType):
