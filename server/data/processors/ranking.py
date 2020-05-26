@@ -198,21 +198,24 @@ class CentralityDegreeCalculator(Modifier):
 
 
 class ToxicityRanker(Modifier):
-    def __init__(self, *args, window_length=125, **kwargs):
+    def __init__(self, *args, window_length=None, whole_comment=None, **kwargs):
         """
         Returns a graph with toxicity node weights
         :param args:
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-
-        logger.debug(f'{self.__class__.__name__} initialised. Load ft model...')
-
+        self.window_length = self.conf_getint('window_length', window_length)
+        self.whole_comment = self.conf_getboolean('whole_comment', whole_comment)
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'window_length={self.window_length} and '
+                     f'whole_comment={self.whole_comment}. '
+                     f'Load ft model...')
         ft_model = load_fasttext_model()
         self.ft_model = ft_model
         self.n_features = ft_model.get_dimension()
-        self.window_length = self.conf_getint('window_length', window_length)
-        logger.debug(f'ft model loaded. Load toxicity model...')
+        logger.debug(f'ft model loaded with {self.n_features} features. '
+                     f'Load toxicity model...')
         model_name = 'trained_toxicity_model'
         self.toxicity_model = tf.keras.models.load_model(filepath=f'models/{model_name}')
         logger.debug(f'toxicity model loaded.')
@@ -270,19 +273,26 @@ class ToxicityRanker(Modifier):
         return x
 
     def modify(self, graph: GraphRepresentationType):
-        # alternative for orig_comments
-        # x = self.orig_comment_to_data(graph.orig_comments)
+        # for orig_comments
+        if self.whole_comment:
+            x = self.orig_comment_to_data(graph.orig_comments)
+            predictions = self.toxicity_model.predict(x, verbose=0, batch_size=512)
 
-        x = self.graph_comments_to_data(graph)
+            for comment_counter, comment in enumerate(graph.comments):
+                for split in comment.splits:
+                    split.wgts.TOXICITY = predictions[comment_counter][0]
+        # for sentences
+        else:
+            x = self.graph_comments_to_data(graph)
 
-        predictions = self.toxicity_model.predict(x, verbose=0, batch_size=512)
+            predictions = self.toxicity_model.predict(x, verbose=0, batch_size=512)
 
-        split_counter = 0
-        for comment in graph.comments:
-            for split in comment.splits:
-                # use probability for not being toxic
-                split.wgts.TOXICITY = predictions[split_counter][0]
-                split_counter += 1
+            split_counter = 0
+            for comment in graph.comments:
+                for split in comment.splits:
+                    # use probability for not being toxic
+                    split.wgts.TOXICITY = predictions[split_counter][0]
+                    split_counter += 1
 
 
 class Representives:
