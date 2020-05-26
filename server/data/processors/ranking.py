@@ -213,14 +213,14 @@ class ToxicityRanker(Modifier):
         self.n_features = ft_model.get_dimension()
         self.window_length = self.conf_getint('window_length', window_length)
         logger.debug(f'ft model loaded. Load toxicity model...')
-        model_name = 'trained_model_25-05-2020'
+        model_name = 'trained_toxicity_model'
         self.toxicity_model = tf.keras.models.load_model(filepath=f'models/{model_name}')
         logger.debug(f'toxicity model loaded.')
 
     def normalize(self, s):
         # transform to lowercase characters
         s = str(s)
-        s = s.lower()
+        # s = s.lower()
         # Isolate punctuation
         s = re.sub(r'([\'\"\.\(\)\!\?\-\\\/\,])', r' \1 ', s)
         # Remove some special characters
