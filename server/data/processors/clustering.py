@@ -1,4 +1,5 @@
 import logging
+import operator
 import re
 from collections import defaultdict
 from typing import List, Callable, Tuple
@@ -30,6 +31,133 @@ class Representives:
     #     max_id = sims.index(max(sims))
     #     return nodes[max_id]
 
+
+class GenericNodeMerger(Modifier):
+    def __init__(self, *args, threshold: float = None, smaller_as=None, edge_weight_type=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.threshold = self.conf_getfloat('threshold', threshold)
+        self.smaller_as = self.conf_getboolean('smaller_as', smaller_as)
+        self.edge_weight_type = self.conf_get('edge_weight_type', edge_weight_type)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'threshold={self.threshold}, smaller_as={self.smaller_as} '
+                     f'and edge_weight_type={self.edge_weight_type}')
+
+
+    @staticmethod
+    def clusters(to_replace):
+        finalized_replacements = {}
+        for k, v in to_replace.items():
+            for k2, v2 in to_replace.items():
+                if v == k2:
+                    finalized_replacements[k] = v2
+
+            if k not in finalized_replacements:
+                finalized_replacements[k] = v
+
+        cluster = defaultdict(list)
+        for k, v in to_replace.items():
+            cluster[v].append(k)
+
+        for k, v in cluster.items():
+            for k2, v2 in cluster.items():
+                if k != k2 and k in v2:
+                    cluster[k2].extend(v)
+                    cluster[k].clear()
+        # print(cluster)
+        # replacement -> [to_be_replaced_1, ..., to_be_replaced_n]
+        cluster = {k: l for k, l in cluster.items() if len(l) > 0}
+
+        # to_be_replaced -> replacement
+        finalized_replacements = {v: k for k, l in cluster.items() for v in l}
+
+        return cluster, finalized_replacements
+
+    def modify(self, graph: GraphRepresentationType):
+
+        replacements = {}
+
+        # # investigate what can be replaced with what
+        # for edge in graph.edges:
+        #     if conj == "or":
+        #         filter_bool = edge.wgts.SIMILARITY > textual \
+        #                       or edge.wgts.REPLY_TO > structural \
+        #                       or edge.wgts.SAME_COMMENT > structural \
+        #                       or edge.wgts.SAME_ARTICLE > structural \
+        #                       or edge.wgts.SAME_GROUP > structural \
+        #                       or edge.wgts.TEMPORAL < temporal
+        #     else:
+        #         filter_bool = edge.wgts.SIMILARITY > textual \
+        #                       and edge.wgts.REPLY_TO > structural \
+        #                       and edge.wgts.SAME_COMMENT > structural \
+        #                       and edge.wgts.SAME_ARTICLE > structural \
+        #                       and edge.wgts.SAME_GROUP > structural \
+        #                       and edge.wgts.TEMPORAL < temporal
+        #
+        #     if filter_bool:
+        #         source: Tuple[int, int] = edge.src
+        #         target: Tuple[int, int] = edge.tgt
+        #
+        #         if source is None or target is None:
+        #             continue
+        #
+        #         if source == target:
+        #             edge.src = None
+        #             edge.tgt = None
+        #             continue
+        #
+        #         source_weight = graph.comments[source[0]].splits[source[1]].wgts[representive_weight]
+        #         target_weight = graph.comments[target[0]].splits[target[1]].wgts[representive_weight]
+        #
+        #         if source_weight > target_weight:
+        #             use = source
+        #             drop = target
+        #         else:
+        #             use = target
+        #             drop = source
+        #
+        #         if use == drop:
+        #             raise UserWarning("use and drop same!")
+        #
+        #         replacements[drop] = use
+        #
+        # # use only replacements that cannot be replaced by others
+        # cluster, final_replacements = self.clusters(replacements)
+        # #   # replace nodes in edges
+        # for edge in graph.edges:
+        #     if edge.src in final_replacements.keys():
+        #         edge.src = final_replacements[edge.src]
+        #
+        #     if edge.tgt in final_replacements.keys():
+        #         edge.tgt = final_replacements[edge.tgt]
+
+        if self.smaller_as:
+            operator_filter = operator.le
+        else:
+            operator_filter = operator.ge
+
+        look_up = {}
+        for edge in graph.edges:
+            if operator_filter(edge.wgts[self.edge_weight_type], self.threshold):
+                 look_up[...] = ...
+                # todo: complete merging
+
+        # merge preperation:
+        for comment in graph.comments:
+            for j, split in enumerate(comment.splits):
+                split.wgts.MERGE_ID = look_up[(graph.id2idx[comment.id], j)]
+
+
+    def weights_bigger_as_threshold(self, edge: models.Edge, threshold: float = 0, edge_types=None):
+        if edge_types is None:
+            edge_types = [models.EdgeWeights.SIMILARITY, models.EdgeWeights.SAME_COMMENT]
+        choosen_weights = [edge.wgts[edge_type] for edge_type in edge_types]
+
+        # boolean_and
+        for w in choosen_weights:
+            if w <= threshold:
+                return False
+        return True
 
 class NodeMerger(Modifier):
     def __init__(self, *args, textual_threshold: float = None, structural_threshold: float = None,
