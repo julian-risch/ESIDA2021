@@ -41,27 +41,27 @@ class GenericEdgeFilter(Modifier):
 
 class SimilarityEdgeFilter(GenericEdgeFilter):
     def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="SIMILARITY",  smaller_as=smaller_as, **kwargs)
+        super().__init__(*args, threshold=threshold, edge_type="SIMILARITY", smaller_as=smaller_as, **kwargs)
 
 
 class ReplyToEdgeFilter(GenericEdgeFilter):
     def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="REPLY_TO",  smaller_as=smaller_as, **kwargs)
+        super().__init__(*args, threshold=threshold, edge_type="REPLY_TO", smaller_as=smaller_as, **kwargs)
 
 
 class SameCommentEdgeFilter(GenericEdgeFilter):
     def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="SAME_COMMENT",  smaller_as=smaller_as, **kwargs)
+        super().__init__(*args, threshold=threshold, edge_type="SAME_COMMENT", smaller_as=smaller_as, **kwargs)
 
 
 class SameArticleEdgeFilter(GenericEdgeFilter):
     def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="SAME_ARTICLE",  smaller_as=smaller_as, **kwargs)
+        super().__init__(*args, threshold=threshold, edge_type="SAME_ARTICLE", smaller_as=smaller_as, **kwargs)
 
 
 class SameGroupEdgeFilter(GenericEdgeFilter):
     def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
-        super().__init__(*args, threshold=threshold, edge_type="SAME_GROUP",  smaller_as=smaller_as, **kwargs)
+        super().__init__(*args, threshold=threshold, edge_type="SAME_GROUP", smaller_as=smaller_as, **kwargs)
 
 
 class TemporalEdgeFilter(GenericEdgeFilter):
@@ -116,7 +116,7 @@ class OrEdgeFilter(Modifier):
 
 
 class GenericBottomEdgeFilter(Modifier):
-    def __init__(self, *args, top_edges=None, edge_type=None, **kwargs):
+    def __init__(self, *args, top_edges=None, edge_type=None, descending_order=None, **kwargs):
         """
         Filters all edges except top edges for specific edge type
         :param args:
@@ -126,10 +126,12 @@ class GenericBottomEdgeFilter(Modifier):
         super().__init__(*args, **kwargs)
         self.top_edges = self.conf_getint('top_edges', top_edges)
         self.edge_type = self.conf_get('edge_type', edge_type)
+        self.descending_order = self.conf_getboolean('descending_order', descending_order)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
                      f'top_edges={self.top_edges} '
-                     f'for edge_type={self.edge_type}')
+                     f'for edge_type={self.edge_type} '
+                     f'with descending_order={self.descending_order}')
 
     def modify(self, graph: GraphRepresentationType):
         def filter_none(wgt_type):
@@ -143,7 +145,9 @@ class GenericBottomEdgeFilter(Modifier):
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
                 node_edges = edge_dict[(graph.id2idx[comment.id], j)]
-                node_edges = sorted(node_edges, key=lambda e: filter_none(e.wgts[self.edge_type]), reverse=True)[
+                node_edges = sorted(node_edges,
+                                    key=lambda e: filter_none(e.wgts[self.edge_type]),
+                                    reverse=self.descending_order)[
                              :self.top_edges]
                 for edge in node_edges:
                     if edge not in filtered_edges:
@@ -154,33 +158,39 @@ class GenericBottomEdgeFilter(Modifier):
 
 
 class BottomSimilarityEdgeFilter(GenericBottomEdgeFilter):
-    def __init__(self, *args, top_edges=None, **kwargs):
-        GenericBottomEdgeFilter.__init__(self, *args, top_edges=top_edges, edge_type="SIMILARITY", **kwargs)
+    def __init__(self, *args, top_edges=None, descending_order=None, **kwargs):
+        GenericBottomEdgeFilter.__init__(self, *args, top_edges=top_edges, edge_type="SIMILARITY",
+                                         descending_order=descending_order, **kwargs)
 
 
 class BottomReplyToEdgeFilter(GenericBottomEdgeFilter):
-    def __init__(self, *args, top_edges=None, **kwargs):
-        GenericBottomEdgeFilter.__init__(self, *args, top_edges=top_edges, edge_type="REPLY_TO", **kwargs)
+    def __init__(self, *args, top_edges=None, descending_order=None, **kwargs):
+        GenericBottomEdgeFilter.__init__(self, *args, top_edges=top_edges, edge_type="REPLY_TO",
+                                         descending_order=descending_order, **kwargs)
 
 
 class BottomTemporalEdgeFilter(GenericBottomEdgeFilter):
-    def __init__(self, *args, top_edges=None, **kwargs):
-        GenericBottomEdgeFilter.__init__(*args, top_edges=top_edges, edge_type="TEMPORAL", **kwargs)
+    def __init__(self, *args, top_edges=None, descending_order=None, **kwargs):
+        GenericBottomEdgeFilter.__init__(*args, top_edges=top_edges, edge_type="TEMPORAL",
+                                         descending_order=descending_order, **kwargs)
 
 
 class BottomSameCommentFilter(GenericBottomEdgeFilter):
-    def __init__(self, *args, top_edges=None, **kwargs):
-        GenericBottomEdgeFilter.__init__(self, *args, top_edges=top_edges, edge_type="SAME_COMMENT", **kwargs)
+    def __init__(self, *args, top_edges=None, descending_order=None, **kwargs):
+        GenericBottomEdgeFilter.__init__(self, *args, top_edges=top_edges, edge_type="SAME_COMMENT",
+                                         descending_order=descending_order, **kwargs)
 
 
 class BottomSameArticleEdgeFilter(GenericBottomEdgeFilter):
-    def __init__(self, *args, top_edges=None, **kwargs):
-        GenericBottomEdgeFilter.__init__(self, *args, top_edges=top_edges, edge_type="SAME_ARTICLE", **kwargs)
+    def __init__(self, *args, top_edges=None, descending_order=None, **kwargs):
+        GenericBottomEdgeFilter.__init__(self, *args, top_edges=top_edges, edge_type="SAME_ARTICLE",
+                                         descending_order=descending_order, **kwargs)
 
 
 class BottomSameGroupEdgeFilter(GenericBottomEdgeFilter):
-    def __init__(self, *args, top_edges=None, **kwargs):
-        GenericBottomEdgeFilter.__init__(*args, top_edges=top_edges, edge_type="SAME_GROUP", **kwargs)
+    def __init__(self, *args, top_edges=None, descending_order=None, **kwargs):
+        GenericBottomEdgeFilter.__init__(*args, top_edges=top_edges, edge_type="SAME_GROUP",
+                                         descending_order=descending_order, **kwargs)
 
 
 #
@@ -264,7 +274,7 @@ class ToxicityFilter(GenericNodeWeightFilter):
 
 
 class GenericNodeWeightBottomFilter(Modifier):
-    def __init__(self, *args, top_k=None, node_weight_type=None, strict=None, **kwargs):
+    def __init__(self, *args, top_k=None, node_weight_type=None, strict=None, descending_order=None, **kwargs):
         """
         Remove edges from a graph not connected to top-k nodes of the specified weight
         :param args:
@@ -277,16 +287,18 @@ class GenericNodeWeightBottomFilter(Modifier):
         self.node_weight_type = self.conf_get("node_weight_type", node_weight_type)
         self.top_k = self.conf_getint("top_k", top_k)
         self.strict = self.conf_getboolean('strict', strict)
+        self.descending_order = self.conf_getboolean('descending_order', descending_order)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
                      f'k={self.top_k} and strict={self.strict} '
-                     f'on {self.node_weight_type}')
+                     f'on {self.node_weight_type} '
+                     f'with descending_order={self.descending_order}')
 
     def modify(self, graph: GraphRepresentationType):
         weights = {(graph.id2idx[comment.id], j): split.wgts[self.node_weight_type]
                    for comment in graph.comments for j, split in enumerate(comment.splits)}
         filtered_ranks = {k: v for k, v in sorted(weights.items(),
-                                                  key=lambda item: item[1], reverse=True)[:self.top_k]}
+                                                  key=lambda item: item[1], reverse=self.descending_order)[:self.top_k]}
         if self.strict:
             graph.edges = [edge for edge in graph.edges
                            if edge.src in filtered_ranks and edge.tgt in filtered_ranks]
@@ -296,30 +308,36 @@ class GenericNodeWeightBottomFilter(Modifier):
 
 
 class SizeBottomFilter(GenericNodeWeightBottomFilter):
-    def __init__(self, *args, top_k=None, strict=None, **kwargs):
-        super().__init__(*args, top_k=top_k, node_weight_type="SIZE", strict=strict, **kwargs)
+    def __init__(self, *args, top_k=None, strict=None, descending_order=None, **kwargs):
+        super().__init__(*args, top_k=top_k, node_weight_type="SIZE", strict=strict, descending_order=descending_order,
+                         **kwargs)
 
 
 class PageRankBottomFilter(GenericNodeWeightBottomFilter):
-    def __init__(self, *args, top_k=None, strict=None, **kwargs):
-        super().__init__(*args, top_k=top_k, node_weight_type="PAGERANK", strict=strict, **kwargs)
+    def __init__(self, *args, top_k=None, strict=None, descending_order=None, **kwargs):
+        super().__init__(*args, top_k=top_k, node_weight_type="PAGERANK", strict=strict,
+                         descending_order=descending_order, **kwargs)
 
 
 class DegreeCentralityBottomFilter(GenericNodeWeightBottomFilter):
-    def __init__(self, *args, top_k=None, strict=None, **kwargs):
-        super().__init__(*args, top_k=top_k, node_weight_type="DEGREE_CENTRALITY", strict=strict, **kwargs)
+    def __init__(self, *args, top_k=None, strict=None, descending_order=None, **kwargs):
+        super().__init__(*args, top_k=top_k, node_weight_type="DEGREE_CENTRALITY", strict=strict,
+                         descending_order=descending_order, **kwargs)
 
 
 class RecencyBottomFilter(GenericNodeWeightBottomFilter):
-    def __init__(self, *args, top_k=None, strict=None, **kwargs):
-        super().__init__(*args, top_k=top_k, node_weight_type="RECENCY", strict=strict, **kwargs)
+    def __init__(self, *args, top_k=None, strict=None, descending_order=None, **kwargs):
+        super().__init__(*args, top_k=top_k, node_weight_type="RECENCY", strict=strict,
+                         descending_order=descending_order, **kwargs)
 
 
 class VotesBottomFilter(GenericNodeWeightBottomFilter):
-    def __init__(self, *args, top_k=None, strict=None, **kwargs):
-        super().__init__(*args, top_k=top_k, node_weight_type="VOTES", strict=strict, **kwargs)
+    def __init__(self, *args, top_k=None, strict=None, descending_order=None, **kwargs):
+        super().__init__(*args, top_k=top_k, node_weight_type="VOTES", strict=strict, descending_order=descending_order,
+                         **kwargs)
 
 
 class ToxicityBottomFilter(GenericNodeWeightBottomFilter):
-    def __init__(self, *args, top_k=None, strict=None, **kwargs):
-        super().__init__(*args, top_k=top_k, node_weight_type="TOXICITY", strict=strict, **kwargs)
+    def __init__(self, *args, top_k=None, strict=None, descending_order=None, **kwargs):
+        super().__init__(*args, top_k=top_k, node_weight_type="TOXICITY", strict=strict,
+                         descending_order=descending_order, **kwargs)
