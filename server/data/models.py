@@ -161,6 +161,10 @@ class SplitWeights(BaseModel):
     VOTES: Optional[float]
     # the toxicity of the comment
     TOXICITY: Optional[float]
+    # id of merge group
+    MERGE_ID: Optional[float]
+    # id of cluster group
+    CLUSTER_ID: Optional[float]
 
     def __getitem__(self, item):
         # return self.__root__[item]
