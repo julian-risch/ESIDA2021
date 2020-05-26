@@ -4,7 +4,7 @@ from typing import List, Dict
 from data.processors import Comparator, Modifier, GraphRepresentationType
 import data.models as models
 import logging
-from common import config
+from common import config, init_or_get_fasttext_model
 
 FASTTEXT_PATH = config.get('TextProcessing', 'fasttext_path')
 logger = logging.getLogger('data.graph.embedding')
@@ -20,7 +20,7 @@ def vectorize_sentence(model, sentence: str) -> List[float]:
 
 def vectorize_comments(model, comment_texts: List[str]) -> Dict[int, List[float]]:
     if not model:
-        model = load_fasttext_model()
+        model = init_or_get_fasttext_model()
     vectorized_documents = {i: vectorize_sentence(model, comment_text.replace("\n", " "))
                             for i, comment_text in enumerate(comment_texts)}
 
@@ -56,7 +56,7 @@ class SimilarityComparator(Comparator):
 
         logger.debug(f'{self.__class__.__name__} initialised with max_similarity: {self.max_similarity} '
                      f'base_weight: {self.base_weight} and only_root: {self.only_root}, load fasttext model...')
-        self.model = load_fasttext_model()
+        self.model = init_or_get_fasttext_model()
         logger.debug(f'loaded fast text model')
 
     def _set_weight(self, edge: models.EdgeWeights, weight: float):

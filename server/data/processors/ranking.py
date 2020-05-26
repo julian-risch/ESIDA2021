@@ -4,13 +4,11 @@ from collections import defaultdict
 from typing import List, Callable, Tuple
 import numpy as np
 import data.models as models
+from common import init_or_get_fasttext_model, init_or_get_toxicity_model
 from data.processors import Modifier, GraphRepresentationType
 from scipy import sparse
 from fast_pagerank import pagerank, pagerank_power
-import tensorflow as tf
-import keras
 
-from data.processors.embedding import load_fasttext_model
 
 logger = logging.getLogger('data.graph.ranking')
 
@@ -211,13 +209,12 @@ class ToxicityRanker(Modifier):
                      f'window_length={self.window_length} and '
                      f'whole_comment={self.whole_comment}. '
                      f'Load ft model...')
-        ft_model = load_fasttext_model()
+        ft_model = init_or_get_fasttext_model()
         self.ft_model = ft_model
         self.n_features = ft_model.get_dimension()
         logger.debug(f'ft model loaded with {self.n_features} features. '
                      f'Load toxicity model...')
-        model_name = 'trained_toxicity_model'
-        self.toxicity_model = tf.keras.models.load_model(filepath=f'models/{model_name}')
+        self.toxicity_model = init_or_get_toxicity_model()
         logger.debug(f'toxicity model loaded.')
 
     def normalize(self, s):
