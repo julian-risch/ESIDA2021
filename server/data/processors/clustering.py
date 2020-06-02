@@ -43,39 +43,7 @@ class GenericNodeMerger(Modifier):
                      f'threshold={self.threshold}, smaller_as={self.smaller_as} '
                      f'and edge_weight_type={self.edge_weight_type}')
 
-
-    @staticmethod
-    def clusters(to_replace):
-        finalized_replacements = {}
-        for k, v in to_replace.items():
-            for k2, v2 in to_replace.items():
-                if v == k2:
-                    finalized_replacements[k] = v2
-
-            if k not in finalized_replacements:
-                finalized_replacements[k] = v
-
-        cluster = defaultdict(list)
-        for k, v in to_replace.items():
-            cluster[v].append(k)
-
-        for k, v in cluster.items():
-            for k2, v2 in cluster.items():
-                if k != k2 and k in v2:
-                    cluster[k2].extend(v)
-                    cluster[k].clear()
-        # print(cluster)
-        # replacement -> [to_be_replaced_1, ..., to_be_replaced_n]
-        cluster = {k: l for k, l in cluster.items() if len(l) > 0}
-
-        # to_be_replaced -> replacement
-        finalized_replacements = {v: k for k, l in cluster.items() for v in l}
-
-        return cluster, finalized_replacements
-
     def modify(self, graph: GraphRepresentationType):
-
-        replacements = {}
         if self.smaller_as:
             operator_filter = operator.le
         else:
@@ -84,17 +52,25 @@ class GenericNodeMerger(Modifier):
         look_up = {}
         reverse_look_up = defaultdict(set)
         cluster_id = 0
+
+        # FIXME: there is a bug preventing similary edges to be merged
         for edge in graph.edges:
+            if edge.wgts[self.edge_weight_type] is None:
+                continue
             if operator_filter(edge.wgts[self.edge_weight_type], self.threshold):
+                # use old id if existing, else increment
                 if edge.tgt in look_up or edge.src in look_up:
                     tgt_cluster = look_up.get(edge.tgt)
                     src_cluster = look_up.get(edge.src)
+
                     if tgt_cluster != src_cluster:
+
                         if src_cluster is not None and tgt_cluster is None:
                             concrete_id = src_cluster
                         elif src_cluster is None and tgt_cluster is not None:
                             concrete_id = tgt_cluster
                         else:
+                            # actual merge by replacing cluster ids in lookup tables
                             concrete_id = src_cluster
                             nodes_to_change = reverse_look_up[tgt_cluster]
                             for node in nodes_to_change:
@@ -103,7 +79,7 @@ class GenericNodeMerger(Modifier):
 
                             del reverse_look_up[tgt_cluster]
                     else:
-                        concrete_id = tgt_cluster
+                        concrete_id = src_cluster
                 else:
                     concrete_id = cluster_id
                     cluster_id += 1
@@ -116,7 +92,44 @@ class GenericNodeMerger(Modifier):
         # merge preperation:
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
-                split.wgts.MERGE_ID = look_up[(graph.id2idx[comment.id], j)]
+                cluster = look_up.get((graph.id2idx[comment.id], j))
+                # set id of nodes without cluster to -1
+                if cluster is None:
+                    cluster = -1
+                split.wgts.MERGE_ID = cluster
+
+        # print(reverse_look_up)
+        return look_up, reverse_look_up
+
+
+class SimilarityNodeMerger(GenericNodeMerger):
+    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_weight_type="SIMILARITY", smaller_as=smaller_as, **kwargs)
+
+
+class ReplyToNodeMerger(GenericNodeMerger):
+    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_weight_type="REPLY_TO", smaller_as=smaller_as, **kwargs)
+
+
+class SameCommentNodeMerger(GenericNodeMerger):
+    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_weight_type="SAME_COMMENT", smaller_as=smaller_as, **kwargs)
+
+
+class SameArticleNodeMerger(GenericNodeMerger):
+    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_weight_type="SAME_ARTICLE", smaller_as=smaller_as, **kwargs)
+
+
+class SameGroupNodeMerger(GenericNodeMerger):
+    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_weight_type="SAME_GROUP", smaller_as=smaller_as, **kwargs)
+
+
+class TemporalNodeMerger(GenericNodeMerger):
+    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+        super().__init__(*args, threshold=threshold, edge_weight_type="TEMPORAL", smaller_as=smaller_as, **kwargs)
 
 
 class NodeMerger(Modifier):

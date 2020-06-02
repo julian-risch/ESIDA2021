@@ -1,4 +1,5 @@
 from data.processors import ranking
+from data.processors.clustering import *
 from data.processors.text import split_comment
 import data.models as models
 from typing import List
@@ -38,7 +39,10 @@ MODIFIERS = [
     GenericNodeWeightFilter, SizeFilter, PageRankFilter, DegreeCentralityFilter,
     RecencyFilter, VotesFilter, ToxicityFilter,
     GenericNodeWeightBottomFilter, SizeBottomFilter, PageRankBottomFilter, DegreeCentralityBottomFilter,
-    RecencyBottomFilter, VotesBottomFilter, ToxicityBottomFilter
+    RecencyBottomFilter, VotesBottomFilter, ToxicityBottomFilter,
+
+    GenericNodeMerger, SimilarityNodeMerger, ReplyToNodeMerger, SameCommentNodeMerger, SameArticleNodeMerger,
+    SameGroupNodeMerger, TemporalNodeMerger
 ]
 
 logger = logging.getLogger('data.processors.graph')
