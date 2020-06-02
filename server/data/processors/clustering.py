@@ -53,10 +53,10 @@ class GenericNodeMerger(Modifier):
         reverse_look_up = defaultdict(set)
         cluster_id = 0
 
-        # FIXME: there is a bug preventing similary edges to be merged
         for edge in graph.edges:
             if edge.wgts[self.edge_weight_type] is None:
                 continue
+
             if operator_filter(edge.wgts[self.edge_weight_type], self.threshold):
                 # use old id if existing, else increment
                 if edge.tgt in look_up or edge.src in look_up:
@@ -98,7 +98,6 @@ class GenericNodeMerger(Modifier):
                     cluster = -1
                 split.wgts.MERGE_ID = cluster
 
-        # print(reverse_look_up)
         return look_up, reverse_look_up
 
 
