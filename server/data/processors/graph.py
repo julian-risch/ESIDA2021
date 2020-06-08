@@ -42,7 +42,7 @@ MODIFIERS = [
     RecencyBottomFilter, VotesBottomFilter, ToxicityBottomFilter,
 
     GenericNodeMerger, SimilarityNodeMerger, ReplyToNodeMerger, SameCommentNodeMerger, SameArticleNodeMerger,
-    SameGroupNodeMerger, TemporalNodeMerger
+    SameGroupNodeMerger, TemporalNodeMerger, MultiNodeMerger
 ]
 
 logger = logging.getLogger('data.processors.graph')
