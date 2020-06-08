@@ -2,6 +2,7 @@ import operator
 from collections import defaultdict
 from data.processors import Modifier, GraphRepresentationType
 import logging
+import networkx as nx
 
 logger = logging.getLogger('data.graph.clustering')
 
@@ -213,3 +214,72 @@ class SameGroupNodeMerger(GenericNodeMerger):
 class TemporalNodeMerger(GenericNodeMerger):
     def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
         super().__init__(*args, threshold=threshold, edge_weight_type="TEMPORAL", smaller_as=smaller_as, **kwargs)
+
+
+class GenericClusterer(Modifier):
+    def __init__(self, *args, threshold: float = None, smaller_as=None, edge_weight_type=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.threshold = self.conf_getfloat('threshold', threshold)
+        self.smaller_as = self.conf_getboolean('smaller_as', smaller_as)
+        self.edge_weight_type = self.conf_get('edge_weight_type', edge_weight_type)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'threshold={self.threshold}, smaller_as={self.smaller_as} '
+                     f'and edge_weight_type={self.edge_weight_type}')
+
+    def modify(self, graph: GraphRepresentationType):
+        if self.smaller_as:
+            operator_filter = operator.le
+        else:
+            operator_filter = operator.ge
+
+        look_up = {}
+        reverse_look_up = defaultdict(set)
+        cluster_id = 0
+
+        for edge in graph.edges:
+            if edge.wgts[self.edge_weight_type] is None:
+                continue
+
+            if operator_filter(edge.wgts[self.edge_weight_type], self.threshold):
+                # use old id if existing, else increment
+                if edge.tgt in look_up or edge.src in look_up:
+                    tgt_cluster = look_up.get(edge.tgt)
+                    src_cluster = look_up.get(edge.src)
+
+                    if tgt_cluster != src_cluster:
+
+                        if src_cluster is not None and tgt_cluster is None:
+                            concrete_id = src_cluster
+                        elif src_cluster is None and tgt_cluster is not None:
+                            concrete_id = tgt_cluster
+                        else:
+                            # actual merge by replacing cluster ids in lookup tables
+                            concrete_id = src_cluster
+                            nodes_to_change = reverse_look_up[tgt_cluster]
+                            for node in nodes_to_change:
+                                look_up[node] = concrete_id
+                                reverse_look_up[concrete_id].add(node)
+
+                            del reverse_look_up[tgt_cluster]
+                    else:
+                        concrete_id = src_cluster
+                else:
+                    concrete_id = cluster_id
+                    cluster_id += 1
+
+                reverse_look_up[concrete_id].add(edge.tgt)
+                reverse_look_up[concrete_id].add(edge.src)
+                look_up[edge.tgt] = concrete_id
+                look_up[edge.src] = concrete_id
+
+        # merge preperation:
+        for comment in graph.comments:
+            for j, split in enumerate(comment.splits):
+                cluster = look_up.get((graph.id2idx[comment.id], j))
+                # set id of nodes without cluster to -1
+                if cluster is None:
+                    cluster = -1
+                split.wgts.MERGE_ID = cluster
+
+        return look_up, reverse_look_up
