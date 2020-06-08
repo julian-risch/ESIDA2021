@@ -36,8 +36,8 @@ class GenericNodeMerger(Modifier):
             if operator_filter(edge.wgts[self.edge_weight_type], self.threshold):
                 # use old id if existing, else increment
                 if edge.tgt in look_up or edge.src in look_up:
-                    tgt_cluster = look_up.get(edge.tgt)
                     src_cluster = look_up.get(edge.src)
+                    tgt_cluster = look_up.get(edge.tgt)
 
                     if tgt_cluster != src_cluster:
 
@@ -365,5 +365,4 @@ class MultiEdgeTypeClusterer(Modifier):
                     cluster = -1
                 split.wgts.CLUSTER_ID = cluster
 
-        print(look_up)
         return look_up, reverse_look_up
