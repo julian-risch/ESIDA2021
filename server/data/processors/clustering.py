@@ -3,6 +3,7 @@ from collections import defaultdict
 from data.processors import Modifier, GraphRepresentationType
 import logging
 import networkx as nx
+from networkx.algorithms import community
 
 logger = logging.getLogger('data.graph.clustering')
 
@@ -217,69 +218,78 @@ class TemporalNodeMerger(GenericNodeMerger):
 
 
 class GenericClusterer(Modifier):
-    def __init__(self, *args, threshold: float = None, smaller_as=None, edge_weight_type=None, **kwargs):
+    def __init__(self, *args, edge_weight_type=None, algorithm=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.threshold = self.conf_getfloat('threshold', threshold)
-        self.smaller_as = self.conf_getboolean('smaller_as', smaller_as)
         self.edge_weight_type = self.conf_get('edge_weight_type', edge_weight_type)
+        self.algorithm = self.conf_get('algorithm', algorithm)
 
         logger.debug(f'{self.__class__.__name__} initialised with '
-                     f'threshold={self.threshold}, smaller_as={self.smaller_as} '
+                     f'algorithm={self.algorithm} '
                      f'and edge_weight_type={self.edge_weight_type}')
 
     def modify(self, graph: GraphRepresentationType):
-        if self.smaller_as:
-            operator_filter = operator.le
-        else:
-            operator_filter = operator.ge
-
         look_up = {}
         reverse_look_up = defaultdict(set)
-        cluster_id = 0
+        networkx_graph = nx.Graph()
+
+        for comment in graph.comments:
+            for j, split in enumerate(comment.splits):
+                networkx_graph.add_node(node_for_adding=(graph.id2idx[comment.id], j))
 
         for edge in graph.edges:
-            if edge.wgts[self.edge_weight_type] is None:
-                continue
+            if edge.wgts[self.edge_weight_type]:
+                networkx_graph.add_edge(u_of_edge=edge.src, v_of_edge=edge.tgt, weight=edge.wgts[self.edge_weight_type])
 
-            if operator_filter(edge.wgts[self.edge_weight_type], self.threshold):
-                # use old id if existing, else increment
-                if edge.tgt in look_up or edge.src in look_up:
-                    tgt_cluster = look_up.get(edge.tgt)
-                    src_cluster = look_up.get(edge.src)
+        if self.algorithm.lower() == "girvannewman":
+            communities_generator = community.girvan_newman(networkx_graph)
+            # parametrize?
+            top_level_communities = next(communities_generator)
+            # next_level_communities = next(communities_generator)
+            communities = sorted(map(sorted, top_level_communities))
+        else:
+            communities = community.greedy_modularity_communities(networkx_graph)
 
-                    if tgt_cluster != src_cluster:
+        for cluster_id, found_community in enumerate(communities):
+            for node in found_community:
+                look_up[node] = cluster_id
+                reverse_look_up[cluster_id].add(node)
 
-                        if src_cluster is not None and tgt_cluster is None:
-                            concrete_id = src_cluster
-                        elif src_cluster is None and tgt_cluster is not None:
-                            concrete_id = tgt_cluster
-                        else:
-                            # actual merge by replacing cluster ids in lookup tables
-                            concrete_id = src_cluster
-                            nodes_to_change = reverse_look_up[tgt_cluster]
-                            for node in nodes_to_change:
-                                look_up[node] = concrete_id
-                                reverse_look_up[concrete_id].add(node)
-
-                            del reverse_look_up[tgt_cluster]
-                    else:
-                        concrete_id = src_cluster
-                else:
-                    concrete_id = cluster_id
-                    cluster_id += 1
-
-                reverse_look_up[concrete_id].add(edge.tgt)
-                reverse_look_up[concrete_id].add(edge.src)
-                look_up[edge.tgt] = concrete_id
-                look_up[edge.src] = concrete_id
-
-        # merge preperation:
+        # clustering preperation:
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
                 cluster = look_up.get((graph.id2idx[comment.id], j))
                 # set id of nodes without cluster to -1
                 if cluster is None:
                     cluster = -1
-                split.wgts.MERGE_ID = cluster
-
+                split.wgts.CLUSTER_ID = cluster
         return look_up, reverse_look_up
+
+
+class SimilarityClusterer(GenericClusterer):
+    def __init__(self, *args, algorithm=None, **kwargs):
+        super().__init__(*args, edge_weight_type="SIMILARITY", algorithm=algorithm, **kwargs)
+
+
+class ReplyToClusterer(GenericClusterer):
+    def __init__(self, *args, algorithm=None, **kwargs):
+        super().__init__(*args, edge_weight_type="REPLY_TO", algorithm=algorithm, **kwargs)
+
+
+class SameCommentClusterer(GenericClusterer):
+    def __init__(self, *args, algorithm=None, **kwargs):
+        super().__init__(*args, edge_weight_type="SAME_COMMENT", algorithm=algorithm, **kwargs)
+
+
+class SameArticleClusterer(GenericClusterer):
+    def __init__(self, *args, algorithm=None, **kwargs):
+        super().__init__(*args, edge_weight_type="SAME_ARTICLE", algorithm=algorithm, **kwargs)
+
+
+class SameGroupClusterer(GenericClusterer):
+    def __init__(self, *args, algorithm=None, **kwargs):
+        super().__init__(*args, edge_weight_type="SAME_GROUP", algorithm=algorithm, **kwargs)
+
+
+class TemporalClusterer(GenericClusterer):
+    def __init__(self, *args, algorithm=None, **kwargs):
+        super().__init__(*args, edge_weight_type="TEMPORAL", algorithm=algorithm, **kwargs)
