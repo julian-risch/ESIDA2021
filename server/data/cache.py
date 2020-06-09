@@ -7,7 +7,7 @@ from typing import Union, Optional, Tuple, List
 from data.scrapers import scrape, prepare_url, get_matching_scraper, \
     NoScraperException, ScraperWarning, NoCommentsWarning
 from data.processors.graph import GraphRepresentation
-# from data.processors.graph_testing import GraphRepresentation
+from data.processors.graph_testing import GraphRepresentation as GraphBenchmark
 import logging
 
 logger = logging.getLogger('data.cache')
@@ -30,7 +30,11 @@ async def get_graph(urls: List[str] = None, article_ids: List[int] = None, conf:
         logger.debug('Ignoring cache for graph request.')
 
     comments = await db.get_comments(article_ids)
-    graph_rep = GraphRepresentation(comments, conf=conf)
+    # todo: parametrize condition
+    if True:
+        graph_rep = GraphRepresentation(comments, conf=conf)
+    else:
+        graph_rep = GraphBenchmark(comments, conf=conf)
     graph = models.Graph(**graph_rep.__dict__())
 
     logger.debug(f'Constructed graph with {len(graph.edges)} edges '
