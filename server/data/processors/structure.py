@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 import data.models as models
 from data.processors import Comparator
 
@@ -7,7 +6,7 @@ logger = logging.getLogger('data.graph.structure')
 
 
 class SameCommentComparator(Comparator):
-    def __init__(self, *args, base_weight=None, only_consecutive: bool = None, **kwargs):
+    def __init__(self, *args, base_weight: float = None, only_consecutive: bool = None, **kwargs):
         """
         Returns base_weight iff split_a and split_b are part of the same comment.
         :param args:
@@ -33,7 +32,14 @@ class SameCommentComparator(Comparator):
 
 
 class SameArticleComparator(Comparator):
-    def __init__(self, *args, base_weight=None, only_root: bool = None, **kwargs):
+    def __init__(self, *args, base_weight: float = None, only_root: bool = None, **kwargs):
+        """
+        Returns base_weight iff split_a and split_b are part of the same article.
+        :param args:
+        :param base_weight: weight to attach
+        :param only_root:
+        :param kwargs:
+        """
         super().__init__(*args, **kwargs)
         self.base_weight = self.conf_getfloat('base_weight', base_weight)
         self.only_root = self.conf_getboolean('only_root', only_root)
@@ -52,7 +58,14 @@ class SameArticleComparator(Comparator):
 
 
 class ReplyToComparator(Comparator):
-    def __init__(self, *args, base_weight=None, only_root: bool = None, **kwargs):
+    def __init__(self, *args, base_weight: float = None, only_root: bool = None, **kwargs):
+        """
+        Returns base_weight iff split_a or split_b are in reply-to relation
+        :param args:
+        :param base_weight: weight to attach
+        :param only_root:
+        :param kwargs:
+        """
         super().__init__(*args, **kwargs)
         self.base_weight = self.conf_getfloat('base_weight', base_weight)
         self.only_root = self.conf_getboolean('only_root', only_root)
@@ -73,7 +86,15 @@ class ReplyToComparator(Comparator):
 
 
 class TemporalComparator(Comparator):
-    def __init__(self, *args, max_time=1000, base_weight=None, only_root: bool = None, **kwargs):
+    def __init__(self, *args, max_time=1000, base_weight: float = None, only_root: bool = None, **kwargs):
+        """
+        Returns distance between two split comments
+        :param args:
+        :param max_time: maximal time to use
+        :param base_weight: weight to attach
+        :param only_root:
+        :param kwargs:
+        """
         super().__init__(*args, **kwargs)
         self.max_time = self.conf_getint('max_time', max_time)
         self.base_weight = self.conf_getfloat('base_weight', base_weight)
