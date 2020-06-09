@@ -1,15 +1,15 @@
 import time
 import copy
 
-from data.processors import ranking
 from data.processors.clustering import *
 from data.processors.text import split_comment
 import data.models as models
 from typing import List
-from data.processors import GraphRepresentationType
-from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, TemporalComparator
+from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, \
+    TemporalComparator
 from data.processors.embedding import SimilarityComparator
-from data.processors.ranking import PageRanker, CentralityDegreeCalculator, SizeRanker, VotesRanker, RecencyRanker, ToxicityRanker
+from data.processors.ranking import PageRanker, CentralityDegreeCalculator, SizeRanker, VotesRanker, RecencyRanker, \
+    ToxicityRanker
 from data.processors.filters import *
 
 
@@ -58,7 +58,6 @@ class GraphRepresentation(GraphRepresentationType):
     def __init__(self, comments: List[models.CommentCached], conf: dict = None):
         super().__init__(comments)
 
-
         # create a temporary copy of the global config
         self.conf = ConfigParser()
         self.conf.read_dict(config)
@@ -68,7 +67,6 @@ class GraphRepresentation(GraphRepresentationType):
 
         # config: configuration from DEFAULT.ini
         # self.conf: configuration from code
-        # FIXME: delete, due this is only for testing purposes because the code config overrides the configuration from file
         self.conf = config
 
         logger.debug(f'{len(self.comments)} comments turned '
@@ -116,11 +114,13 @@ class GraphRepresentation(GraphRepresentationType):
             end_time = time.time()
 
             time_taken = round(end_time - start_time, 3)
-            logging.info(f'configuration {configuration_number} - {len(self.edges)} edges, {nr_removed} removed, {time_taken} seconds')
+            logging.info(f'configuration {configuration_number} - {len(self.edges)} edges, {nr_removed} removed, '
+                         f'{time_taken} seconds')
             results.append((configuration_number, len(self.edges), nr_removed, time_taken))
             configuration_number += 1
 
-        result_df = pd.DataFrame.from_records(results, columns=["configuration ID", "remaining edges", "removed edges", "seconds"])
+        result_df = pd.DataFrame.from_records(results, columns=["configuration ID", "remaining edges", "removed edges",
+                                                                "seconds"])
         print(result_df)
         result_df.to_csv("configuration_testing.csv", index=False)
 
