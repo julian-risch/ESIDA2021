@@ -9,7 +9,15 @@ logger = logging.getLogger('data.graph.clustering')
 
 
 class GenericNodeMerger(Modifier):
-    def __init__(self, *args, threshold: float = None, smaller_as=None, edge_weight_type=None, **kwargs):
+    def __init__(self, *args, threshold: float = None, smaller_as: bool = None, edge_weight_type: str = None, **kwargs):
+        """
+        Merges Nodes sharing edges with weights in filter condition
+        :param args:
+        :param threshold: treshold for specified weight type
+        :param smaller_as: direction for condition, less equals vs greater equals
+        :param edge_weight_type: specified weight type
+        :param kwargs:
+        """
         super().__init__(*args, **kwargs)
         self.threshold = self.conf_getfloat('threshold', threshold)
         self.smaller_as = self.conf_getboolean('smaller_as', smaller_as)
@@ -78,32 +86,32 @@ class GenericNodeMerger(Modifier):
 
 
 class SimilarityNodeMerger(GenericNodeMerger):
-    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+    def __init__(self, *args, threshold: float = None, smaller_as: bool = None, **kwargs):
         super().__init__(*args, threshold=threshold, edge_weight_type="SIMILARITY", smaller_as=smaller_as, **kwargs)
 
 
 class ReplyToNodeMerger(GenericNodeMerger):
-    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+    def __init__(self, *args, threshold: float = None, smaller_as: bool = None, **kwargs):
         super().__init__(*args, threshold=threshold, edge_weight_type="REPLY_TO", smaller_as=smaller_as, **kwargs)
 
 
 class SameCommentNodeMerger(GenericNodeMerger):
-    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+    def __init__(self, *args, threshold: float = None, smaller_as: bool = None, **kwargs):
         super().__init__(*args, threshold=threshold, edge_weight_type="SAME_COMMENT", smaller_as=smaller_as, **kwargs)
 
 
 class SameArticleNodeMerger(GenericNodeMerger):
-    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+    def __init__(self, *args, threshold: float = None, smaller_as: bool = None, **kwargs):
         super().__init__(*args, threshold=threshold, edge_weight_type="SAME_ARTICLE", smaller_as=smaller_as, **kwargs)
 
 
 class SameGroupNodeMerger(GenericNodeMerger):
-    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+    def __init__(self, *args, threshold: float = None, smaller_as: bool = None, **kwargs):
         super().__init__(*args, threshold=threshold, edge_weight_type="SAME_GROUP", smaller_as=smaller_as, **kwargs)
 
 
 class TemporalNodeMerger(GenericNodeMerger):
-    def __init__(self, *args, threshold=None, smaller_as=None, **kwargs):
+    def __init__(self, *args, threshold: float = None, smaller_as: bool = None, **kwargs):
         super().__init__(*args, threshold=threshold, edge_weight_type="TEMPORAL", smaller_as=smaller_as, **kwargs)
 
 
@@ -111,6 +119,19 @@ class MultiNodeMerger(Modifier):
     def __init__(self, *args, reply_to_threshold=None, same_comment_threshold=None, same_article_threshold=None,
                  similarity_threshold=None, same_group_threshold=None, temporal_threshold=None, smaller_as=None,
                  conj_or=None, **kwargs):
+        """
+        Merges node based on multiple defined thresholds. Negative values indicate skips
+        :param args:
+        :param reply_to_threshold:
+        :param same_comment_threshold:
+        :param same_article_threshold:
+        :param similarity_threshold:
+        :param same_group_threshold:
+        :param temporal_threshold:
+        :param smaller_as: direction for condition, less equals vs greater equals
+        :param conj_or: us as conj logical OR vs logical and
+        :param kwargs:
+        """
         super().__init__(*args, **kwargs)
         self.reply_to_threshold = self.conf_getfloat("reply_to_threshold", reply_to_threshold)
         self.same_comment_threshold = self.conf_getfloat("same_comment_threshold", same_comment_threshold)
@@ -218,7 +239,14 @@ class MultiNodeMerger(Modifier):
 
 
 class GenericClusterer(Modifier):
-    def __init__(self, *args, edge_weight_type=None, algorithm=None, **kwargs):
+    def __init__(self, *args, edge_weight_type: str = None, algorithm: str = None, **kwargs):
+        """
+        Clusters nodes with the specified algorithm.
+        :param args:
+        :param edge_weight_type: edge weight type to use for clustering
+        :param algorithm: girvanNewman vs greedyModularityCommunities (case insensitive)
+        :param kwargs:
+        """
         super().__init__(*args, **kwargs)
         self.edge_weight_type = self.conf_get('edge_weight_type', edge_weight_type)
         self.algorithm = self.conf_get('algorithm', algorithm)
@@ -266,38 +294,51 @@ class GenericClusterer(Modifier):
 
 
 class SimilarityClusterer(GenericClusterer):
-    def __init__(self, *args, algorithm=None, **kwargs):
+    def __init__(self, *args, algorithm: str = None, **kwargs):
         super().__init__(*args, edge_weight_type="SIMILARITY", algorithm=algorithm, **kwargs)
 
 
 class ReplyToClusterer(GenericClusterer):
-    def __init__(self, *args, algorithm=None, **kwargs):
+    def __init__(self, *args, algorithm: str = None, **kwargs):
         super().__init__(*args, edge_weight_type="REPLY_TO", algorithm=algorithm, **kwargs)
 
 
 class SameCommentClusterer(GenericClusterer):
-    def __init__(self, *args, algorithm=None, **kwargs):
+    def __init__(self, *args, algorithm: str = None, **kwargs):
         super().__init__(*args, edge_weight_type="SAME_COMMENT", algorithm=algorithm, **kwargs)
 
 
 class SameArticleClusterer(GenericClusterer):
-    def __init__(self, *args, algorithm=None, **kwargs):
+    def __init__(self, *args, algorithm: str = None, **kwargs):
         super().__init__(*args, edge_weight_type="SAME_ARTICLE", algorithm=algorithm, **kwargs)
 
 
 class SameGroupClusterer(GenericClusterer):
-    def __init__(self, *args, algorithm=None, **kwargs):
+    def __init__(self, *args, algorithm: str = None, **kwargs):
         super().__init__(*args, edge_weight_type="SAME_GROUP", algorithm=algorithm, **kwargs)
 
 
 class TemporalClusterer(GenericClusterer):
-    def __init__(self, *args, algorithm=None, **kwargs):
+    def __init__(self, *args, algorithm: str = None, **kwargs):
         super().__init__(*args, edge_weight_type="TEMPORAL", algorithm=algorithm, **kwargs)
 
 
 class MultiEdgeTypeClusterer(Modifier):
-    def __init__(self, *args, use_reply_to=None, use_same_comment=None, use_same_article=None,
-                 use_similarity=None, use_same_group=None, use_temporal=None, algorithm=None, **kwargs):
+    def __init__(self, *args, use_reply_to: bool = None, use_same_comment: bool = None, use_same_article: bool = None,
+                 use_similarity: bool = None, use_same_group: bool = None, use_temporal: bool = None,
+                 algorithm: str = None, **kwargs):
+        """
+        Uses multiple edge Types for clustering of the specified algorithm
+        :param args:
+        :param use_reply_to:
+        :param use_same_comment:
+        :param use_same_article:
+        :param use_similarity:
+        :param use_same_group:
+        :param use_temporal:
+        :param algorithm: girvanNewman vs greedyModularityCommunities (case insensitive)
+        :param kwargs:
+        """
         super().__init__(*args, **kwargs)
         self.use_reply_to = self.conf_getboolean('use_reply_to', use_reply_to)
         self.use_same_comment = self.conf_getboolean('use_same_comment', use_same_comment)
