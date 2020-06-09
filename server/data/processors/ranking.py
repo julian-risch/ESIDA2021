@@ -26,11 +26,8 @@ def build_edge_dict(graph):
 class SizeRanker(Modifier):
     def __init__(self, *args, **kwargs):
         """
-        Returns a graph with page-ranked node weights
+        Returns a graph with size ranked node weights
         :param args:
-        :param num_iterations: number of iteration for PageRank
-        :d: d parameter for PageRank
-        :normalize: normalize the PageRank values?
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
@@ -44,13 +41,12 @@ class SizeRanker(Modifier):
 
 
 class VotesRanker(Modifier):
-    def __init__(self, *args, use_upvotes=None, use_downvotes=None, **kwargs):
+    def __init__(self, *args, use_upvotes: bool = None, use_downvotes: bool = None, **kwargs):
         """
-        Returns a graph with page-ranked node weights
+        Returns a graph with vote ranked node weights
         :param args:
-        :param num_iterations: number of iteration for PageRank
-        :d: d parameter for PageRank
-        :normalize: normalize the PageRank values?
+        :param use_upvotes: use upvotes for votes?
+        :param use_downvotes: use downvotes for votes?
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
@@ -84,17 +80,15 @@ class VotesRanker(Modifier):
 
 
 class RecencyRanker(Modifier):
-    def __init__(self, *args, use_yongest=None, **kwargs):
+    def __init__(self, *args, use_youngest: bool = None, **kwargs):
         """
-        Returns a graph with page-ranked node weights
+        Returns a graph with time ranked node weights
         :param args:
-        :param num_iterations: number of iteration for PageRank
-        :d: d parameter for PageRank
-        :normalize: normalize the PageRank values?
+        :param use_youngest: sets direction of ranking, if True: youngest comments get small weight
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-        self.use_yongest = self.conf_getboolean('use_yongest', use_yongest)
+        self.use_yongest = self.conf_getboolean('use_yongest', use_youngest)
         logger.debug(f'{self.__class__.__name__} initialised')
 
     def modify(self, graph: GraphRepresentationType):
@@ -112,14 +106,15 @@ class RecencyRanker(Modifier):
 
 
 class PageRanker(Modifier):
-    def __init__(self, *args, num_iterations: int = None, d: float = None, edge_type=None,
-                 user_power_mode=None, **kwargs):
+    def __init__(self, *args, num_iterations: int = None, d: float = None, edge_type: str = None,
+                 user_power_mode: bool = None, **kwargs):
         """
         Returns a graph with page-ranked node weights
         :param args:
         :param num_iterations: number of iteration for PageRank
-        :d: d parameter for PageRank
-        :normalize: normalize the PageRank values?
+        :param d: d parameter for PageRank
+        :param edge_type: edge weight type to apply pagerank on
+        :param user_power_mode: use power mode of implementation
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
@@ -173,11 +168,8 @@ class PageRanker(Modifier):
 class CentralityDegreeCalculator(Modifier):
     def __init__(self, *args, **kwargs):
         """
-        Returns a graph with page-ranked node weights
+        Returns a graph with centrality degree ranked node weights
         :param args:
-        :param num_iterations: number of iteration for PageRank
-        :d: d parameter for PageRank
-        :normalize: normalize the PageRank values?
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
@@ -196,10 +188,12 @@ class CentralityDegreeCalculator(Modifier):
 
 
 class ToxicityRanker(Modifier):
-    def __init__(self, *args, window_length=None, whole_comment=None, **kwargs):
+    def __init__(self, *args, window_length: int = None, whole_comment: bool = None, **kwargs):
         """
-        Returns a graph with toxicity node weights
+        Returns a graph with toxicity ranked node weights
         :param args:
+        :param window_length: the window length to use when calculating toxicity
+        :param whole_comment: calculate toxicity for whole comment or only split?
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
