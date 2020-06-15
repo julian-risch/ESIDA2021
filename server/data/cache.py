@@ -38,6 +38,7 @@ async def get_graph(urls: List[str] = None, article_ids: List[int] = None, conf:
     use_benchmark_mode = config_parser.getboolean('mode', 'benchmark')
 
     if use_benchmark_mode:
+        logger.info(f'Started benchmark mode.')
         graph_rep = GraphBenchmark(comments, conf=conf)
     else:
         graph_rep = GraphRepresentation(comments, conf=conf)
