@@ -1,3 +1,4 @@
+from configparser import ConfigParser
 from common import config
 import data.database as db
 import data.models as models
@@ -30,8 +31,12 @@ async def get_graph(urls: List[str] = None, article_ids: List[int] = None, conf:
         logger.debug('Ignoring cache for graph request.')
 
     comments = await db.get_comments(article_ids)
-    # todo: parametrize condition
-    if True:
+
+    config_parser = ConfigParser()
+    config_parser.read_dict(config)
+
+    use_benchmark_mode = config_parser.getboolean('mode', 'benchmark')
+    if use_benchmark_mode:
         graph_rep = GraphRepresentation(comments, conf=conf)
     else:
         graph_rep = GraphBenchmark(comments, conf=conf)
