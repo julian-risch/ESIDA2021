@@ -36,10 +36,11 @@ async def get_graph(urls: List[str] = None, article_ids: List[int] = None, conf:
     config_parser.read_dict(config)
 
     use_benchmark_mode = config_parser.getboolean('mode', 'benchmark')
+
     if use_benchmark_mode:
-        graph_rep = GraphRepresentation(comments, conf=conf)
-    else:
         graph_rep = GraphBenchmark(comments, conf=conf)
+    else:
+        graph_rep = GraphRepresentation(comments, conf=conf)
     graph = models.Graph(**graph_rep.__dict__())
 
     logger.debug(f'Constructed graph with {len(graph.edges)} edges '
