@@ -77,17 +77,80 @@ class GraphRepresentation(GraphRepresentationType):
             (
                 [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
                 [PageRanker(num_iterations=10, d=0.85, edge_type="SAME_COMMENT", user_power_mode=True),
-                 PageRankBottomFilter(top_k=50, strict=False, descending_order=True)]
+                 PageRankBottomFilter(top_k=50, strict=False, descending_order=True)],
+                "SC_PR_k50"
             ),
-            # (
-            #     [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
-            #     [PageRanker(num_iterations=10, d=0.85, edge_type="SAME_COMMENT", user_power_mode=True),
-            #      PageRankBottomFilter(top_k=50, strict=False, descending_order=True)]
-            # ),
+            (
+                [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
+                [PageRanker(num_iterations=100, d=0.85, edge_type="SAME_COMMENT", user_power_mode=True),
+                 PageRankBottomFilter(top_k=50, strict=False, descending_order=True)],
+                ""
+            ),
+            (
+                [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
+                [PageRanker(num_iterations=10, d=0.85, edge_type="SAME_COMMENT", user_power_mode=True),
+                 PageRankBottomFilter(top_k=50, strict=False, descending_order=True)],
+                ""
+            ),
+            (
+                [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
+                [PageRanker(num_iterations=10, d=0.85, edge_type="SAME_COMMENT", user_power_mode=True),
+                 PageRankBottomFilter(top_k=100, strict=False, descending_order=True)],
+                ""
+            ),
+            (
+                [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
+                [PageRanker(num_iterations=10, d=0.85, edge_type="SAME_COMMENT", user_power_mode=True),
+                 PageRankBottomFilter(top_k=50, strict=True, descending_order=True)],
+                ""
+            ),
+            (
+                [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
+                [PageRanker(num_iterations=10, d=0.85, edge_type="SAME_COMMENT", user_power_mode=True),
+                 PageRankBottomFilter(top_k=50, strict=False, descending_order=False)],
+                ""
+            ),
+            (
+                [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
+                [PageRanker(num_iterations=10, d=0.85, edge_type="SAME_COMMENT", user_power_mode=True),
+                 PageRankFilter(threshold=0.0005, strict=False, smaller_as=False)],
+                ""
+            ),
+            (
+                [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
+                [PageRanker(num_iterations=10, d=0.85, edge_type="SAME_COMMENT", user_power_mode=True),
+                 PageRankFilter(threshold=0.001, strict=False, smaller_as=False)],
+                ""
+            ),
+            (
+                [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
+                [PageRanker(num_iterations=10, d=0.85, edge_type="SAME_COMMENT", user_power_mode=True),
+                 PageRankFilter(threshold=0.005, strict=False, smaller_as=False)],
+                ""
+            ),
+            (
+                [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
+                [PageRanker(num_iterations=10, d=0.85, edge_type="SAME_COMMENT", user_power_mode=True),
+                 PageRankFilter(threshold=0.001, strict=False, smaller_as=False)],
+                ""
+            ),
+            (
+                [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
+                [PageRanker(num_iterations=10, d=0.85, edge_type="SAME_COMMENT", user_power_mode=True),
+                 PageRankFilter(threshold=0.001, strict=True, smaller_as=False)],
+                ""
+            ),
+            (
+                [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
+                [PageRanker(num_iterations=10, d=0.85, edge_type="SAME_COMMENT", user_power_mode=True),
+                 PageRankFilter(threshold=0.001, strict=False, smaller_as=False)],
+                ""
+            ),
             (
                 [ReplyToComparator(base_weight=1.0, only_root=True)],
                 [PageRanker(num_iterations=10, d=0.85, edge_type="REPLY_TO", user_power_mode=True),
-                 PageRankBottomFilter(top_k=50, strict=False, descending_order=True)]
+                 PageRankBottomFilter(top_k=50, strict=False, descending_order=True)],
+                ""
             ),
             # (
             #     [SimilarityComparator(max_similarity=0.75, base_weight=0.1, only_root=True)],
@@ -102,7 +165,7 @@ class GraphRepresentation(GraphRepresentationType):
         original_comments = copy.deepcopy(self.comments)
         original_id2idx = copy.deepcopy(self.id2idx)
         original_orig_comments = copy.deepcopy(self.orig_comments)
-        for comparators, modifiers in graph_iteration_config:
+        for comparators, modifiers, desc in graph_iteration_config:
             self.edges = copy.deepcopy(original_edges)
             self.comments = copy.deepcopy(original_comments)
             self.id2idx = copy.deepcopy(original_id2idx)
@@ -116,11 +179,11 @@ class GraphRepresentation(GraphRepresentationType):
             time_taken = round(end_time - start_time, 3)
             logging.info(f'configuration {configuration_number} - {len(self.edges)} edges, {nr_removed} removed, '
                          f'{time_taken} seconds')
-            results.append((configuration_number, len(self.edges), nr_removed, time_taken))
+            results.append((configuration_number, desc, len(self.edges), nr_removed, time_taken))
             configuration_number += 1
 
-        result_df = pd.DataFrame.from_records(results, columns=["configuration ID", "remaining edges", "removed edges",
-                                                                "seconds"])
+        result_df = pd.DataFrame.from_records(results, columns=["configuration ID", "Description", "remaining edges",
+                                                                "removed edges", "seconds"])
         print(result_df)
         result_df.to_csv("configuration_testing.csv", index=False)
 
