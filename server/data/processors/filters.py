@@ -181,7 +181,7 @@ class BottomReplyToEdgeFilter(GenericBottomEdgeFilter):
 
 class BottomTemporalEdgeFilter(GenericBottomEdgeFilter):
     def __init__(self, *args, top_edges: int = None, descending_order: bool = None, **kwargs):
-        GenericBottomEdgeFilter.__init__(*args, top_edges=top_edges, edge_type="TEMPORAL",
+        GenericBottomEdgeFilter.__init__(self, *args, top_edges=top_edges, edge_type="TEMPORAL",
                                          descending_order=descending_order, **kwargs)
 
 
@@ -199,7 +199,7 @@ class BottomSameArticleEdgeFilter(GenericBottomEdgeFilter):
 
 class BottomSameGroupEdgeFilter(GenericBottomEdgeFilter):
     def __init__(self, *args, top_edges: int = None, descending_order: bool = None, **kwargs):
-        GenericBottomEdgeFilter.__init__(*args, top_edges=top_edges, edge_type="SAME_GROUP",
+        GenericBottomEdgeFilter.__init__(self, *args, top_edges=top_edges, edge_type="SAME_GROUP",
                                          descending_order=descending_order, **kwargs)
 
 
