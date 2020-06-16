@@ -117,13 +117,13 @@ graph_iteration_config = [
                 [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
                 [CentralityDegreeCalculator(),
                  DegreeCentralityFilter(threshold=0.0005, strict=False, smaller_as=False)],
-                "S_CD"
+                "SC_CD"
             ),
             (
                 [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
                 [CentralityDegreeCalculator(),
                  DegreeCentralityBottomFilter(top_k=50, strict=False, descending_order=True)],
-                "S_CDB"
+                "SC_CDB"
             ),
             (
                 [SameCommentComparator(base_weight=1.0, only_consecutive=True)],
