@@ -124,12 +124,14 @@ class GenericNodeMerger(Modifier):
                 look_up[edge.src] = concrete_id
 
         # merge preperation:
+        negative_cluster_id = -1
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
                 cluster = look_up.get((graph.id2idx[comment.id], j))
                 # set id of nodes without cluster to -1
                 if cluster is None:
-                    cluster = -1
+                    cluster = negative_cluster_id
+                    negative_cluster_id -= 1
                 split.wgts.MERGE_ID = cluster
 
         return look_up, reverse_look_up
@@ -277,12 +279,14 @@ class MultiNodeMerger(Modifier):
                 look_up[edge.src] = concrete_id
 
         # merge preperation:
+        negative_cluster_id = -1
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
                 cluster = look_up.get((graph.id2idx[comment.id], j))
                 # set id of nodes without cluster to -1
                 if cluster is None:
-                    cluster = -1
+                    cluster = negative_cluster_id
+                    negative_cluster_id -= 1
                 split.wgts.MERGE_ID = cluster
 
         return look_up, reverse_look_up
