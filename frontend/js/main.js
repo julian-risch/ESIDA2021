@@ -20,8 +20,20 @@ let urls = URI.get_arr('source', init_urls);
 console.log(urls);
 if (urls.length > 0) {
     urls.forEach((url) => emitter.emit(E.NEW_SOURCE_URL, url));
-    setTimeout(() => {
-        emitter.emit(E.GRAPH_REQUESTED)
-    }, 1000);
+    let countdown = {
+        cntdwn: urls.length,
+        e1: emitter.on(E.RECEIVED_ARTICLE, () => countdown.cb()),
+        e2: emitter.on(E.ARTICLE_FAILED, () => countdown.cb()),
+        cb: () => {
+            countdown.cntdwn--;
+            if (countdown.cntdwn <= 0) {
+                emitter.off(countdown.e1);
+                emitter.off(countdown.e2);
+                emitter.emit(E.GRAPH_REQUESTED);
+            }
+        }
+    }
+
+
     console.log(data);
 }
