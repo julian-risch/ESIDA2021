@@ -209,6 +209,21 @@ class EdgeWeights(BaseModel):
         # return self.__dict__[item]
         return self.dict()[item]
 
+    def __setitem__(self, key, value):
+        if key == "REPLY_TO":
+            self.REPLY_TO = value
+        if key == "SAME_ARTICLE":
+            self.SAME_ARTICLE = value
+        if key == "SIMILARITY":
+            self.SIMILARITY = value
+        if key == "SAME_GROUP":
+            self.SAME_GROUP = value
+        if key == "SAME_COMMENT":
+            self.SAME_COMMENT = value
+        if key == "TEMPORAL":
+            self.TEMPORAL = value
+
+
 class Edge(BaseModel):
     src: Tuple[int, int]  # first is index of comment, second is index of sentence within comment
     tgt: Tuple[int, int]  # first is index of comment, second is index of sentence within comment
