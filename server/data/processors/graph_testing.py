@@ -18,7 +18,7 @@ from common import config
 import logging
 import pandas as pd
 
-from test.configuration_testing import graph_iteration_config
+
 
 COMPARATORS = [
     SameArticleComparator,
@@ -83,6 +83,7 @@ class GraphRepresentation(GraphRepresentationType):
         original_comments = copy.deepcopy(self.comments)
         original_id2idx = copy.deepcopy(self.id2idx)
         original_orig_comments = copy.deepcopy(self.orig_comments)
+        from test.configuration_testing import graph_iteration_config
         for comparators, modifiers, desc in graph_iteration_config:
             self.edges = copy.deepcopy(original_edges)
             self.comments = copy.deepcopy(original_comments)
