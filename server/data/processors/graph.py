@@ -74,9 +74,13 @@ class GraphRepresentation(GraphRepresentationType):
                      f'into {len([s for c in self.comments for s in c.splits])} splits')
 
         # construct graph
+        logger.info(f'Build index...')
         self._build_index()
+        logger.info(f'Calculate edges...')
         self._pairwise_comparisons()
+        logger.info(f'Modify graph...')
         self._modify()
+        logger.info(f'Graph processing completed.')
 
     def __dict__(self) -> models.Graph.__dict__:
         return {
@@ -117,6 +121,7 @@ class GraphRepresentation(GraphRepresentationType):
 
         nr_unfiltered = len(self.edges)
         for modifier in modifiers:
+            logger.debug(f'Currently {len(self.edges)} # edges. {modifier} started modification...')
             modifier.modify(self)
 
         logger.debug(f'{nr_unfiltered-len(self.edges)} edges removed')
