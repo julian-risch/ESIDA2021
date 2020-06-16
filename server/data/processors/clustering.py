@@ -1,11 +1,61 @@
 import operator
 from collections import defaultdict
+from typing import Tuple
+
+from data import models
 from data.processors import Modifier, GraphRepresentationType
+from data.processors.ranking import build_edge_dict
 import logging
 import networkx as nx
 from networkx.algorithms import community
 
 logger = logging.getLogger('data.graph.clustering')
+
+
+class GenericSingleEdgeAdder(Modifier):
+    def __init__(self, *args, base_weight: float = None, edge_weight_type: str = None,
+                 node_weight_type: str = None, **kwargs):
+        """
+        Merges Nodes sharing edges with weights in filter condition
+        :param args:
+        :param base_weight: base weight for new added edges
+        :param node_weight_type: specified weight type
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.base_weight = self.conf_getfloat('base_weight', base_weight)
+        self.node_weight_type = self.conf_get('node_weight_type', node_weight_type)
+        self.edge_weight_type = self.conf_get('edge_weight_type', edge_weight_type)
+
+        logger.debug(f'{self.__class__.__name__} initialised with '
+                     f'edge_weight_type={self.edge_weight_type}, edge_weight_type={self.node_weight_type} '
+                     f'and base_weight={self.base_weight}')
+
+    def modify(self, graph: GraphRepresentationType):
+        def get_closest_node_to(node: Tuple[int, int]) -> Tuple[int, int]:
+            this_relation_value = graph.comments[node[0]].splits[node[1]].wgts[self.node_weight_type]
+            distances = []
+            for c in graph.comments:
+                if node[0] == graph.id2idx[c.id]:
+                    continue
+                for k, split in enumerate(c.splits):
+                    candidate_node = (graph.id2idx[c.id], k)
+                    distances.append((abs(this_relation_value-split.wgts[self.node_weight_type]), candidate_node))
+            return min(distances)[1]
+
+        edge_dict = build_edge_dict(graph)
+        for comment in graph.comments:
+            for j, comment_split in enumerate(comment.splits):
+                this_node = (graph.id2idx[comment.id], j)
+                node_edges = edge_dict[this_node]
+                if node_edges is None or len(node_edges) == 0:
+                    if j > 0:
+                        other_node = (graph.id2idx[comment.id], 0)
+                    else:
+                        other_node = get_closest_node_to(this_node)
+                    edge_weights = models.EdgeWeights()
+                    edge_weights[self.edge_weight_type] = self.base_weight
+                    graph.edges.append(models.Edge(src=this_node, tgt=other_node, wgts=edge_weights))
 
 
 class GenericNodeMerger(Modifier):

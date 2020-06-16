@@ -44,7 +44,10 @@ MODIFIERS = [
     GenericNodeMerger, SimilarityNodeMerger, ReplyToNodeMerger, SameCommentNodeMerger, SameArticleNodeMerger,
     SameGroupNodeMerger, TemporalNodeMerger, MultiNodeMerger,
     GenericClusterer, SimilarityClusterer, ReplyToClusterer, SameCommentClusterer, SameArticleClusterer,
-    SameGroupClusterer, TemporalClusterer, MultiEdgeTypeClusterer
+    SameGroupClusterer, TemporalClusterer, MultiEdgeTypeClusterer,
+
+    #adding
+    GenericSingleEdgeAdder
 ]
 
 logger = logging.getLogger('data.processors.graph')
