@@ -296,26 +296,26 @@ graph_iteration_config = [
                 [ReplyToClusterer(algorithm="gmc")],
                 "RT_cluster_GMC"
             ),
-            (
-                [TemporalComparator(base_weight=1.0, only_root=True)],
-                [TemporalClusterer(algorithm="girvannewman")],
-                "T_cluster_GN"
-            ),
-            (
-                [TemporalComparator(base_weight=1.0, only_root=True)],
-                [TemporalClusterer(algorithm="gmc")],
-                "T_cluster_GMC"
-            ),
-            (
-                [SimilarityComparator(max_similarity=0.75, base_weight=0.1, only_root=True)],
-                [SimilarityClusterer(algorithm="girvannewman")],
-                "S_cluster_GN"
-            ),
-            (
-                [SimilarityComparator(max_similarity=0.75, base_weight=0.1, only_root=True)],
-                [SimilarityClusterer(algorithm="gmc")],
-                "S_cluster_GMC"
-            )
+            # (
+            #     [TemporalComparator(base_weight=1.0, only_root=True)],
+            #     [TemporalClusterer(algorithm="girvannewman")],
+            #     "T_cluster_GN"
+            # ),
+            # (
+            #     [TemporalComparator(base_weight=1.0, only_root=True)],
+            #     [TemporalClusterer(algorithm="gmc")],
+            #     "T_cluster_GMC"
+            # ),
+            # (
+            #     [SimilarityComparator(max_similarity=0.75, base_weight=0.1, only_root=True)],
+            #     [SimilarityClusterer(algorithm="girvannewman")],
+            #     "S_cluster_GN"
+            # ),
+            # (
+            #     [SimilarityComparator(max_similarity=0.75, base_weight=0.1, only_root=True)],
+            #     [SimilarityClusterer(algorithm="gmc")],
+            #     "S_cluster_GMC"
+            # )
         ]
 
 
