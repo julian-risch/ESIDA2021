@@ -1,6 +1,6 @@
 import { LANG, FORMAT_DATE } from './lang.js';
 import { EXAMPLE_STORIES } from "./examples.js";
-import { emitter, E } from "../env/events.js"
+import { emitter, E } from "./events.js"
 import { API } from "../api.js";
 import { ComExDrawing } from "../drawing/drawing.js";
 import { ConfigPanel } from "../drawing/config.js";
@@ -213,7 +213,8 @@ class SidebarExampleElement {
 
                 let elem = nElem({ tag: 'input', id: id, attribs: attribs });
                 elem.addEventListener('change', () => {
-                    emitter.emit(E.EXAMPLE_SELECTED, story)
+                    console.log(story)
+                    emitter.emit(E.EXAMPLE_SELECTED, story);
                 });
                 this.ROOT.appendChild(elem);
 
@@ -298,6 +299,7 @@ class CommentSidebar {
         this.BUTTON_CLEAR_FILTERS = document.getElementById('comments-filters-clear');
         this.BUTTON_SEARCH = document.querySelector('#comments-filters-search > button');
         this.SEARCH_BOX = document.querySelector('#comments-filters-search > input');
+        this.SEARCH_BOX.setAttribute('placeholder', LANG.SEARCH.s + '…')
         this.COUNTER = document.getElementById('comments-filters-counter');
 
         this.COMMENTS = {};

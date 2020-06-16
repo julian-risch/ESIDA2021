@@ -32,7 +32,8 @@ const LANG = {
         (d) => `${FORMAT_DATE["dd.mm.YYYY HH:MM"](d)} Uhr`,
         FORMAT_DATE["YYYY-mm-dd HH:MM"]),
     COMMENTS: new T('Kommentare', 'Comments'),
-    EMPTY_EXAMPLE: new T('Benutzerdefiniert', 'User defined')
+    EMPTY_EXAMPLE: new T('Benutzerdefiniert', 'User defined'),
+    SEARCH: new T('Suchen', 'Search')
 };
 
 export { LANG, FORMAT_DATE };
