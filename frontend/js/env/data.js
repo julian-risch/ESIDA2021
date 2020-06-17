@@ -79,6 +79,7 @@ class DataStore {
         emitter.on(E.DATA_UPDATED_COMMENTS, this.resetSearchIndex.bind(this));
         emitter.on(E.COMMENT_SEARCH, this.searchComments.bind(this));
         emitter.on(E.CLEAR_FILTERS, this.clearFilters.bind(this));
+        emitter.on(E.CLEAR_SEARCH_FILTER, () => this.clearFilters('search'));
     }
 
     appendComments(comments) {
@@ -106,6 +107,8 @@ class DataStore {
 
     clearFilters(filters) {
         if (!filters) filters = ['highlight', 'timeRange', 'search', 'lasso'];
+        if (typeof filters === 'string') filters = [filters]
+
         filters.forEach(filter => this.activeFilters[filter] = false);
         Object.keys(this.comments).forEach(key => {
             filters.forEach(filter => this.comments[key].activeFilters[filter] = false);
@@ -115,12 +118,10 @@ class DataStore {
 
     applyFilter(filter, activeIds) {
         let resultIds = new Set(activeIds);
-        Object.keys(this.comments).forEach(key => {
-            this.comments[key].activeFilters[filter] = resultIds.has(key);
-        });
+        Object.keys(this.comments).forEach(key =>{
+            this.comments[key].activeFilters[filter] = resultIds.has(this.comments[key].id)});
         this.activeFilters[filter] = true;
         emitter.emit(E.FILTERS_UPDATED, this.comments);
-
     }
 
     searchComments(query) {

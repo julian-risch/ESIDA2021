@@ -72,15 +72,11 @@ class RangeSlider {
     drawChartTemplate() {
         const attrs = this.getChartState();
         const calc = attrs.calc;
-        console.log(attrs.svgHeight)
-        console.log(attrs.svgWidth)
         //Drawing containers
         var container = d3.select(attrs.container);
         var containerRect = container.node().getBoundingClientRect();
         //if (containerRect.width > 0) attrs.svgWidth = containerRect.width;
 
-        console.log(attrs.svgHeight)
-        console.log(attrs.svgWidth)
         //Add svg
         var svg = container
             .patternify({

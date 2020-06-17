@@ -5,6 +5,7 @@ import { API } from "../api.js";
 import { ComExDrawing } from "../drawing/drawing.js";
 import { ConfigPanel } from "../drawing/config.js";
 import { TimeSlider } from "../drawing/timeslider.js";
+import { data } from "./data.js";
 
 function nElem({ tag, cls = null, attribs = null, id = null, text = null, children = null }) {
     let elem = document.createElement(tag);
@@ -308,7 +309,7 @@ class CommentSidebar {
         this.SIDEBAR_TOGGLE_BUTTON.addEventListener('click', this.toggleShow.bind(this));
         this.SEARCH_BOX.addEventListener('input', this.searchSubmit.bind(this));
         this.BUTTON_SEARCH.addEventListener('click', this.searchSubmit.bind(this));
-        this.BUTTON_CLEAR_FILTERS.addEventListener('click', () => emitter.emit(E.CLEAR_FILTERS));
+        this.BUTTON_CLEAR_FILTERS.addEventListener('click', () => emitter.emit(E.CLEAR_SEARCH_FILTER));
 
         emitter.on(E.DATA_UPDATED_COMMENTS, this.onCommentsReceived.bind(this));
         emitter.on(E.COMMENT_SELECTED, this.onCommentHighlight.bind(this));
@@ -362,7 +363,10 @@ class CommentSidebar {
     onFiltersChanged(comments) {
         let counter = 0;
         Object.values(comments).forEach(comment => {
-            let visible = comment.active === undefined || comment.active;
+            let visible =
+                (!data.activeFilters.search || (data.activeFilters.search && comment.activeFilters.search)) &&
+                (!data.activeFilters.lasso || (data.activeFilters.lasso && comment.activeFilters.lasso)) &&
+                (!data.activeFilters.timeRange || (data.activeFilters.timeRange && comment.activeFilters.timeRange));
             this.COMMENTS[comment.id].applyFilter(visible);
             if (visible) counter++;
         });
