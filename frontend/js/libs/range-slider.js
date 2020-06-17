@@ -400,6 +400,7 @@ class RangeSlider {
 
                 output({
                     range: [minX, maxX],
+                    reset: true
                 });
                 return;
             }

@@ -35,7 +35,10 @@ class TimeSlider {
     }
 
     onBrush(d) {
-
+        if (d.reset)
+            data.clearFilters('timeRange');
+        else
+            data.applyFilter('timeRange', d.data.map(c => c.id));
     }
 }
 

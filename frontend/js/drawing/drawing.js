@@ -16,7 +16,8 @@ class Comments {
             data.comments[commentId].splits.forEach((split, j) => {
                 this.splits.push({
                     orig_id: [commentId, j],
-                    text: data.getCommentText(commentId, j)
+                    text: data.getCommentText(commentId, j),
+
                 });
                 this.lookup[commentId].push(counter);
                 counter++;
