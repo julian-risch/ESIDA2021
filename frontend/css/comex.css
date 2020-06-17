@@ -72,12 +72,18 @@ footer {
 }
 
 #main {
-    display: block;
-    /*margin-left: 300px;
-    width: calc(100vw - 300px);
-    height: calc(100vh - 3rem);*/
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     position: relative;
+}
+
+#time-selector {
+    height: 10vh;
+    min-height: 100px;
+}
+#comment-graph {
+    height: 100%;
 }
 
 /**********************
