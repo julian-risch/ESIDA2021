@@ -81,9 +81,11 @@ footer {
 #time-selector {
     height: 10vh;
     min-height: 100px;
+    text-align: center;
 }
 #comment-graph {
     height: 100%;
+    overflow: hidden;
 }
 
 /**********************

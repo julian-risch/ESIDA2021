@@ -4,6 +4,7 @@ import { emitter, E } from "./events.js"
 import { API } from "../api.js";
 import { ComExDrawing } from "../drawing/drawing.js";
 import { ConfigPanel } from "../drawing/config.js";
+import { TimeSlider } from "../drawing/timeslider.js";
 
 function nElem({ tag, cls = null, attribs = null, id = null, text = null, children = null }) {
     let elem = document.createElement(tag);
@@ -394,9 +395,16 @@ class CommentSidebar {
 
 class MainPanel {
     constructor() {
-        this.ROOT = document.getElementById('main');
+        this.ROOT = document.getElementById('comment-graph');
         this.DRAWING = new ComExDrawing(this.ROOT);
         this.CONFIG_PANEL = new ConfigPanel(this.ROOT);
+    }
+}
+
+class TimeSelectorPanel {
+    constructor() {
+        this.ROOT = document.getElementById('time-selector');
+        this.SLIDER = new TimeSlider(this.ROOT);
     }
 }
 
@@ -405,6 +413,7 @@ class Elements {
         this.ADD_SOURCE_MODAL = new AddSourceModalElements();
         this.SIDEBAR = new SidebarElements(this.ADD_SOURCE_MODAL.show);
         this.MAIN_PANEL = new MainPanel();
+        this.TIME_SELECTOR = new TimeSelectorPanel();
         this.COMMENTS_SIDEBAR = new CommentSidebar();
     }
 }

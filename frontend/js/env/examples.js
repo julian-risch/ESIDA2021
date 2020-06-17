@@ -10,14 +10,14 @@ const EXAMPLE_STORIES = [
         title: 'Brände in Australien',
         sources: [
             'https://www.faz.net/aktuell/politik/ausland/braende-in-australien-zur-flucht-ist-es-zu-spaet-16567672.html',
-            'https://www.spiegel.de/wissenschaft/natur/buschfeuer-in-australien-satellitenbild-zeigt-riesige-rauchwolke-a-1303595.html',
-            'https://www.zeit.de/news/2020-01/06/australiens-einzigartige-tierwelt-leidet-unter-den-braenden',
-            'https://www.zeit.de/gesellschaft/zeitgeschehen/2020-01/australien-feuer-buschbraende-waldbraende-duerre-fs',
+            //'https://www.spiegel.de/wissenschaft/natur/buschfeuer-in-australien-satellitenbild-zeigt-riesige-rauchwolke-a-1303595.html',
+            //'https://www.zeit.de/news/2020-01/06/australiens-einzigartige-tierwelt-leidet-unter-den-braenden',
+            //'https://www.zeit.de/gesellschaft/zeitgeschehen/2020-01/australien-feuer-buschbraende-waldbraende-duerre-fs',
             //'https://www.tagesschau.de/ausland/buschfeuer-australien-127.html',
             //'https://www.zeit.de/news/2020-01/06/australiens-premier-buschbraende-dauern-noch-monate',
             //'https://www.faz.net/aktuell/gesellschaft/zukunft-nach-braenden-unklar-tier-massensterben-durch-braende-in-australien-16565020.html',
             //'https://www.zeit.de/news/2020-01/05/buschfeuer-in-australien-schrecken-nimmt-kein-ende',
-            //'https://www.welt.de/vermischtes/article204780066/Buschbraende-in-Australien-Millionen-Tiere-sterben-Pink-spendet-500-000-Dollar.html'
+            'https://www.welt.de/vermischtes/article204780066/Buschbraende-in-Australien-Millionen-Tiere-sterben-Pink-spendet-500-000-Dollar.html'
         ]
     }, {
         title: 'Erdogan bei Putin',

@@ -23,7 +23,7 @@ const DRAWING_CONFIG = {
         EDGE_STROKE_DEFAULT: '#999',
         NODE_OPACITY_UNSELECTED: 0.3
     },
-    LINKS_VISIBLE: true
+    LINKS_VISIBLE: false
 };
 
 class ConfigPanel {
