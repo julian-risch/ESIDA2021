@@ -44,68 +44,93 @@ class Comments {
 
         this.eventlisteners = [
             emitter.on(E.DRAWING_CONFIG_CHANGED, this.onConfigChange.bind(this)),
-            emitter.on(E.COMMENT_SELECTED, this.highlightComment.bind(this))];
+            emitter.on(E.COMMENT_SELECTED, this.highlightComment.bind(this)),
+            emitter.on(E.FILTERS_UPDATED, this.onFilterUpdate.bind(this))];
     }
 
     draw(parent) {
         this.ROOT = parent.append('g');
-        this.NODES = this.ROOT
-            .selectAll('g')
-            .data(this.splits)
-            .join('g');
-
-        this.NODES
-            .append('circle')
-            .attr('stroke', '#fff')
-            .attr('stroke-width', 1.5)
-            .attr('r', 5)
-            .attr('fill', CONFIG.COLOURS.NODE_FILL_DEFAULT)
-            .on('click', this.nodeOnClick.bind(this));
-
-        /*this.nodes
-            .append('title')
-            .text(d => d.name);
-
-        this.nodes.append('text')
-            .attr('dy', -3)
-            .text(d => d.name);*/
 
         this.LINKS = parent.append('g')
-            .attr('stroke', CONFIG.COLOURS.EDGE_STROKE_DEFAULT)
-            .attr('stroke-opacity', 0.6)
+            .attr('stroke', CONFIG.STYLES.DEFAULT.EDGE_STROKE)
+            .attr('stroke-opacity', CONFIG.LINKS_VISIBLE ? CONFIG.STYLES.DEFAULT.EDGE_OPACITY : 0)
             .selectAll('line')
             .data(this.edges)
             .join('line')
             .attr('stroke-width', d => Math.sqrt(d.value / 50));
+
+        this.NODES = this.ROOT
+            .selectAll('circle')
+            .data(this.splits)
+            .enter()
+            .append('circle')
+            .attr('stroke', CONFIG.STYLES.DEFAULT.NODE_STROKE)
+            .attr('stroke-width', CONFIG.STYLES.DEFAULT.NODE_STROKE_WIDTH)
+            // TODO make this weight dependent
+            .attr('r', d => 1.0 * CONFIG.STYLES.DEFAULT.BASE_RADIUS)
+            .attr('fill', CONFIG.STYLES.DEFAULT.NODE_FILL)
+            .on('click', this.nodeOnClick.bind(this));
+    }
+
+    onFilterUpdate() {
+        // defaults:
+        let radius = d => 1.0 * CONFIG.STYLES.DEFAULT.BASE_RADIUS;
+        let opacity = CONFIG.STYLES.DEFAULT.NODE_OPACITY;
+        let fill = CONFIG.STYLES.DEFAULT.NODE_FILL;
+
+        if (data.activeFilters.highlight) {
+            opacity = (d) => CONFIG.style('NODE_OPACITY', 'HIGHLIGHT',
+                data.comments[d.orig_id[0]].activeFilters.highlight);
+            fill = (d) => CONFIG.style('NODE_FILL', 'HIGHLIGHT',
+                data.comments[d.orig_id[0]].activeFilters.highlight);
+        }
+
+        if (data.activeFilters.timeRange) {
+            // TODO make this weight dependent
+            radius = (d) => 1 * CONFIG.style('BASE_RADIUS', 'TIME_RANGE',
+                data.comments[d.orig_id[0]].activeFilters.timeRange);
+            opacity = (d) => CONFIG.style('NODE_OPACITY', 'TIME_RANGE',
+                data.comments[d.orig_id[0]].activeFilters.timeRange);
+        }
+
+        this.NODES.attr('r', radius);
+        this.NODES.attr('opacity', opacity);
+        this.NODES.attr('fill', fill);
     }
 
     highlightComment(commentId) {
-        commentId += '';
-        let nodeOpacity = 1.0;
-        this.highlightActive = !this.highlightActive;
-        if (this.highlightActive)
-            nodeOpacity = (d) => (d.orig_id[0] !== commentId) ? CONFIG.COLOURS.NODE_OPACITY_UNSELECTED : 1.0;
+        if (data.activeFilters.highlight !== false) {
+            data.comments[data.activeFilters.highlight].activeFilters.highlight = false;
+            data.activeFilters.highlight = false;
+        } else {
+            data.comments[commentId].activeFilters.highlight = true;
+            data.activeFilters.highlight = commentId;
+        }
 
-        this.NODES.attr('fill-opacity', nodeOpacity);
+        emitter.emit(E.FILTERS_UPDATED, data.comments);
     }
 
     nodeOnClick(e) {
-        this.eventlisteners.push(emitter.emit(E.COMMENT_SELECTED, e.orig_id[0]));
+        emitter.emit(E.COMMENT_SELECTED, e.orig_id[0]);
     }
 
     onTick() {
-        this.LINKS
-            .attr('x1', d => d.source.x)
-            .attr('y1', d => d.source.y)
-            .attr('x2', d => d.target.x)
-            .attr('y2', d => d.target.y);
+        if (CONFIG.LINKS_VISIBLE) {
+            this.LINKS
+                .attr('x1', d => d.source.x)
+                .attr('y1', d => d.source.y)
+                .attr('x2', d => d.target.x)
+                .attr('y2', d => d.target.y);
+        }
         this.NODES
             .attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
     }
 
     onConfigChange(key, value) {
-        if (key === 'LINKS_VISIBLE')
-            this.LINKS.attr('stroke-opacity', value ? 1 : 0);
+        if (key === 'LINKS_VISIBLE') {
+            this.LINKS.attr('stroke-opacity', value ? CONFIG.STYLES.DEFAULT.EDGE_OPACITY : 0);
+            if (value) this.onTick();
+        }
     }
 
     attachSimulation(simulation) {
@@ -188,7 +213,7 @@ class ComExDrawing {
     centreZoom() {
         this.ZOOM.scaleTo(this.MAIN_GROUP, 1);
         // FIXME: somehow is 0 0 not the centroid
-        this.ZOOM.translateTo(this.MAIN_GROUP, 0, 0);
+        this.ZOOM.translate([0, 0])//this.MAIN_GROUP, -0.5,0.5);
     }
 
     initZoom() {
