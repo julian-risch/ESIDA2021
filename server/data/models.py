@@ -1,7 +1,8 @@
-from pydantic import BaseModel, validator, ValidationError, AnyHttpUrl
+from pydantic import BaseModel, AnyHttpUrl
 from datetime import datetime
-from typing import List, Optional, Union, NamedTuple, Tuple
-from enum import Enum, IntEnum
+from typing import List, Optional, Union, Tuple
+from enum import Enum
+from dataclasses import dataclass
 
 
 class CommentScraped(BaseModel):
@@ -9,40 +10,40 @@ class CommentScraped(BaseModel):
     comment_id: str
     timestamp: datetime
     text: Union[str, List[str]]
-    reply_to: Optional[str] = None
+    reply_to: Optional[str]
 
     # Optional details from FAZ and TAZ
-    num_replies: Optional[int] = None
-    user_id: Optional[str] = None
+    num_replies: Optional[int]
+    user_id: Optional[str]
 
     # Optional details from SPON
-    upvotes: Optional[int] = None
-    downvotes: Optional[int] = None
-    love: Optional[int] = None
+    upvotes: Optional[int]
+    downvotes: Optional[int]
+    love: Optional[int]
 
     # Optional details from Welt
-    likes: Optional[int] = None
-    recommended: Optional[int] = None
+    likes: Optional[int]
+    recommended: Optional[int]
 
     # Optional details from ZON
-    leseempfehlungen: Optional[int] = None
+    leseempfehlungen: Optional[int]
 
     # Optional details from Tagesschau
-    title: Optional[str] = None
+    title: Optional[str]
 
 
 class CommentCached(CommentScraped):
     id: int
     article_id: int
-    reply_to_id: Optional[int] = None
+    reply_to_id: Optional[int]
 
 
 class ArticleScraped(BaseModel):
     url: AnyHttpUrl
     title: str
-    subtitle: Optional[str] = None
-    summary: Optional[str] = None
-    author: Optional[str] = None
+    subtitle: Optional[str]
+    summary: Optional[str]
+    author: Optional[str]
     text: str
     published_time: datetime
     scrape_time: datetime = datetime.now()
@@ -68,17 +69,17 @@ class ScrapeResultStatus(str, Enum):
 
 class ScrapeResultDetails(BaseModel):
     status: ScrapeResultStatus = ScrapeResultStatus.OK
-    error: Optional[str] = None
+    error: Optional[str]
 
 
 class ScrapeResult(BaseModel):
     detail: ScrapeResultDetails = ScrapeResultDetails()
-    payload: Optional[CommentedArticle] = None
+    payload: Optional[CommentedArticle]
 
 
 class CacheResult(BaseModel):
     detail: ScrapeResultDetails = ScrapeResultDetails()
-    payload: Optional[ArticleCached] = None
+    payload: Optional[ArticleCached]
 
 
 class ComparatorConfigBase(BaseModel):
@@ -100,18 +101,74 @@ class ReplyToComparatorConfig(ComparatorConfigBase):
     only_root: bool = True
 
 
-class ComparatorConfig(BaseModel):
-    SameCommentComparator: Optional[SameCommentComparatorConfig] = None
-    SameArticleComparator: Optional[SameArticleComparatorConfig] = None
-    ReplyToComparator: Optional[ReplyToComparatorConfig] = None
+class SimilarityComparatorConfig(ComparatorConfigBase):
+    base_weight: float = 0.1
+    only_root: bool = True
+    max_similarity: float = 0.5
 
 
-class EdgeType(IntEnum):
-    REPLY_TO = 0
-    SAME_ARTICLE = 1
-    SIMILARITY = 2
-    SAME_GROUP = 3
-    SAME_COMMENT = 4
+class TemporalComparatorConfig(ComparatorConfigBase):
+    base_weight: float = 0.1
+    only_root: bool = True
+    max_time: int = 1000
+
+
+class PageRankerConfig(ComparatorConfigBase):
+    num_iterations: int = 100
+    d: float = 0.85
+    normalize: bool = True
+
+
+class CentralityDegreeCalculatorConfig(ComparatorConfigBase):
+    pass
+
+
+class BottomSimilarityEdgeFilterConfig(ComparatorConfigBase):
+    top_edges: int = 5
+
+
+class BottomReplyToEdgeFilterConfig(ComparatorConfigBase):
+    top_edges: int = 5
+
+
+class SimilarityEdgeFilterConfig(ComparatorConfigBase):
+    threshold: float = 0.7
+
+
+class GraphConfig(BaseModel):
+    SameCommentComparator: Optional[SameCommentComparatorConfig]
+    SameArticleComparator: Optional[SameArticleComparatorConfig]
+    ReplyToComparator: Optional[ReplyToComparatorConfig]
+    SimilarityComparator: Optional[SimilarityComparatorConfig]
+    TemporalComparator: Optional[TemporalComparatorConfig]
+    PageRanker: Optional[PageRankerConfig]
+    CentralityDegreeCalculator: Optional[CentralityDegreeCalculatorConfig]
+    BottomReplyToEdgeFilter: Optional[BottomReplyToEdgeFilterConfig]
+    BottomSimilarityEdgeFilter: Optional[BottomSimilarityEdgeFilterConfig]
+    SimilarityEdgeFilter: Optional[SimilarityEdgeFilterConfig]
+
+
+class SplitWeights(BaseModel):
+    # the length of the split
+    SIZE: Optional[float]
+    # the page rank value for the split / node
+    PAGERANK: Optional[float]
+    # the degree centrality value for the split / node
+    DEGREE_CENTRALITY: Optional[float]
+    # the distance (in seconds) to global comparable time (e.g. youngest comment)
+    RECENCY: Optional[float]
+    # the number of votes for the comment
+    VOTES: Optional[float]
+    # the toxicity of the comment
+    TOXICITY: Optional[float]
+    # id of merge group
+    MERGE_ID: Optional[float]
+    # id of cluster group
+    CLUSTER_ID: Optional[float]
+
+    def __getitem__(self, item):
+        # return self.__root__[item]
+        return self.dict()[item]
 
 
 class Split(BaseModel):
@@ -120,41 +177,62 @@ class Split(BaseModel):
     # last character of the sentence
     e: int
     # weight / size of split
-    wgt: Optional[float]
+    wgts: SplitWeights
 
 
 class SplitComment(BaseModel):
     # database ID of the comment
     id: int
     # ID of the cluster the comment belongs to
-    grp_id: Optional[int] = None
+    grp_id: Optional[int]
     # List of sentences (splits) the comment is comprised of
     splits: List[Split]
 
 
-class EdgeWeight(NamedTuple):
-# class EdgeWeight(Tuple, NamedTuple):
-    # edge weight
-    wgt: float
-    # edge type
-    tp: EdgeType
-    # short string of comparator used
-    comp: str
+class EdgeWeights(BaseModel):
+    # is one comment the reply to the other comment?
+    REPLY_TO: Optional[float]
+    # belong the two splits to the same article?
+    SAME_ARTICLE: Optional[float]
+    # cosine similarity between comments
+    SIMILARITY: Optional[float]
+    # belong the two splits to the same group?
+    SAME_GROUP: Optional[float]
+    # belong the two splits to the same comment?
+    SAME_COMMENT: Optional[float]
+    # distance in seconds between comments
+    TEMPORAL: Optional[float]
 
+    # this method allows dictionary access, e.g. edge.wgts["reply_to"]
+    def __getitem__(self, item):
+        # https://pydantic-docs.helpmanual.io/usage/models/
+        # return self.__dict__[item]
+        return self.dict()[item]
 
-# this is just a hack because Pydantic doesnt understand NamedTuples
-EdgeWeightType = Tuple[float, EdgeType, str]
+    def __setitem__(self, key, value):
+        if key == "REPLY_TO":
+            self.REPLY_TO = value
+        if key == "SAME_ARTICLE":
+            self.SAME_ARTICLE = value
+        if key == "SIMILARITY":
+            self.SIMILARITY = value
+        if key == "SAME_GROUP":
+            self.SAME_GROUP = value
+        if key == "SAME_COMMENT":
+            self.SAME_COMMENT = value
+        if key == "TEMPORAL":
+            self.TEMPORAL = value
 
 
 class Edge(BaseModel):
-    src: List[int]  # first is index of comment, second is index of sentence within comment
-    tgt: List[int]  # first is index of comment, second is index of sentence within comment
-    wgts: List[EdgeWeightType]
+    src: Tuple[int, int]  # first is index of comment, second is index of sentence within comment
+    tgt: Tuple[int, int]  # first is index of comment, second is index of sentence within comment
+    wgts: EdgeWeights
 
 
 class Graph(BaseModel):
-    article_ids: Optional[List[int]] = None
-    graph_id: Optional[int] = None
+    article_ids: Optional[List[int]]
+    graph_id: Optional[int]
 
     comments: List[SplitComment]
     id2idx: dict

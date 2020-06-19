@@ -9,9 +9,10 @@ const DRAWING_CONFIG = {
         EDGE_TYPE_WEIGHTS: {
             REPLY_TO: 1.,
             SAME_ARTICLE: 1.,
-            //SIMILARITY: 1.,
-            //SAME_GROUP: 1.,
-            SAME_COMMENT: 1.
+            SIMILARITY: 1.,
+            SAME_GROUP: 1.,
+            SAME_COMMENT: 1.,
+            TEMPORAL: 1.
         },
         CHARGE_STRENGTH: -10,
         CHARGE_MAX_DISTANCE: 150,

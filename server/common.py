@@ -6,8 +6,12 @@ import yaml
 import math
 import traceback
 from uvicorn.logging import AccessFormatter, DefaultFormatter
+from tensorflow.keras.models import load_model as load_keras_model
+from fasttext import load_model as load_fasttext_model
 
 config = None
+fasttext_model = None
+toxicity_model = None
 
 
 def init_config(override_args=None):
@@ -74,4 +78,19 @@ def except2str(e, logger=None):
     return f'{type(e).__name__}: {e}'
 
 
-__all__ = ['get_logger_config', 'config', 'init_logging', 'init_config', 'except2str']
+def init_or_get_fasttext_model():
+    global fasttext_model
+    if fasttext_model is None:
+        fasttext_model = load_fasttext_model(config.get('TextProcessing', 'fasttext_path'))
+    return fasttext_model
+
+
+def init_or_get_toxicity_model():
+    global toxicity_model
+    if toxicity_model is None:
+        toxicity_model = load_keras_model(config.get('TextProcessing', 'toxicity_path'))
+    return toxicity_model
+
+
+__all__ = ['get_logger_config', 'config', 'init_logging', 'init_config', 'except2str', 'init_or_get_fasttext_model',
+           'init_or_get_toxicity_model']
