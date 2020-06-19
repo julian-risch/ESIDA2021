@@ -66,8 +66,10 @@ const E = {
     DATA_UPDATED_COMMENTS: 'DATA_UPDATED_COMMENTS', // DATA: the dict of comments
     // a comment was selected for highlight (or unselected)
     COMMENT_SELECTED: 'COMMENT_SELECTED', // DATA: commentId (optional)
-    // request to remove all comment filters
+    // request to remove all filters
     CLEAR_FILTERS: 'CLEAR_FILTERS', // DATA: none
+    // request to remove search filter
+    CLEAR_SEARCH_FILTER: 'CLEAR_SEARCH_FILTER', // DATA: none
     // emitted when the search box updated
     COMMENT_SEARCH: 'COMMENT_SEARCH', // DATA: current search query
     // emitted when the DataSource has updated the 'active' field

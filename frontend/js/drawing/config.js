@@ -19,12 +19,55 @@ const DRAWING_CONFIG = {
         FORCE_Y: .01,
         FORCE_X: .01
     },
-    COLOURS: {
-        NODE_FILL_DEFAULT: 'rgb(31, 119, 180)',
-        EDGE_STROKE_DEFAULT: '#999',
-        NODE_OPACITY_UNSELECTED: 0.3
+    style: function (key, setting, mode) {
+        if (setting === undefined)
+            return this.STYLES.DEFAULT[key];
+
+        mode = mode ? 'pos' : 'neg';
+
+        if (key in this.STYLES[setting][mode]) {
+            console.log(key, setting, mode, this.STYLES[setting][mode][key])
+            return this.STYLES[setting][mode][key];
+        }
+        return this.STYLES.DEFAULT[key];
     },
-    LINKS_VISIBLE: true
+    STYLES: {
+        DEFAULT: {
+            NODE_FILL: 'rgb(31, 119, 180)',
+            NODE_OPACITY: 1.0,
+            NODE_STROKE_WIDTH: 1.5,
+            NODE_STROKE: '#fff',
+            EDGE_STROKE: '#999',
+            EDGE_OPACITY: 0.6,
+            BASE_RADIUS: 5
+        },
+        HIGHLIGHT: {
+            pos: {
+                NODE_FILL: 'rgb(255,3,83)'
+            },
+            neg: {
+                NODE_OPACITY: 0.3
+            }
+        },
+        TIME_RANGE: {
+            pos: {
+                // stays default
+            },
+            neg: {
+                BASE_RADIUS: 2,
+                NODE_OPACITY: 0.2
+            }
+        },
+        LASSO: {
+            pos: {},
+            neg: {}
+        },
+        SEARCH: {
+            pos: {},
+            neg: {}
+        }
+    },
+    LINKS_VISIBLE: false
 };
 
 class ConfigPanel {

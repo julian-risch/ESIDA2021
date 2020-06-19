@@ -1,9 +1,11 @@
 import { LANG, FORMAT_DATE } from './lang.js';
 import { EXAMPLE_STORIES } from "./examples.js";
-import { emitter, E } from "../env/events.js"
+import { emitter, E } from "./events.js"
 import { API } from "../api.js";
 import { ComExDrawing } from "../drawing/drawing.js";
 import { ConfigPanel } from "../drawing/config.js";
+import { TimeSlider } from "../drawing/timeslider.js";
+import { data } from "./data.js";
 
 function nElem({ tag, cls = null, attribs = null, id = null, text = null, children = null }) {
     let elem = document.createElement(tag);
@@ -213,7 +215,8 @@ class SidebarExampleElement {
 
                 let elem = nElem({ tag: 'input', id: id, attribs: attribs });
                 elem.addEventListener('change', () => {
-                    emitter.emit(E.EXAMPLE_SELECTED, story)
+                    console.log(story)
+                    emitter.emit(E.EXAMPLE_SELECTED, story);
                 });
                 this.ROOT.appendChild(elem);
 
@@ -298,6 +301,7 @@ class CommentSidebar {
         this.BUTTON_CLEAR_FILTERS = document.getElementById('comments-filters-clear');
         this.BUTTON_SEARCH = document.querySelector('#comments-filters-search > button');
         this.SEARCH_BOX = document.querySelector('#comments-filters-search > input');
+        this.SEARCH_BOX.setAttribute('placeholder', LANG.SEARCH.s + '…')
         this.COUNTER = document.getElementById('comments-filters-counter');
 
         this.COMMENTS = {};
@@ -305,7 +309,7 @@ class CommentSidebar {
         this.SIDEBAR_TOGGLE_BUTTON.addEventListener('click', this.toggleShow.bind(this));
         this.SEARCH_BOX.addEventListener('input', this.searchSubmit.bind(this));
         this.BUTTON_SEARCH.addEventListener('click', this.searchSubmit.bind(this));
-        this.BUTTON_CLEAR_FILTERS.addEventListener('click', () => emitter.emit(E.CLEAR_FILTERS));
+        this.BUTTON_CLEAR_FILTERS.addEventListener('click', () => emitter.emit(E.CLEAR_SEARCH_FILTER));
 
         emitter.on(E.DATA_UPDATED_COMMENTS, this.onCommentsReceived.bind(this));
         emitter.on(E.COMMENT_SELECTED, this.onCommentHighlight.bind(this));
@@ -359,7 +363,10 @@ class CommentSidebar {
     onFiltersChanged(comments) {
         let counter = 0;
         Object.values(comments).forEach(comment => {
-            let visible = comment.active === undefined || comment.active;
+            let visible =
+                (!data.activeFilters.search || (data.activeFilters.search && comment.activeFilters.search)) &&
+                (!data.activeFilters.lasso || (data.activeFilters.lasso && comment.activeFilters.lasso)) &&
+                (!data.activeFilters.timeRange || (data.activeFilters.timeRange && comment.activeFilters.timeRange));
             this.COMMENTS[comment.id].applyFilter(visible);
             if (visible) counter++;
         });
@@ -392,9 +399,16 @@ class CommentSidebar {
 
 class MainPanel {
     constructor() {
-        this.ROOT = document.getElementById('main');
+        this.ROOT = document.getElementById('comment-graph');
         this.DRAWING = new ComExDrawing(this.ROOT);
         this.CONFIG_PANEL = new ConfigPanel(this.ROOT);
+    }
+}
+
+class TimeSelectorPanel {
+    constructor() {
+        this.ROOT = document.getElementById('time-selector');
+        this.SLIDER = new TimeSlider(this.ROOT);
     }
 }
 
@@ -403,6 +417,7 @@ class Elements {
         this.ADD_SOURCE_MODAL = new AddSourceModalElements();
         this.SIDEBAR = new SidebarElements(this.ADD_SOURCE_MODAL.show);
         this.MAIN_PANEL = new MainPanel();
+        this.TIME_SELECTOR = new TimeSelectorPanel();
         this.COMMENTS_SIDEBAR = new CommentSidebar();
     }
 }

@@ -64,7 +64,13 @@ class DataStore {
     id2idx = {};
     edges = [];
     groups = {};
-    filterKeep = undefined;
+
+    activeFilters = {
+        highlight: false,
+        timeRange: false,
+        search: false,
+        lasso: false
+    }
 
     constructor() {
         emitter.on(E.RECEIVED_ARTICLE, this.onArticleReceive.bind(this));
@@ -73,54 +79,54 @@ class DataStore {
         emitter.on(E.DATA_UPDATED_COMMENTS, this.resetSearchIndex.bind(this));
         emitter.on(E.COMMENT_SEARCH, this.searchComments.bind(this));
         emitter.on(E.CLEAR_FILTERS, this.clearFilters.bind(this));
+        emitter.on(E.CLEAR_SEARCH_FILTER, () => this.clearFilters('search'));
     }
 
     appendComments(comments) {
         comments.forEach(c => {
+            // some additional properties per comment
+            // to manage highlighting (on click),
+            // text search, lasso, and time range selection
+            c.activeFilters = {
+                highlight: false,
+                timeRange: false,
+                search: false,
+                lasso: false
+            }
+
             this.comments[c.id] = c;
         });
     }
 
     resetSearchIndex() {
         this.searchIndex = new JsSearch.Search(['id']);
-
         this.searchIndex.tokenizer = new JsSearch.StemmingTokenizer(JsSearch.stemmer, new JsSearch.SimpleTokenizer());
         this.searchIndex.addIndex('text');
         this.searchIndex.addDocuments(Object.values(this.comments));
     }
 
-    clearFilters() {
-        if (this.filterKeep === undefined) return;
-        this.filterKeep = undefined;
-        Object.values(this.comments).forEach(comment => {
-            delete comment.active;
+    clearFilters(filters) {
+        if (!filters) filters = ['highlight', 'timeRange', 'search', 'lasso'];
+        if (typeof filters === 'string') filters = [filters]
+
+        filters.forEach(filter => this.activeFilters[filter] = false);
+        Object.keys(this.comments).forEach(key => {
+            filters.forEach(filter => this.comments[key].activeFilters[filter] = false);
         });
         emitter.emit(E.FILTERS_UPDATED, this.comments);
     }
 
-    updateFilters(keepIds) {
-        keepIds = new Set(keepIds);
-        if (this.filterKeep === undefined)
-            // initialise filtering parameter
-            Object.values(this.comments).forEach(comment => {
-                comment.active = false;
-            });
-        else
-            difference(this.filterKeep, keepIds).forEach(key => {
-                this.comments[key].active = false;
-            });
-
-        keepIds.forEach(key => {
-            this.comments[key].active = true;
-        });
-
-        this.filterKeep = keepIds;
+    applyFilter(filter, activeIds) {
+        let resultIds = new Set(activeIds);
+        Object.keys(this.comments).forEach(key =>{
+            this.comments[key].activeFilters[filter] = resultIds.has(this.comments[key].id)});
+        this.activeFilters[filter] = true;
         emitter.emit(E.FILTERS_UPDATED, this.comments);
     }
 
     searchComments(query) {
         let searchResult = this.searchIndex.search(query);
-        this.updateFilters(searchResult.map((c) => c.id));
+        this.applyFilter('search', searchResult.map(c => c.id))
     }
 
     onCommentsReceive(comments) {
