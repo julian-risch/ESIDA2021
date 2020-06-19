@@ -56,8 +56,11 @@ class Layout {
     }
 
     linkStrength(link) {
-        let weightedWeight = (weight) => weight[0] * CONFIG.LAYOUT.EDGE_TYPE_WEIGHTS[EDGE_TYPES_REV[weight[1]]];
-        return link.weights.reduce((acc, weight) => acc + weightedWeight(weight), .0);
+        let weightedWeight = (weight) => weight[1] * CONFIG.LAYOUT.EDGE_TYPE_WEIGHTS[weight[0]];
+
+        return Object.entries(link.weights)
+            .filter(weight => weight[1] !== null)
+            .reduce((acc, weight) => acc + weightedWeight(weight), .0);
     }
 
     static drag(simulation) {

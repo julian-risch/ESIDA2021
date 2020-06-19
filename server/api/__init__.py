@@ -10,11 +10,23 @@ from common import config, get_logger_config
 from api.routes import ping, platforms, graph
 import uvicorn
 import json
-import resource
 import time
 import logging
+import mimetypes
+
+mimetypes.init()
 
 logger = logging.getLogger('comex.api.server')
+
+try:
+    from resource import getrusage, RUSAGE_SELF
+except ImportError as e:
+    logger.warning(e)
+
+    RUSAGE_SELF = None
+
+    def getrusage(*args):
+        return 0.0, 0.0
 
 
 class APISubRouter:
@@ -32,7 +44,8 @@ class APISubRouter:
 class Server:
     def __init__(self):
         self.app = FastAPI()
-
+        # this fixes problems for windows hosts
+        mimetypes.add_type('application/javascript', '.js')
         logger.debug('Setup Middlewares')
         trusted_hosts = json.loads(config.get('server', 'hosts'))
         if config.getboolean('server', 'header_trusted_host'):
@@ -76,6 +89,6 @@ class TimingMiddleware(BaseHTTPMiddleware):
 
     @staticmethod
     def _get_cpu_time():
-        resources = resource.getrusage(resource.RUSAGE_SELF)
+        resources = getrusage(RUSAGE_SELF)
         # add up user time (ru_utime) and system time (ru_stime)
         return resources[0] + resources[1]

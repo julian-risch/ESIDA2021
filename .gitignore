@@ -5,6 +5,7 @@
 server/store.db
 server/configs/example.ini
 venv/**
+wsl_venv/**
 **/__pycache__/**
 **/.pytest_cache/**
 backfill.log
