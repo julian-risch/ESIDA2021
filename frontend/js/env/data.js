@@ -15,10 +15,10 @@ const GRAPH_CONFIG = {
     SameCommentComparator: {
         active: true,
         base_weight: 1.0,
-        only_consecutive: false
+        only_consecutive: true
     },
     SameArticleComparator: {
-        active: false,
+        active: true,
         base_weight: 1.0,
         only_root: true
     },
@@ -26,11 +26,309 @@ const GRAPH_CONFIG = {
         active: true,
         base_weight: 1.0,
         only_root: true
+    },
+    SimilarityComparator: {
+        active: false,
+        base_weight: 0.1,
+        only_root: true,
+        max_similarity: 0.75
+    },
+    TemporalComparator: {
+        active: true,
+        base_weight: 1.0,
+        only_root: true,
+        max_time: 1000
+    },
+    SizeRanker: {
+        active: true
+    },
+    RecencyRanker: {
+        active: true,
+        use_yongest: false
+    },
+    VotesRanker: {
+        active: true,
+        use_upvotes: true,
+        use_downvotes: true
+    },
+    PageRanker: {
+        active: true,
+        num_iterations: 100,
+        d: 0.85,
+        edge_type: 'TEMPORAL',
+        use_power_mode: true
+    },
+    ToxicityRanker: {
+        active: false,
+        window_length: 125,
+        whole_comment: true
+    },
+    CentralityDegreeCalculator: {
+        active: true
+    },
+    GenericEdgeFilter: {
+        active: false,
+        threshold: 0.13,
+        smaller_as: false,
+        edge_type: 'REPLY_TO'
+    },
+    SimilarityEdgeFilter: {
+        active: false,
+        threshold: 0.3,
+        smaller_as: false
+    },
+    ReplyToEdgeFilter: {
+        active: false,
+        threshold: 0.5,
+        smaller_as: false
+    },
+    SameCommentEdgeFilter: {
+        active: false,
+        threshold: 0.5,
+        smaller_as: false
+    },
+    SameArticleEdgeFilter: {
+        active: false,
+        threshold: 0.5,
+        smaller_as: false
+    },
+    SameGroupEdgeFilter: {
+        active: false,
+        threshold: 0.5,
+        smaller_as: false
+    },
+    TemporalEdgeFilter: {
+        active: false,
+        threshold: 0.5,
+        smaller_as: false
+    },
+    OrEdgeFilter: {
+        active: false,
+        reply_to_threshold: 0.5,
+        same_comment_threshold: 0.5,
+        same_article_threshold: -0.5,
+        similarity_threshold: -0.5,
+        same_group_threshold: -0.5,
+        temporal_threshold: 0.5
+    },
+    GenericBottomEdgeFilter: {
+        active: false,
+        top_edges: 2,
+        descending_order: true,
+        edge_type: 'REPLY_TO'
+    },
+    BottomSimilarityEdgeFilter: {
+        active: false,
+        top_edges: 5,
+        descending_order: true
+    },
+    BottomReplyToEdgeFilter: {
+        active: false,
+        top_edges: 100,
+        descending_order: true
+    },
+    BottomTemporalEdgeFilter: {
+        active: false,
+        top_edges: 100,
+        descending_order: true
+    },
+    BottomSameCommentFilter: {
+        active: false,
+        top_edges: 100,
+        descending_order: true
+    },
+    BottomSameArticleEdgeFilter: {
+        active: false,
+        top_edges: 100,
+        descending_order: true
+    },
+    BottomSameGroupEdgeFilter: {
+        active: false,
+        top_edges: 100,
+        descending_order: true
+    },
+    GenericNodeWeightFilter: {
+        active: false,
+        strict: false,
+        threshold: 2,
+        smaller_as: false,
+        node_weight_type: 'DEGREE_CENTRALITY'
+    },
+    SizeFilter: {
+        active: false,
+        strict: false,
+        threshold: 1,
+        smaller_as: false
+    },
+    PageRankFilter: {
+        active: false,
+        strict: false,
+        threshold: 1,
+        smaller_as: false
+    },
+    DegreeCentralityFilter: {
+        active: false,
+        strict: false,
+        threshold: 1,
+        smaller_as: false
+    },
+    RecencyFilter: {
+        active: false,
+        strict: false,
+        threshold: 1,
+        smaller_as: false
+    },
+    VotesFilter: {
+        active: true,
+        strict: false,
+        threshold: 2,
+        smaller_as: false
+    },
+    ToxicityFilter: {
+        active: false,
+        strict: false,
+        threshold: 0.5,
+        smaller_as: true
+    },
+    GenericNodeWeightBottomFilter: {
+        active: false,
+        strict: false,
+        top_k: 5,
+        descending_order: true,
+        node_weight_type: 'DEGREE_CENTRALITY'
+    },
+    SizeBottomFilter: {
+        active: false,
+        strict: false,
+        top_k: 5,
+        descending_order: true
+    },
+    PageRankBottomFilter: {
+        active: true,
+        strict: true,
+        top_k: 200,
+        descending_order: true
+    },
+    DegreeCentralityBottomFilter: {
+        active: false,
+        strict: false,
+        top_k: 5,
+        descending_order: true
+    },
+    RecencyBottomFilter: {
+        active: false,
+        strict: false,
+        top_k: 5,
+        descending_order: true
+    },
+    VotesBottomFilter: {
+        active: false,
+        strict: false,
+        top_k: 50,
+        descending_order: true
+    },
+    ToxicityBottomFilter: {
+        active: false,
+        strict: false,
+        top_k: 500,
+        descending_order: true
+    },
+    GenericNodeMerger: {
+        active: false,
+        threshold: 0.5,
+        smaller_as: false,
+        edge_weight_type: 'SAME_COMMENT'
+    },
+    SimilarityNodeMerger: {
+        active: false,
+        threshold: 0.11,
+        smaller_as: false
+    },
+    ReplyToNodeMerger: {
+        active: true,
+        threshold: 0.5,
+        smaller_as: false
+    },
+    SameCommentNodeMerger: {
+        active: false,
+        threshold: 0.5,
+        smaller_as: false
+    },
+    SameArticleNodeMerger: {
+        active: false,
+        threshold: 0.5,
+        smaller_as: false
+    },
+    SameGroupNodeMerger: {
+        active: false,
+        threshold: 0.5,
+        smaller_as: false
+    },
+    TemporalNodeMerger: {
+        active: false,
+        threshold: 0.12,
+        smaller_as: false
+    },
+    MultiNodeMerger: {
+        active: false,
+        reply_to_threshold: 0.5,
+        same_comment_threshold: 0.5,
+        same_article_threshold: -0.5,
+        similarity_threshold: -0.5,
+        same_group_threshold: -0.5,
+        temporal_threshold: -0.5,
+        smaller_as: false,
+        conj_or: true
+    },
+    GenericClusterer: {
+        active: false,
+        edge_weight_type: 'SAME_COMMENT',
+        algorithm: 'GirvanNewman'
+    },
+    SimilarityClusterer: {
+        active: false,
+        algorithm: 'GirvanNewman'
+    },
+    ReplyToClusterer: {
+        active: false,
+        algorithm: 'GirvanNewman'
+    },
+    SameCommentClusterer: {
+        active: false,
+        algorithm: 'GirvanNewman'
+    },
+    SameArticleClusterer: {
+        active: false,
+        algorithm: 'GirvanNewman'
+    },
+    SameGroupClusterer: {
+        active: false,
+        algorithm: 'GirvanNewman'
+    },
+    TemporalClusterer: {
+        active: false,
+        algorithm: 'GirvanNewman'
+    },
+    MultiEdgeTypeClusterer: {
+        active: false,
+        use_reply_to: true,
+        use_same_comment: true,
+        use_same_article: false,
+        use_similarity: false,
+        use_same_group: false,
+        use_temporal: false,
+        algorithm: 'GirvanNewman'
+    },
+    GenericSingleEdgeAdder: {
+        active: true,
+        base_weight: 0.1,
+        edge_weight_type: 'TEMPORAL',
+        node_weight_type: 'RECENCY'
     }
 };
 
 const API_SETTINGS = {
-    GRAPH_IGNORE_CACHE: true
+    GRAPH_IGNORE_CACHE: false
 };
 
 function difference(setA, setB) {
@@ -118,8 +416,9 @@ class DataStore {
 
     applyFilter(filter, activeIds) {
         let resultIds = new Set(activeIds);
-        Object.keys(this.comments).forEach(key =>{
-            this.comments[key].activeFilters[filter] = resultIds.has(this.comments[key].id)});
+        Object.keys(this.comments).forEach(key => {
+            this.comments[key].activeFilters[filter] = resultIds.has(this.comments[key].id)
+        });
         this.activeFilters[filter] = true;
         emitter.emit(E.FILTERS_UPDATED, this.comments);
     }
