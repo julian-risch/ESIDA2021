@@ -2,7 +2,6 @@ from pydantic import BaseModel, AnyHttpUrl
 from datetime import datetime
 from typing import List, Optional, Union, Tuple
 from enum import Enum
-from dataclasses import dataclass
 
 
 class CommentScraped(BaseModel):
@@ -82,6 +81,31 @@ class CacheResult(BaseModel):
     payload: Optional[ArticleCached]
 
 
+class NodeWeightType(str, Enum):
+    SIZE = 'SIZE'
+    PAGERANK = 'PAGERANK'
+    DEGREE_CENTRALITY = 'DEGREE_CENTRALITY'
+    RECENCY = 'RECENCY'
+    VOTES = 'VOTES'
+    TOXICITY = 'TOXICITY'
+    MERGE_ID = 'MERGE_ID'
+    CLUSTER_ID = 'CLUSTER_ID'
+
+
+class EdgeWeightType(str, Enum):
+    REPLY_TO = 'REPLY_TO'
+    SAME_ARTICLE = 'SAME_ARTICLE'
+    SIMILARITY = 'SIMILARITY'
+    SAME_GROUP = 'SAME_GROUP'
+    SAME_COMMENT = 'SAME_COMMENT'
+    TEMPORAL = 'TEMPORAL'
+
+
+class ClusteringAlgorithm(str, Enum):
+    GirvanNewman = 'GirvanNewman'
+    GreedyModularityCommunities = 'GreedyModularityCommunities'
+
+
 class ComparatorConfigBase(BaseModel):
     active: bool = True
 
@@ -132,7 +156,7 @@ class VotesRankerConfig(ComparatorConfigBase):
 class PageRankerConfig(ComparatorConfigBase):
     num_iterations: int = 100
     d: float = 0.85
-    edge_type: str = "TEMPORAL"
+    edge_type: EdgeWeightType = EdgeWeightType.TEMPORAL
     use_power_mode: bool = True
 
 
@@ -150,7 +174,7 @@ class GenericEdgeFilterConfig(ComparatorConfigBase):
     active: bool = False
     threshold: float = 0.13
     smaller_as: bool = False
-    edge_type: str = 'REPLY_TO'
+    edge_type: EdgeWeightType = EdgeWeightType.REPLY_TO
 
 
 class SimilarityEdgeFilterConfig(ComparatorConfigBase):
@@ -203,7 +227,7 @@ class GenericBottomEdgeFilterConfig(ComparatorConfigBase):
     active: bool = False
     top_edges: int = 2
     descending_order: bool = True
-    edge_type: str = 'REPLY_TO'
+    edge_type: EdgeWeightType = EdgeWeightType.REPLY_TO
 
 
 class BottomSimilarityEdgeFilterConfig(ComparatorConfigBase):
@@ -247,7 +271,7 @@ class GenericNodeWeightFilterConfig(ComparatorConfigBase):
     strict: bool = False
     threshold: int = 2
     smaller_as: bool = False
-    node_weight_type: str = 'DEGREE_CENTRALITY'
+    node_weight_type: NodeWeightType = NodeWeightType.DEGREE_CENTRALITY
 
 
 class SizeFilterConfig(ComparatorConfigBase):
@@ -296,7 +320,7 @@ class GenericNodeWeightBottomFilterConfig(ComparatorConfigBase):
     strict: bool = False
     top_k: int = 5
     descending_order: bool = True
-    node_weight_type: str = 'DEGREE_CENTRALITY'
+    node_weight_type: NodeWeightType = NodeWeightType.DEGREE_CENTRALITY
 
 
 class SizeBottomFilterConfig(ComparatorConfigBase):
@@ -344,7 +368,7 @@ class GenericNodeMergerConfig(ComparatorConfigBase):
     active: bool = False
     threshold: float = 0.5
     smaller_as: bool = False
-    edge_weight_type: str = 'SAME_COMMENT'
+    edge_weight_type: EdgeWeightType = EdgeWeightType.SAME_COMMENT
 
 
 class SimilarityNodeMergerConfig(ComparatorConfigBase):
@@ -395,38 +419,38 @@ class MultiNodeMergerConfig(ComparatorConfigBase):
 
 class GenericClustererConfig(ComparatorConfigBase):
     active: bool = False
-    edge_weight_type: str = 'SAME_COMMENT'
-    algorithm: str = 'GirvanNewman'
+    edge_weight_type: EdgeWeightType = EdgeWeightType.SAME_COMMENT
+    algorithm: ClusteringAlgorithm = ClusteringAlgorithm.GirvanNewman
 
 
 class SimilarityClustererConfig(ComparatorConfigBase):
     active: bool = False
-    algorithm: str = 'GirvanNewman'
+    algorithm: ClusteringAlgorithm = ClusteringAlgorithm.GirvanNewman
 
 
 class ReplyToClustererConfig(ComparatorConfigBase):
     active: bool = False
-    algorithm: str = 'GirvanNewman'
+    algorithm: ClusteringAlgorithm = ClusteringAlgorithm.GirvanNewman
 
 
 class SameCommentClustererConfig(ComparatorConfigBase):
     active: bool = False
-    algorithm: str = 'GirvanNewman'
+    algorithm: ClusteringAlgorithm = ClusteringAlgorithm.GirvanNewman
 
 
 class SameArticleClustererConfig(ComparatorConfigBase):
     active: bool = False
-    algorithm: str = 'GirvanNewman'
+    algorithm: ClusteringAlgorithm = ClusteringAlgorithm.GirvanNewman
 
 
 class SameGroupClustererConfig(ComparatorConfigBase):
     active: bool = False
-    algorithm: str = 'GirvanNewman'
+    algorithm: ClusteringAlgorithm = ClusteringAlgorithm.GirvanNewman
 
 
 class TemporalClustererConfig(ComparatorConfigBase):
     active: bool = False
-    algorithm: str = 'GirvanNewman'
+    algorithm: ClusteringAlgorithm = ClusteringAlgorithm.GirvanNewman
 
 
 class MultiEdgeTypeClustererConfig(ComparatorConfigBase):
@@ -437,13 +461,13 @@ class MultiEdgeTypeClustererConfig(ComparatorConfigBase):
     use_similarity: bool = False
     use_same_group: bool = False
     use_temporal: bool = False
-    algorithm: str = 'GirvanNewman'
+    algorithm: ClusteringAlgorithm = ClusteringAlgorithm.GirvanNewman
 
 
 class GenericSingleEdgeAdderConfig(ComparatorConfigBase):
     base_weight: float = 0.1
-    edge_weight_type: str = 'TEMPORAL'
-    node_weight_type: str = 'RECENCY'
+    edge_weight_type: EdgeWeightType = EdgeWeightType.TEMPORAL
+    node_weight_type: NodeWeightType = NodeWeightType.RECENCY
 
 
 class GraphConfig(BaseModel):
