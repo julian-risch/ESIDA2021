@@ -14,7 +14,8 @@ const DRAWING_CONFIG = {
             SAME_COMMENT: 1.,
             TEMPORAL: 1.
         },
-        CHARGE_STRENGTH: -10,
+        //CHARGE_STRENGTH: -10,
+        CHARGE_STRENGTH: 50,
         CHARGE_MAX_DISTANCE: 150,
         FORCE_Y: .01,
         FORCE_X: .01
@@ -26,7 +27,6 @@ const DRAWING_CONFIG = {
         mode = mode ? 'pos' : 'neg';
 
         if (key in this.STYLES[setting][mode]) {
-            console.log(key, setting, mode, this.STYLES[setting][mode][key])
             return this.STYLES[setting][mode][key];
         }
         return this.STYLES.DEFAULT[key];
@@ -34,12 +34,15 @@ const DRAWING_CONFIG = {
     STYLES: {
         DEFAULT: {
             NODE_FILL: 'rgb(31, 119, 180)',
-            NODE_OPACITY: 1.0,
+            NODE_OPACITY: 0.8,
             NODE_STROKE_WIDTH: 1.5,
             NODE_STROKE: '#fff',
             EDGE_STROKE: '#999',
             EDGE_OPACITY: 0.6,
-            BASE_RADIUS: 5
+            EDGE_MIN_STROKE_WIDTH: 1,
+            EDGE_MAX_STROKE_WIDTH: 1,
+            NODE_RADIUS: d => 100 * Math.sqrt(d.wgts.PAGERANK),
+            NODE_PADDING: 1
         },
         HIGHLIGHT: {
             pos: {
@@ -54,8 +57,8 @@ const DRAWING_CONFIG = {
                 // stays default
             },
             neg: {
-                BASE_RADIUS: 2,
-                NODE_OPACITY: 0.2
+                NODE_RADIUS: d => 50 * Math.sqrt(d.wgts.PAGERANK),
+                NODE_OPACITY: 0.3
             }
         },
         LASSO: {

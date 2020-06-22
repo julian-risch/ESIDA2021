@@ -1,6 +1,5 @@
 import { emitter, E } from '../env/events.js'
 import { data } from '../env/data.js';
-import { ELEMENTS } from '../env/elements.js';
 import { Layout } from './layout.js';
 import { Lasso } from "./lasso.js";
 import { DRAWING_CONFIG as CONFIG } from "./config.js";
@@ -17,17 +16,20 @@ class Comments {
                 this.splits.push({
                     orig_id: [commentId, j],
                     text: data.getCommentText(commentId, j),
-
+                    wgts: split.wgts,
+                    cluster: split.wgts.CLUSTER_ID //|| split.wgts.MERGE_ID
                 });
                 this.lookup[commentId].push(counter);
                 counter++;
             });
         });
+        console.log(`Initialising drawing with ${this.splits.length} nodes/splits and ${data.edges.length} edges.`)
+
         this.edges = data.edges.map(edge => {
             try {
                 return {
-                    source: this.lookup[data.idx2id[edge.src[0]]][edge.src[1]],
-                    target: this.lookup[data.idx2id[edge.tgt[0]]][edge.tgt[1]],
+                    source: this.splits[this.lookup[data.idx2id[edge.src[0]]][edge.src[1]]],
+                    target: this.splits[this.lookup[data.idx2id[edge.tgt[0]]][edge.tgt[1]]],
                     weights: edge.wgts,
                     src: edge.src,
                     tgt: edge.tgt
@@ -40,8 +42,6 @@ class Comments {
             }
         });
 
-        this.highlightActive = false;
-
         this.eventlisteners = [
             emitter.on(E.DRAWING_CONFIG_CHANGED, this.onConfigChange.bind(this)),
             emitter.on(E.COMMENT_SELECTED, this.highlightComment.bind(this)),
@@ -49,16 +49,19 @@ class Comments {
     }
 
     draw(parent) {
-        this.ROOT = parent.append('g');
-
         this.LINKS = parent.append('g')
             .attr('stroke', CONFIG.STYLES.DEFAULT.EDGE_STROKE)
             .attr('stroke-opacity', CONFIG.LINKS_VISIBLE ? CONFIG.STYLES.DEFAULT.EDGE_OPACITY : 0)
             .selectAll('line')
             .data(this.edges)
             .join('line')
-            .attr('stroke-width', d => Math.sqrt(d.value / 50));
+            .attr('stroke-width', d =>
+                Math.min(CONFIG.STYLES.DEFAULT.EDGE_MAX_STROKE_WIDTH,
+                    Math.max(CONFIG.STYLES.DEFAULT.EDGE_MIN_STROKE_WIDTH,
+                        Object.values(d.weights).reduce((acc, weight) => acc += weight || 0, 0) * 3)));
 
+
+        this.ROOT = parent.append('g');
         this.NODES = this.ROOT
             .selectAll('circle')
             .data(this.splits)
@@ -66,15 +69,16 @@ class Comments {
             .append('circle')
             .attr('stroke', CONFIG.STYLES.DEFAULT.NODE_STROKE)
             .attr('stroke-width', CONFIG.STYLES.DEFAULT.NODE_STROKE_WIDTH)
-            // TODO make this weight dependent
-            .attr('r', d => 1.0 * CONFIG.STYLES.DEFAULT.BASE_RADIUS)
+            .attr('r', CONFIG.STYLES.DEFAULT.NODE_RADIUS)
             .attr('fill', CONFIG.STYLES.DEFAULT.NODE_FILL)
+            .attr('cluster-id', d => d.cluster || 0)
             .on('click', this.nodeOnClick.bind(this));
+
     }
 
     onFilterUpdate() {
         // defaults:
-        let radius = d => 1.0 * CONFIG.STYLES.DEFAULT.BASE_RADIUS;
+        let radius = CONFIG.STYLES.DEFAULT.NODE_RADIUS;
         let opacity = CONFIG.STYLES.DEFAULT.NODE_OPACITY;
         let fill = CONFIG.STYLES.DEFAULT.NODE_FILL;
 
@@ -86,9 +90,8 @@ class Comments {
         }
 
         if (data.activeFilters.timeRange) {
-            // TODO make this weight dependent
-            radius = (d) => 1 * CONFIG.style('BASE_RADIUS', 'TIME_RANGE',
-                data.comments[d.orig_id[0]].activeFilters.timeRange);
+            radius = (d) => CONFIG.style('NODE_RADIUS', 'TIME_RANGE',
+                data.comments[d.orig_id[0]].activeFilters.timeRange)(d);
             opacity = (d) => CONFIG.style('NODE_OPACITY', 'TIME_RANGE',
                 data.comments[d.orig_id[0]].activeFilters.timeRange);
         }
