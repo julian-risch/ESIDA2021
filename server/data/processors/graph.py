@@ -4,11 +4,12 @@ from data.processors.text import split_comment
 import data.models as models
 from typing import List
 from data.processors import GraphRepresentationType
-from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, TemporalComparator
+from data.processors.structure import SameArticleComparator, SameCommentComparator, ReplyToComparator, \
+    TemporalComparator
 from data.processors.embedding import SimilarityComparator
-from data.processors.ranking import PageRanker, CentralityDegreeCalculator, SizeRanker, VotesRanker, RecencyRanker, ToxicityRanker
+from data.processors.ranking import PageRanker, CentralityDegreeCalculator, SizeRanker, VotesRanker, RecencyRanker, \
+    ToxicityRanker
 from data.processors.filters import *
-
 
 from configparser import ConfigParser
 from common import config
@@ -46,7 +47,7 @@ MODIFIERS = [
     GenericClusterer, SimilarityClusterer, ReplyToClusterer, SameCommentClusterer, SameArticleClusterer,
     SameGroupClusterer, TemporalClusterer, MultiEdgeTypeClusterer,
 
-    #adding
+    # adding
     GenericSingleEdgeAdder
 ]
 
@@ -56,7 +57,6 @@ logger = logging.getLogger('data.processors.graph')
 class GraphRepresentation(GraphRepresentationType):
     def __init__(self, comments: List[models.CommentCached], conf: dict = None):
         super().__init__(comments)
-
 
         # create a temporary copy of the global config
         self.conf = ConfigParser()
@@ -121,7 +121,7 @@ class GraphRepresentation(GraphRepresentationType):
 
         nr_unfiltered = len(self.edges)
         for modifier in modifiers:
-            logger.debug(f'Currently {len(self.edges)} # edges. {modifier} started modification...')
+            logger.debug(f'Currently {len(self.edges)} # edges. {modifier.__class__} started modification...')
             modifier.modify(self)
 
-        logger.debug(f'{nr_unfiltered-len(self.edges)} edges removed')
+        logger.debug(f'{nr_unfiltered - len(self.edges)} edges removed')

@@ -87,65 +87,424 @@ class ComparatorConfigBase(BaseModel):
 
 
 class SameCommentComparatorConfig(ComparatorConfigBase):
-    base_weight: float = None
+    active: bool = True
+    base_weight: float = 1.0
     only_consecutive: bool = True
 
 
 class SameArticleComparatorConfig(ComparatorConfigBase):
-    base_weight: float = None
+    base_weight: float = 1.0
     only_root: bool = True
 
 
 class ReplyToComparatorConfig(ComparatorConfigBase):
-    base_weight: float = None
+    base_weight: float = 1.0
     only_root: bool = True
 
 
 class SimilarityComparatorConfig(ComparatorConfigBase):
+    active: bool = False
     base_weight: float = 0.1
     only_root: bool = True
-    max_similarity: float = 0.5
+    max_similarity: float = 0.75
 
 
 class TemporalComparatorConfig(ComparatorConfigBase):
-    base_weight: float = 0.1
+    active: bool = True
+    base_weight: float = 1.0
     only_root: bool = True
     max_time: int = 1000
+
+
+class SizeRankerConfig(ComparatorConfigBase):
+    pass
+
+
+class RecencyRankerConfig(ComparatorConfigBase):
+    use_yongest: bool = False
+
+
+class VotesRankerConfig(ComparatorConfigBase):
+    use_upvotes: bool = True
+    use_downvotes: bool = True
 
 
 class PageRankerConfig(ComparatorConfigBase):
     num_iterations: int = 100
     d: float = 0.85
-    normalize: bool = True
+    edge_type: str = "TEMPORAL"
+    use_power_mode: bool = True
+
+
+class ToxicityRankerConfig(ComparatorConfigBase):
+    active: bool = False
+    window_length: int = 125
+    whole_comment: bool = True
 
 
 class CentralityDegreeCalculatorConfig(ComparatorConfigBase):
     pass
 
 
-class BottomSimilarityEdgeFilterConfig(ComparatorConfigBase):
-    top_edges: int = 5
-
-
-class BottomReplyToEdgeFilterConfig(ComparatorConfigBase):
-    top_edges: int = 5
+class GenericEdgeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    threshold: float = 0.13
+    smaller_as: bool = False
+    edge_type: str = 'REPLY_TO'
 
 
 class SimilarityEdgeFilterConfig(ComparatorConfigBase):
-    threshold: float = 0.7
+    active: bool = False
+    threshold: float = 0.3
+    smaller_as: bool = False
+
+
+class ReplyToEdgeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    threshold: float = 0.5
+    smaller_as: bool = False
+
+
+class SameCommentEdgeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    threshold: float = 0.5
+    smaller_as: bool = False
+
+
+class SameArticleEdgeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    threshold: float = 0.5
+    smaller_as: bool = False
+
+
+class SameGroupEdgeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    threshold: float = 0.5
+    smaller_as: bool = False
+
+
+class TemporalEdgeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    threshold: float = 0.5
+    smaller_as: bool = False
+
+
+class OrEdgeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    reply_to_threshold: float = 0.5
+    same_comment_threshold: float = 0.5
+    same_article_threshold: float = -0.5
+    similarity_threshold: float = -0.5
+    same_group_threshold: float = -0.5
+    temporal_threshold: float = 0.5
+
+
+class GenericBottomEdgeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    top_edges: int = 2
+    descending_order: bool = True
+    edge_type: str = 'REPLY_TO'
+
+
+class BottomSimilarityEdgeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    top_edges: int = 5
+    descending_order: bool = True
+
+
+class BottomReplyToEdgeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    top_edges: int = 100
+    descending_order: bool = True
+
+
+class BottomTemporalEdgeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    top_edges: int = 100
+    descending_order: bool = True
+
+
+class BottomSameCommentFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    top_edges: int = 100
+    descending_order: bool = True
+
+
+class BottomSameArticleEdgeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    top_edges: int = 100
+    descending_order: bool = True
+
+
+class BottomSameGroupEdgeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    top_edges: 100
+    descending_order: bool = True
+
+
+class GenericNodeWeightFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    strict: bool = False
+    threshold: int = 2
+    smaller_as: bool = False
+    node_weight_type: str = 'DEGREE_CENTRALITY'
+
+
+class SizeFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    strict: bool = False
+    threshold: int = 1
+    smaller_as: bool = False
+
+
+class PageRankFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    strict: bool = False
+    threshold: int = 1
+    smaller_as: bool = False
+
+
+class DegreeCentralityFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    strict: bool = False
+    threshold: int = 1
+    smaller_as: bool = False
+
+
+class RecencyFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    strict: bool = False
+    threshold: int = 1
+    smaller_as: bool = False
+
+
+class VotesFilterConfig(ComparatorConfigBase):
+    strict: bool = False
+    threshold: int = 2
+    smaller_as: bool = False
+
+
+class ToxicityFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    strict: bool = False
+    threshold: float = 0.5
+    smaller_as: bool = True
+
+
+class GenericNodeWeightBottomFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    strict: bool = False
+    top_k: int = 5
+    descending_order: bool = True
+    node_weight_type: str = 'DEGREE_CENTRALITY'
+
+
+class SizeBottomFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    strict: bool = False
+    top_k: int = 5
+    descending_order: bool = True
+
+
+class PageRankBottomFilterConfig(ComparatorConfigBase):
+    strict: bool = True
+    top_k: int = 200
+    descending_order: bool = True
+
+
+class DegreeCentralityBottomFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    strict: bool = False
+    top_k: int = 5
+    descending_order: bool = True
+
+
+class RecencyBottomFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    strict: bool = False
+    top_k: int = 5
+    descending_order: bool = True
+
+
+class VotesBottomFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    strict: bool = False
+    top_k: int = 50
+    descending_order: bool = True
+
+
+class ToxicityBottomFilterConfig(ComparatorConfigBase):
+    active: bool = False
+    strict: bool = False
+    top_k: int = 500
+    descending_order: bool = True
+
+
+class GenericNodeMergerConfig(ComparatorConfigBase):
+    active: bool = False
+    threshold: float = 0.5
+    smaller_as: bool = False
+    edge_weight_type: str = 'SAME_COMMENT'
+
+
+class SimilarityNodeMergerConfig(ComparatorConfigBase):
+    threshold: float = 0.11
+    smaller_as: bool = False
+
+
+class ReplyToNodeMergerConfig(ComparatorConfigBase):
+    threshold: float = 0.5
+    smaller_as: bool = False
+
+
+class SameCommentNodeMergerConfig(ComparatorConfigBase):
+    active: bool = False
+    threshold: float = 0.5
+    smaller_as: bool = False
+
+
+class SameArticleNodeMergerConfig(ComparatorConfigBase):
+    active: bool = False
+    threshold: float = 0.5
+    smaller_as: bool = False
+
+
+class SameGroupNodeMergerConfig(ComparatorConfigBase):
+    active: bool = False
+    threshold: float = 0.5
+    smaller_as: bool = False
+
+
+class TemporalNodeMergerConfig(ComparatorConfigBase):
+    active: bool = False
+    threshold: float = 0.12
+    smaller_as: bool = False
+
+
+class MultiNodeMergerConfig(ComparatorConfigBase):
+    active: bool = False
+    reply_to_threshold: float = 0.5
+    same_comment_threshold: float = 0.5
+    same_article_threshold: float = -0.5
+    similarity_threshold: float = -0.5
+    same_group_threshold: float = -0.5
+    temporal_threshold: float = -0.5
+    smaller_as: bool = False
+    conj_or: bool = True
+
+
+class GenericClustererConfig(ComparatorConfigBase):
+    active: bool = False
+    edge_weight_type: str = 'SAME_COMMENT'
+    algorithm: str = 'GirvanNewman'
+
+
+class SimilarityClustererConfig(ComparatorConfigBase):
+    active: bool = False
+    algorithm: str = 'GirvanNewman'
+
+
+class ReplyToClustererConfig(ComparatorConfigBase):
+    active: bool = False
+    algorithm: str = 'GirvanNewman'
+
+
+class SameCommentClustererConfig(ComparatorConfigBase):
+    active: bool = False
+    algorithm: str = 'GirvanNewman'
+
+
+class SameArticleClustererConfig(ComparatorConfigBase):
+    active: bool = False
+    algorithm: str = 'GirvanNewman'
+
+
+class SameGroupClustererConfig(ComparatorConfigBase):
+    active: bool = False
+    algorithm: str = 'GirvanNewman'
+
+
+class TemporalClustererConfig(ComparatorConfigBase):
+    active: bool = False
+    algorithm: str = 'GirvanNewman'
+
+
+class MultiEdgeTypeClustererConfig(ComparatorConfigBase):
+    active: bool = False
+    use_reply_to: bool = True
+    use_same_comment: bool = True
+    use_same_article: bool = False
+    use_similarity: bool = False
+    use_same_group: bool = False
+    use_temporal: bool = False
+    algorithm: str = 'GirvanNewman'
+
+
+class GenericSingleEdgeAdderConfig(ComparatorConfigBase):
+    base_weight: float = 0.1
+    edge_weight_type: str = 'TEMPORAL'
+    node_weight_type: str = 'RECENCY'
 
 
 class GraphConfig(BaseModel):
+    SameCommentComparator: Optional[SameCommentComparatorConfig]
     SameCommentComparator: Optional[SameCommentComparatorConfig]
     SameArticleComparator: Optional[SameArticleComparatorConfig]
     ReplyToComparator: Optional[ReplyToComparatorConfig]
     SimilarityComparator: Optional[SimilarityComparatorConfig]
     TemporalComparator: Optional[TemporalComparatorConfig]
+    SizeRanker: Optional[SizeRankerConfig]
+    RecencyRanker: Optional[RecencyRankerConfig]
+    VotesRanker: Optional[VotesRankerConfig]
     PageRanker: Optional[PageRankerConfig]
+    ToxicityRanker: Optional[ToxicityRankerConfig]
     CentralityDegreeCalculator: Optional[CentralityDegreeCalculatorConfig]
-    BottomReplyToEdgeFilter: Optional[BottomReplyToEdgeFilterConfig]
-    BottomSimilarityEdgeFilter: Optional[BottomSimilarityEdgeFilterConfig]
+    GenericEdgeFilter: Optional[GenericEdgeFilterConfig]
     SimilarityEdgeFilter: Optional[SimilarityEdgeFilterConfig]
+    ReplyToEdgeFilter: Optional[ReplyToEdgeFilterConfig]
+    SameCommentEdgeFilter: Optional[SameCommentEdgeFilterConfig]
+    SameArticleEdgeFilter: Optional[SameArticleEdgeFilterConfig]
+    SameGroupEdgeFilter: Optional[SameGroupEdgeFilterConfig]
+    TemporalEdgeFilter: Optional[TemporalEdgeFilterConfig]
+    OrEdgeFilter: Optional[OrEdgeFilterConfig]
+    GenericBottomEdgeFilter: Optional[GenericBottomEdgeFilterConfig]
+    BottomSimilarityEdgeFilter: Optional[BottomSimilarityEdgeFilterConfig]
+    BottomReplyToEdgeFilter: Optional[BottomReplyToEdgeFilterConfig]
+    BottomTemporalEdgeFilter: Optional[BottomTemporalEdgeFilterConfig]
+    BottomSameCommentFilter: Optional[BottomSameCommentFilterConfig]
+    BottomSameArticleEdgeFilter: Optional[BottomSameArticleEdgeFilterConfig]
+    BottomSameGroupEdgeFilter: Optional[BottomSameGroupEdgeFilterConfig]
+    GenericNodeWeightFilter: Optional[GenericNodeWeightFilterConfig]
+    SizeFilter: Optional[SizeFilterConfig]
+    PageRankFilter: Optional[PageRankFilterConfig]
+    DegreeCentralityFilter: Optional[DegreeCentralityFilterConfig]
+    RecencyFilter: Optional[RecencyFilterConfig]
+    VotesFilter: Optional[VotesFilterConfig]
+    ToxicityFilter: Optional[ToxicityFilterConfig]
+    GenericNodeWeightBottomFilter: Optional[GenericNodeWeightBottomFilterConfig]
+    SizeBottomFilter: Optional[SizeBottomFilterConfig]
+    PageRankBottomFilter: Optional[PageRankBottomFilterConfig]
+    DegreeCentralityBottomFilter: Optional[DegreeCentralityBottomFilterConfig]
+    RecencyBottomFilter: Optional[RecencyBottomFilterConfig]
+    VotesBottomFilter: Optional[VotesBottomFilterConfig]
+    ToxicityBottomFilter: Optional[ToxicityBottomFilterConfig]
+    GenericNodeMerger: Optional[GenericNodeMergerConfig]
+    SimilarityNodeMerger: Optional[SimilarityNodeMergerConfig]
+    ReplyToNodeMerger: Optional[ReplyToNodeMergerConfig]
+    SameCommentNodeMerger: Optional[SameCommentNodeMergerConfig]
+    SameArticleNodeMerger: Optional[SameArticleNodeMergerConfig]
+    SameGroupNodeMerger: Optional[SameGroupNodeMergerConfig]
+    TemporalNodeMerger: Optional[TemporalNodeMergerConfig]
+    MultiNodeMerger: Optional[MultiNodeMergerConfig]
+    GenericClusterer: Optional[GenericClustererConfig]
+    SimilarityClusterer: Optional[SimilarityClustererConfig]
+    ReplyToClusterer: Optional[ReplyToClustererConfig]
+    SameCommentClusterer: Optional[SameCommentClustererConfig]
+    SameArticleClusterer: Optional[SameArticleClustererConfig]
+    SameGroupClusterer: Optional[SameGroupClustererConfig]
+    TemporalClusterer: Optional[TemporalClustererConfig]
+    MultiEdgeTypeClusterer: Optional[MultiEdgeTypeClustererConfig]
+    GenericSingleEdgeAdder: Optional[GenericSingleEdgeAdderConfig]
 
 
 class SplitWeights(BaseModel):
