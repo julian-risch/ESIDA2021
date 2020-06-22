@@ -6,6 +6,7 @@ import { ComExDrawing } from "../drawing/drawing.js";
 import { ConfigPanel } from "../drawing/config.js";
 import { TimeSlider } from "../drawing/timeslider.js";
 import { data } from "./data.js";
+import { URI } from "./uri.js";
 
 function nElem({ tag, cls = null, attribs = null, id = null, text = null, children = null }) {
     let elem = document.createElement(tag);
@@ -103,6 +104,12 @@ class AddSourceModalElements {
         this.CLOSE_BUTTON.addEventListener('click', this.hide);
         this.SUBMIT.addEventListener('click', () => {
             if (API.isValidScraperUrl(this.url)) {
+                // add new source to list in URL
+                let srcs = URI.get_arr('source', []);
+                srcs.push(this.url);
+                URI.set_val('source', srcs, false);
+
+                // request new data
                 emitter.emit(E.NEW_SOURCE_URL, this.url);
                 this._hide();
             } else {

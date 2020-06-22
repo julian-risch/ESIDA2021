@@ -457,7 +457,7 @@ class DataStore {
             //this.comments[splitComment.id].splits = splitComment.splits.map((split) => text.substr(split.s, split.e));
             this.comments[splitComment.id].splits = splitComment.splits;
         });
-
+        console.log(`Received graph with ${splitComments.length} comments and ${edges.length} edges.`)
         emitter.emit(E.REDRAW);
     }
 
