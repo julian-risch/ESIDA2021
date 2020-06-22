@@ -2,24 +2,35 @@ import { ELEMENTS, SidebarSourceElement } from "./env/elements.js";
 import { emitter, E } from "./env/events.js"
 import { data } from "./env/data.js";
 import { URI } from "./env/uri.js";
-//import { ComExDrawing } from "./drawing/drawing.js";
+import { EXAMPLE_STORIES } from "./env/examples.js";
+import { GRAPH_CONFIG } from "./env/data.js";
 
 ELEMENTS.SIDEBAR.addEmptySource();
 
-// for faster testing
-let init_urls = [
-    'https://www.zeit.de/digital/internet/2020-03/fake-news-coronavirus-falschnachrichten-luegen-panikmache', // id=149
-    150, // https://www.faz.net/aktuell/wissen/medizin-ernaehrung/corona-patienten-italienische-verhaeltnisse-koennen-wir-haendeln-16674388.html
-    151
-];
-
-// if testing is over, uncomment this:
-//init_urls = [];
-
-let urls = URI.get_arr('source', init_urls);
+// if there is a state stored in URL, get the source URLs/IDs
+// FIXME: before release, swap the following two lines.
+//const urls = URI.get_arr('source', []);
+const urls = URI.get_arr('source', EXAMPLE_STORIES[5].sources);
 console.log(urls);
+
+// if there is a state stored in URL, update internal default graph config
+const graph_config = URI.get_arr('graph_config', []);
+if (graph_config.length > 0) {
+    console.log('graph conf from URL', graph_config);
+    graph_config.forEach(c => {
+        const conf = c.split('|');
+        Object.entries(JSON.parse(conf[1])).forEach(cc => {
+            GRAPH_CONFIG[conf[0]][cc[0]] = cc[1];
+        });
+    });
+}
+
+// if data was collected, trigger source fetch events
 if (urls.length > 0) {
     urls.forEach((url) => emitter.emit(E.NEW_SOURCE_URL, url));
+
+    // some magic, so it waits till data for all articles was received
+    // and then triggers event to get graph
     let countdown = {
         cntdwn: urls.length,
         e1: emitter.on(E.RECEIVED_ARTICLE, () => countdown.cb()),
@@ -33,7 +44,5 @@ if (urls.length > 0) {
             }
         }
     }
-
-
     console.log(data);
 }

@@ -262,7 +262,7 @@ class BottomSameArticleEdgeFilterConfig(ComparatorConfigBase):
 
 class BottomSameGroupEdgeFilterConfig(ComparatorConfigBase):
     active: bool = False
-    top_edges: 100
+    top_edges: int = 100
     descending_order: bool = True
 
 

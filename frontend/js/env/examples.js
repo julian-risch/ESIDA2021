@@ -10,15 +10,20 @@ const EXAMPLE_STORIES = [
         title: 'Brände in Australien',
         sources: [
             'https://www.faz.net/aktuell/politik/ausland/braende-in-australien-zur-flucht-ist-es-zu-spaet-16567672.html',
-            //'https://www.spiegel.de/wissenschaft/natur/buschfeuer-in-australien-satellitenbild-zeigt-riesige-rauchwolke-a-1303595.html',
-            //'https://www.zeit.de/news/2020-01/06/australiens-einzigartige-tierwelt-leidet-unter-den-braenden',
-            //'https://www.zeit.de/gesellschaft/zeitgeschehen/2020-01/australien-feuer-buschbraende-waldbraende-duerre-fs',
-            //'https://www.tagesschau.de/ausland/buschfeuer-australien-127.html',
-            //'https://www.zeit.de/news/2020-01/06/australiens-premier-buschbraende-dauern-noch-monate',
-            //'https://www.faz.net/aktuell/gesellschaft/zukunft-nach-braenden-unklar-tier-massensterben-durch-braende-in-australien-16565020.html',
-            //'https://www.zeit.de/news/2020-01/05/buschfeuer-in-australien-schrecken-nimmt-kein-ende',
-            'https://www.welt.de/vermischtes/article204780066/Buschbraende-in-Australien-Millionen-Tiere-sterben-Pink-spendet-500-000-Dollar.html'
-        ]
+            'https://www.welt.de/vermischtes/article204780066/Buschbraende-in-Australien-Millionen-Tiere-sterben-Pink-spendet-500-000-Dollar.html',
+            //'https://www.zeit.de/gesellschaft/zeitgeschehen/2020-01/australien-feuer-buschbraende-waldbraende-duerre-fs',// 80 comments, wrong date
+            //'https://www.spiegel.de/wissenschaft/natur/buschfeuer-in-australien-satellitenbild-zeigt-riesige-rauchwolke-a-1303595.html',// no comments
+            //'https://www.zeit.de/news/2020-01/06/australiens-einzigartige-tierwelt-leidet-unter-den-braenden',// no comments
+            //'https://www.tagesschau.de/ausland/buschfeuer-australien-127.html', // no comments
+            //'https://www.zeit.de/news/2020-01/06/australiens-premier-buschbraende-dauern-noch-monate',// no comments
+            //'https://www.faz.net/aktuell/gesellschaft/zukunft-nach-braenden-unklar-tier-massensterben-durch-braende-in-australien-16565020.html',// no comments
+            //'https://www.zeit.de/news/2020-01/05/buschfeuer-in-australien-schrecken-nimmt-kein-ende',// no comments
+        ],
+        graph_config: {
+            MultiEdgeTypeClusterer: {
+                active: true
+            }
+        }
     }, {
         title: 'Erdogan bei Putin',
         sources: [
@@ -44,12 +49,22 @@ const EXAMPLE_STORIES = [
             'url1',
             'url2'
         ]
-    },
-
+    }, {
+        title: 'Default Example',
+        sources: [
+            'https://www.zeit.de/digital/internet/2020-03/fake-news-coronavirus-falschnachrichten-luegen-panikmache', // id=149
+            150, // https://www.faz.net/aktuell/wissen/medizin-ernaehrung/corona-patienten-italienische-verhaeltnisse-koennen-wir-haendeln-16674388.html
+            151
+        ]
+    }
 ];
 
 emitter.on(E.EXAMPLE_SELECTED, (example) => {
-    URI.set_val('source', example.sources, true);
+    URI.set_val('source', example.sources, !('graph_config' in example));
+
+    if ('graph_config' in example)
+        URI.set_val('graph_config', Object.entries(example.graph_config).map((conf) =>
+            `${conf[0]}|${JSON.stringify(conf[1])}`), true);
 })
 
 export { EXAMPLE_STORIES };
