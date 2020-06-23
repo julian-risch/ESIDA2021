@@ -67,8 +67,8 @@ class GraphRepresentation(GraphRepresentationType):
 
         # config: configuration from DEFAULT.ini
         # self.conf: configuration from code
-        # FIXME: delete, due this is only for testing purposes because the code config overrides the configuration from file
-        self.conf = config
+        # delete, due this is only for testing purposes because the code config overrides the configuration from file
+        # self.conf = config
 
         logger.debug(f'{len(self.comments)} comments turned '
                      f'into {len([s for c in self.comments for s in c.splits])} splits')
