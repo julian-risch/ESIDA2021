@@ -14,6 +14,14 @@ let urls = URI.get_arr('source', EXAMPLE_STORIES[6].sources);
 
 // if there is a state stored in URL, update internal default graph config
 let graph_config = URI.get_arr('graph_config', {});
+
+// alternatively, one can simply select the number of the example by index
+const example = URI.get_int('example', undefined);
+if (example !== undefined) {
+    urls = EXAMPLE_STORIES[example].sources;
+    graph_config = EXAMPLE_STORIES[example].graph_config || {};
+}
+
 if (graph_config.length > 0) {
     console.log('graph conf from URL', graph_config);
     graph_config.forEach(c => {
@@ -22,13 +30,6 @@ if (graph_config.length > 0) {
             GRAPH_CONFIG[conf[0]][cc[0]] = cc[1];
         });
     });
-}
-
-// alternatively, one can simply select the number of the example by index
-const example = URI.get_int('example', undefined);
-if (example !== undefined) {
-    urls = EXAMPLE_STORIES[example].sources;
-    graph_config = EXAMPLE_STORIES[example].graph_config || {};
 }
 
 // if data was collected, trigger source fetch events
