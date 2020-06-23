@@ -11,7 +11,7 @@ const EXAMPLE_STORIES = [
             sources: [
                 'https://www.welt.de/vermischtes/article204780066/Buschbraende-in-Australien-Millionen-Tiere-sterben-Pink-spendet-500-000-Dollar.html',// (164 Kommentare)
                 'https://www.faz.net/aktuell/wissen/klimawandel-und-braende-in-australien-keine-einsicht-in-der-hoelle-16568655.html',// (246 Kommentare)
-                'https://www.zeit.de/wissen/2020-01/buschfeuer-australien-waldbraende-buschbraende-region-duerre-3',// (684 Kommentare)
+                //'https://www.zeit.de/wissen/2020-01/buschfeuer-australien-waldbraende-buschbraende-region-duerre-3',// (684 Kommentare)
                 'https://taz.de/Waldbraende-in-Australien/!5653513',// (7 Kommentare)
                 'https://www.spiegel.de/panorama/gesellschaft/australien-fordert-240-000-buerger-wegen-feuern-zur-evakuierung-auf-a-9e171bd7-042f-475e-a29d-66cee34f8966'// (32 Kommentare)
 
