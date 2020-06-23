@@ -551,7 +551,11 @@ class SplitWeights(BaseModel):
 
     def __getitem__(self, item):
         # return self.__root__[item]
-        return self.dict()[item]
+        try:
+            return self.dict()[item]
+        # hacky fallback
+        except KeyError:
+            return self.dict()[str(item).split('.')[1]]
 
 
 class Split(BaseModel):
@@ -590,7 +594,11 @@ class EdgeWeights(BaseModel):
     def __getitem__(self, item):
         # https://pydantic-docs.helpmanual.io/usage/models/
         # return self.__dict__[item]
-        return self.dict()[item]
+        try:
+            return self.dict()[item]
+        # hacky fallback
+        except KeyError:
+            return self.dict()[str(item).split('.')[1]]
 
     def __setitem__(self, key, value):
         if key == "REPLY_TO":
