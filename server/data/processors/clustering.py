@@ -247,7 +247,6 @@ class MultiNodeMerger(Modifier):
 
             if filter_boolean(edge, operator_filter):
                 # use old id if existing, else increment
-                print(edge)
                 if edge.tgt in look_up or edge.src in look_up:
                     tgt_cluster = look_up.get(edge.tgt)
                     src_cluster = look_up.get(edge.src)
@@ -322,7 +321,7 @@ class GenericClusterer(Modifier):
             if edge.wgts[self.edge_weight_type]:
                 networkx_graph.add_edge(u_of_edge=edge.src, v_of_edge=edge.tgt, weight=edge.wgts[self.edge_weight_type])
 
-        if self.algorithm.lower() == "girvannewman":
+        if self.algorithm.lower().endswith("girvannewman"):
             communities_generator = community.girvan_newman(networkx_graph)
             # parametrize?
             top_level_communities = next(communities_generator)
@@ -337,12 +336,14 @@ class GenericClusterer(Modifier):
                 reverse_look_up[cluster_id].add(node)
 
         # clustering preperation:
+        negative_cluster_id = -1
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
                 cluster = look_up.get((graph.id2idx[comment.id], j))
                 # set id of nodes without cluster to -1
                 if cluster is None:
-                    cluster = -1
+                    cluster = negative_cluster_id
+                    negative_cluster_id -= 1
                 split.wgts.CLUSTER_ID = cluster
         return look_up, reverse_look_up
 
@@ -452,12 +453,14 @@ class MultiEdgeTypeClusterer(Modifier):
                 reverse_look_up[cluster_id].add(node)
 
         # clustering preperation:
+        negative_cluster_id = -1
         for comment in graph.comments:
             for j, split in enumerate(comment.splits):
                 cluster = look_up.get((graph.id2idx[comment.id], j))
                 # set id of nodes without cluster to -1
                 if cluster is None:
-                    cluster = -1
+                    cluster = negative_cluster_id
+                    negative_cluster_id -= 1
                 split.wgts.CLUSTER_ID = cluster
 
         return look_up, reverse_look_up

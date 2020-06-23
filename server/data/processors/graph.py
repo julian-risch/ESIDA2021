@@ -33,14 +33,15 @@ MODIFIERS = [
     ToxicityRanker,
 
     # filtering
-    GenericEdgeFilter, SimilarityEdgeFilter, ReplyToEdgeFilter, SameCommentEdgeFilter, SameArticleEdgeFilter,
-    SameGroupEdgeFilter, TemporalEdgeFilter, OrEdgeFilter,
-    GenericBottomEdgeFilter, BottomSimilarityEdgeFilter, BottomReplyToEdgeFilter, BottomTemporalEdgeFilter,
-    BottomSameCommentFilter, BottomSameArticleEdgeFilter, BottomSameGroupEdgeFilter,
     GenericNodeWeightFilter, SizeFilter, PageRankFilter, DegreeCentralityFilter,
     RecencyFilter, VotesFilter, ToxicityFilter,
     GenericNodeWeightBottomFilter, SizeBottomFilter, PageRankBottomFilter, DegreeCentralityBottomFilter,
     RecencyBottomFilter, VotesBottomFilter, ToxicityBottomFilter,
+
+    GenericEdgeFilter, SimilarityEdgeFilter, ReplyToEdgeFilter, SameCommentEdgeFilter, SameArticleEdgeFilter,
+    SameGroupEdgeFilter, TemporalEdgeFilter, OrEdgeFilter,
+    GenericBottomEdgeFilter, BottomSimilarityEdgeFilter, BottomReplyToEdgeFilter, BottomTemporalEdgeFilter,
+    BottomSameCommentFilter, BottomSameArticleEdgeFilter, BottomSameGroupEdgeFilter,
 
     GenericNodeMerger, SimilarityNodeMerger, ReplyToNodeMerger, SameCommentNodeMerger, SameArticleNodeMerger,
     SameGroupNodeMerger, TemporalNodeMerger, MultiNodeMerger,
