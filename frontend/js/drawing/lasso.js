@@ -1,12 +1,15 @@
 // heavily inspired by https://github.com/skokenes/d3-lasso/blob/master/src/lasso.js
 
+import { data } from "../env/data.js";
+
 class Lasso {
     constructor(parent, comments) {
         this.PARENT = parent;
         this.COMMENTS = comments;
+
+        // create helper elements
         this.ROOT = parent.append('g')
             .attr('class', 'lasso');
-
         this.OUTLINE = this.ROOT.append('path')
             .attr('class', 'drawn');
         this.CLOSE_CHORD = this.ROOT.append('path')
@@ -15,47 +18,44 @@ class Lasso {
             .attr('class', 'origin');
 
         this.dragHook = d3.drag()
-            .on('start', this.dragStart.bind(this))
-            .on('drag', this.dragMove.bind(this))
-            .on('end', this.dragEnd.bind(this));
+            .on('start', this.__dragStart.bind(this))
+            .on('drag', this.__dragMove.bind(this))
+            .on('end', this.__dragEnd.bind(this));
+
+        this.PARENT.select(function () {
+            return this.parentNode;
+        }).call(this.dragHook);
     }
 
     attachLasso() {
-        this.PARENT.call(this.dragHook);
+        this.dragHook.filter(() => true);
     }
 
-    dragStart() {
+    detachLasso() {
+        this.dragHook.filter(null);
+    }
+
+    __dragStart() {
         this.drawnCoords = [];
         this.OUTLINE.attr('d', null);
         this.CLOSE_CHORD.attr('d', null);
         this.outline = '';
         this.origin = '';
         this.COMMENTS.nodes().forEach((comment) => {
-            let box = comment.getBoundingClientRect();
+            const box = comment.getBoundingClientRect();
             comment.__lasso = {
                 possible: false,
                 selected: false,
                 hoverSelect: false,
                 loopSelect: false,
-                lassoPoint: [Math.round(box.left + box.width / 2), Math.round(box.top + box.height / 2)]
+                lassoPoint: [
+                    Math.round(box.left + box.width / 2),
+                    Math.round(box.top + box.height / 2)]
             };
         });
-
-        /*
-        // if hover is on, add hover function
-        if(hoverSelect) {
-            items.on("mouseover.lasso",function() {
-                // if hovered, change lasso selection attribute to true
-                this.__lasso.hoverSelect = true;
-            });
-        }
-
-        // Run user defined start function
-        on.start();
-         */
     }
 
-    dragMove() {
+    __dragMove() {
         // Get mouse position within body, used for calculations
         let x, y;
         if (d3.event.sourceEvent.type === "touchmove") {
@@ -86,43 +86,32 @@ class Lasso {
 
         this.drawnCoords.push([x, y]);
 
-        // Calculate the current distance from the lasso origin
-        let distance = Math.sqrt(Math.pow(x - this.origin[0], 2) + Math.pow(y - this.origin[1], 2));
-
         // Set the closed path line
         let close_draw_path = `M ${tx} ${ty} L ${this.torigin[0]} ${this.torigin[1]}`;
 
         // Draw the lines
         this.OUTLINE.attr('d', this.outline);
-
         this.CLOSE_CHORD.attr('d', close_draw_path);
+    }
 
-        // Check if the path is closed
-        let isPathClosed = true;// TODO: check what the closePathDist is for
-        // let isPathClosed = distance <= closePathDistance ? true : false;
-        let closePathSelect = true; // TODO check what this is
-        
-        // If within the closed path distance parameter, show the closed path. otherwise, hide it
-        if (isPathClosed && closePathSelect) {
-            this.CLOSE_CHORD.attr('display', null);
-        } else {
-            this.CLOSE_CHORD.attr('display', 'none');
+    __dragEnd() {
+        // Remove mouseover tagging function
+        this.COMMENTS.on("mouseover.lasso", null);
+
+        try {
+            const that = this;
+            this.COMMENTS.each(function (comment) {
+                const box = d3.select(this).node().getBoundingClientRect();
+                if (d3.polygonContains(that.drawnCoords, [
+                    Math.round(box.left + box.width / 2),
+                    Math.round(box.top + box.height / 2)]))
+                    data.comments[comment.orig_id[0]].activeFilters.lasso = true;
+            });
+            data.activateFilter('lasso');
+        } catch (e) {
+            data.clearFilters('lasso');
         }
-/*
-        items.nodes().forEach(function (n) {
-            n.__lasso.loopSelect = (isPathClosed && closePathSelect) ? (classifyPoint(drawnCoords, n.__lasso.lassoPoint) < 1) : false;
-            n.__lasso.possible = n.__lasso.hoverSelect || n.__lasso.loopSelect;
-        });
-*/
-        //on.draw();
     }
-
-    dragEnd() {
-
-        console.log('dragend')
-    }
-
-
 }
 
 export { Lasso };

@@ -50,11 +50,11 @@ class Comments {
 
     draw(parent) {
         this.LINKS = parent.append('g')
-            .attr('stroke', CONFIG.STYLES.DEFAULT.EDGE_STROKE)
-            .attr('stroke-opacity', CONFIG.LINKS_VISIBLE ? CONFIG.STYLES.DEFAULT.EDGE_OPACITY : 0)
             .selectAll('line')
             .data(this.edges)
             .join('line')
+            .attr('stroke', CONFIG.STYLES.DEFAULT.EDGE_STROKE)
+            .attr('stroke-opacity', CONFIG.LINKS_VISIBLE ? CONFIG.STYLES.DEFAULT.EDGE_OPACITY : 0)
             .attr('stroke-width', d =>
                 Math.min(CONFIG.STYLES.DEFAULT.EDGE_MAX_STROKE_WIDTH,
                     Math.max(CONFIG.STYLES.DEFAULT.EDGE_MIN_STROKE_WIDTH,
@@ -173,22 +173,24 @@ class ComExDrawing {
 
         this.setDimensions();
         this.initZoom();
-        this.updateMouseMode();
 
         this.COMMENTS = new Comments();
         console.log(this.COMMENTS);
 
         this.COMMENTS.draw(this.MAIN_GROUP);
         this.LAYOUT = new Layout(this.COMMENTS.splits, this.COMMENTS.edges);
-        this.LASSO = new Lasso(this.ROOT, this.COMMENTS.NODES);
+        this.LASSO = new Lasso(this.MAIN_GROUP, this.COMMENTS.NODES);
         this.COMMENTS.attachSimulation(this.LAYOUT.simulation);
         this.ROOT.node();
+
+        this.updateMouseMode();
     }
 
     updateMouseMode() {
         let modes = this.getMouseMode();
         if (modes.zoom) {
             this.ZOOM.filter(() => modes.zoom);
+            this.LASSO.detachLasso()
         } else {
             this.ZOOM.filter(null);
             this.LASSO.attachLasso();
