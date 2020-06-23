@@ -147,8 +147,9 @@ class Layout {
 
         // Find the largest node for each cluster.
         const centroids = this.nodes.reduce((acc, node) => {
-            if (!(node.cluster in acc)) acc[node.cluster] = .0
-            if (acc[node.cluster] < node.wgts.DEGREE_CENTRALITY) acc[node.cluster] = node;
+            if (!(node.cluster in acc)) acc[node.cluster] = node;
+            if (acc[node.cluster].wgts.DEGREE_CENTRALITY < node.wgts.DEGREE_CENTRALITY)
+                acc[node.cluster] = node;
             return acc;
         }, {});
 
