@@ -70,7 +70,7 @@ class Layout {
             center: d3.forceCenter(),//CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2),
             collide: d3.forceCollide(),
             charge: d3.forceManyBody(),
-            cluster: this.cluster(0.002),
+            cluster: this.cluster(0.0002),
             //collide: this.collide(0.002)
         };
 
