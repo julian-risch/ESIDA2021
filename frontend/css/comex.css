@@ -1,3 +1,14 @@
+:root {
+    --light-background: #f1f1f1;
+    --dark-background: #e1e1e1;
+    --darker-background: #252525;
+    --light-accent: #e1e1e1;
+    --dark-accent: #8c8c8c;
+    --light-text: #808080;
+    --dark-text: #252525;
+    --lasso-color: green;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -83,6 +94,7 @@ footer {
     min-height: 100px;
     text-align: center;
 }
+
 #comment-graph {
     height: 100%;
     overflow: hidden;
@@ -96,7 +108,7 @@ footer {
     bottom: 0;
     width: 100%;*/
     color: #eeeef0;
-    background-color: #252525;
+    background-color: var(--darker-background);
     background-image: linear-gradient(to right, #4A4A4A 0%, #2C2A2B 30%, #494A4E 60%, #3B3B3D 80%, #4A4A4A 100%);
     overflow: hidden;
     display: flex;
@@ -136,7 +148,7 @@ footer > div a:focus {
  */
 #sidebar {
     /*position: fixed;*/
-    background-color: #f1f1f1;
+    background-color: var(--light-background);
     /*height: calc(100vh - 3rem);*/
     overflow: hidden;
     display: flex;
@@ -169,7 +181,7 @@ footer > div a:focus {
     margin-top: 2.5rem;
     margin-left: 1.5rem;
     margin-right: 1.5rem;
-    color: #252525;
+    color: var(--dark-text);
     display: block;
 }
 
@@ -186,7 +198,7 @@ footer > div a:focus {
 #sidebar .source .platform {
     height: 1.3em;
     font-size: 0.8em;
-    color: #808080;
+    color: var(--light-text);
 }
 
 #sidebar .source .platform img {
@@ -201,12 +213,12 @@ footer > div a:focus {
     line-height: 1.25rem;
     font-size: 1.05rem;
     letter-spacing: 0.03em;
-    color: #252525;
+    color: var(--dark-text);
     font-weight: bold;
 }
 
 #sidebar .source h2 a {
-    color: #252525;
+    color: var(--dark-text);
 }
 
 #sidebar .source h2 a:hover {
@@ -215,7 +227,7 @@ footer > div a:focus {
 
 #sidebar .source .info {
     font-size: 0.75em;
-    color: #808080;
+    color: var(--light-text);
 }
 
 #sidebar .source .info time::after {
@@ -253,7 +265,7 @@ footer > div a:focus {
 #sidebar .source .add {
     /*font-weight: bold; */
     font-size: 3rem;
-    color: #8c8c8c;
+    color: var(--dark-accent);
     padding: 1rem;
     /*margin: 1rem auto;*/
     width: 1em;
@@ -261,7 +273,7 @@ footer > div a:focus {
     border-width: 0.1rem;
     border-radius: 1rem;
     border-style: dashed;
-    background-color: #e1e1e1;
+    background-color: var(--dark-background);
     cursor: pointer;
 }
 
@@ -276,12 +288,12 @@ footer > div a:focus {
     flex-direction: column;
     transition: 0.3s;
     margin-right: 0;
-    background-color: #f1f1f1;
+    background-color: var(--light-background);
 }
 
 #comments-filters {
     padding: 1rem 1rem;
-    background-color: #e1e1e1;
+    background-color: var(--dark-background);
 }
 
 #comments-filters ul {
@@ -318,7 +330,7 @@ footer > div a:focus {
 
 #comments-filters-counter {
     font-size: 0.75em;
-    color: #808080;
+    color: var(--light-text);
 }
 
 #comments > ul {
@@ -336,18 +348,18 @@ footer > div a:focus {
 
 #comments > ul > li div {
     font-size: 0.75em;
-    color: #808080;
+    color: var(--light-text);
     margin-bottom: 0.7em;
 }
 
 #comments > ul > li p {
     font-size: 0.9em;
-    color: #252525;
+    color: var(--dark-text);
     line-height: 1.5;
 }
 
 #comments > ul > li.highlight {
-    background-color: #e1e1e1;
+    background-color: var(--dark-background);
 }
 
 #comments-toggle {
@@ -356,7 +368,7 @@ footer > div a:focus {
     right: 0;
     width: 1.5rem;
     height: 4rem;
-    background-color: #e1e1e1;
+    background-color: var(--dark-background);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -374,12 +386,12 @@ footer > div a:focus {
 }
 
 #comments-toggle .caret.left {
-    border-right-color: #8c8c8c;
+    border-right-color: var(--dark-accent);
 }
 
 #comments-toggle .caret.right {
-    border-right-color: #8c8c8c;
-    /*border-left-color: #8c8c8c;*/
+    border-right-color: var(--dark-accent);
+    /*border-left-color: var(--dark-accent);*/
     margin-left: 0.8rem;
     /*transform: rotate(180deg);*/
     transform: scale(-1, 1);
@@ -509,7 +521,7 @@ footer > div a:focus {
 }
 
 #add-source-modal a.logo {
-    color: #808080;
+    color: var(--light-text);
     height: 1.2em;
     line-height: 2.5;
     margin-left: 1em;
@@ -550,7 +562,7 @@ footer > div a:focus {
     width: 1em;
     height: 1em;
     margin: 1em 0.3em;
-    background: #808080;
+    background: var(--light-text);
     border-radius: 50%;
     -webkit-animation: 0.9s bounce infinite alternate;
     animation: 0.9s bounce infinite alternate;
@@ -618,7 +630,7 @@ footer > div a:focus {
     padding: 0 2em 0 0.5em;
     display: flex;
     align-items: center;
-    background-color: #e1e1e1;
+    background-color: var(--dark-background);
     border-bottom: #878787 dashed 1px;
     position: absolute;
     top: 0;
@@ -651,10 +663,10 @@ footer > div a:focus {
 .pretty-select input:checked + label {
     order: 1;
     z-index: 2;
-    background: #e1e1e1;
-    border: 1px solid #8c8c8c;
+    background: var(--dark-background);
+    border: 1px solid var(--dark-accent);;
     position: relative;
-    color: #252525;
+    color: var(--dark-text);
     margin-bottom: 2px;
 }
 
@@ -678,7 +690,7 @@ footer > div a:focus {
     height: 2em;
     width: 2em;
     content: '';
-    background-color: #8c8c8c;
+    background-color: var(--dark-accent);;
 }
 
 #sidebar .pretty-select {
@@ -696,9 +708,9 @@ footer > div a:focus {
 
 #mouse-settings label {
     margin-right: 0.5rem;
-    background-color: #e1e1e1;
+    background-color: var(--dark-background);
     padding: 0.25em;
-    border: 1px dashed #8c8c8c;
+    border: 1px dashed var(--dark-accent);
     opacity: 0.5;
     cursor: pointer;
 }
@@ -717,9 +729,26 @@ footer > div a:focus {
 }
 
 #mouse-settings svg path {
-    fill: #8c8c8c;
+    fill: var(--dark-accent);
 }
 
 #mouse-settings input {
+    display: none;
+}
+
+g.lasso > path.drawn {
+    fill: var(--lasso-color);
+    fill-opacity: 0.2;
+    stroke-width: 2pt;
+    stroke-dasharray: 4pt;
+    stroke: var(--lasso-color);
+}
+
+g.lasso > path.chord-close {
+    stroke: green;
+    stroke-width: 0.4pt;
+}
+
+g.lasso > circle.origin {
     display: none;
 }

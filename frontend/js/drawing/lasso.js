@@ -66,8 +66,8 @@ class Lasso {
             y = d3.event.sourceEvent.clientY;
         }
         // Get mouse position within drawing area, used for rendering
-        let tx = d3.mouse(this.PARENT)[0];
-        let ty = d3.mouse(this.PARENT)[1];
+        let tx = d3.mouse(this.PARENT.node())[0];
+        let ty = d3.mouse(this.PARENT.node())[1];
 
         // Initialize the path or add the latest point to it
         if (this.outline === '') {
