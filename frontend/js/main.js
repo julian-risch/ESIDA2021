@@ -26,14 +26,10 @@ if (graph_config.length > 0) {
 
 // alternatively, one can simply select the number of the example by index
 const example = URI.get_int('example', undefined);
-console.log(example)
 if (example !== undefined) {
-    console.log('override')
     urls = EXAMPLE_STORIES[example].sources;
     graph_config = EXAMPLE_STORIES[example].graph_config || {};
 }
-
-console.log(urls);
 
 // if data was collected, trigger source fetch events
 if (urls.length > 0) {
