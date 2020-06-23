@@ -10,11 +10,10 @@ ELEMENTS.SIDEBAR.addEmptySource();
 // if there is a state stored in URL, get the source URLs/IDs
 // FIXME: before release, swap the following two lines.
 //const urls = URI.get_arr('source', []);
-const urls = URI.get_arr('source', EXAMPLE_STORIES[5].sources);
-console.log(urls);
+let urls = URI.get_arr('source', EXAMPLE_STORIES[6].sources);
 
 // if there is a state stored in URL, update internal default graph config
-const graph_config = URI.get_arr('graph_config', []);
+let graph_config = URI.get_arr('graph_config', {});
 if (graph_config.length > 0) {
     console.log('graph conf from URL', graph_config);
     graph_config.forEach(c => {
@@ -24,6 +23,17 @@ if (graph_config.length > 0) {
         });
     });
 }
+
+// alternatively, one can simply select the number of the example by index
+const example = URI.get_int('example', undefined);
+console.log(example)
+if (example !== undefined) {
+    console.log('override')
+    urls = EXAMPLE_STORIES[example].sources;
+    graph_config = EXAMPLE_STORIES[example].graph_config || {};
+}
+
+console.log(urls);
 
 // if data was collected, trigger source fetch events
 if (urls.length > 0) {
