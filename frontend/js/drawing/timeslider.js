@@ -17,10 +17,16 @@ class TimeSlider {
     initRangeSlider() {
         let width = this.ROOT.clientWidth * 0.8;
         if (width < 500) width = this.ROOT.clientWidth - 20;
+
+        // FIXME remove time constraint again!
+        const maxDate = new Date('2020-01-14T00:00:00.000000');
+        const comments = Object.values(data.comments)
+            .filter(comment => comment.datetime < maxDate);
+
         this.RANGE_SLIDER = new RangeSlider()
             .container(this.ROOT)
-            .data(Object.values(data.comments))
-            .accessor(comment => new Date(comment.timestamp))
+            .data(comments)
+            .accessor(comment => comment.datetime)
             .onBrush(this.onBrush)
             .svgWidth(width)
             .svgHeight(this.ROOT.clientHeight)

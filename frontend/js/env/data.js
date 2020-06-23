@@ -391,6 +391,7 @@ class DataStore {
                 search: false,
                 lasso: false
             }
+            c.datetime = new Date(c.timestamp);
 
             this.comments[c.id] = c;
         });

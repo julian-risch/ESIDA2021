@@ -483,7 +483,6 @@ class GraphConfig(BaseModel):
     PageRanker: Optional[PageRankerConfig]
     ToxicityRanker: Optional[ToxicityRankerConfig]
     CentralityDegreeCalculator: Optional[CentralityDegreeCalculatorConfig]
-    GenericEdgeFilter: Optional[GenericEdgeFilterConfig]
     SimilarityEdgeFilter: Optional[SimilarityEdgeFilterConfig]
     ReplyToEdgeFilter: Optional[ReplyToEdgeFilterConfig]
     SameCommentEdgeFilter: Optional[SameCommentEdgeFilterConfig]
