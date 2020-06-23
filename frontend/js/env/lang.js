@@ -1,10 +1,11 @@
-// FIXME: add something to dynamically set the language
-const LANGUAGE = ['de', 'en'][0];
+import { URI } from "./uri.js";
+
+const LANGUAGE = URI.get_str('lang', 'de');
 
 class T {
     constructor(de, en = null) {
         this.de = de;
-        this.en = (!!en) ? de : en;
+        this.en = (en === null) ? de : en;
     }
 
     get s() {
