@@ -209,6 +209,13 @@ async def get_article_with_comments(url: str = None, article_id: int = None) -> 
     return article
 
 
+async def get_graph_id(article_ids: List[int]) -> int:
+    article_ids = [i for i in sorted(article_ids) if isinstance(i, int)]
+    result = await database.fetch_one('SELECT id FROM graphs WHERE article_ids = :article_ids',
+                                      {'article_ids': json.dumps(article_ids)})
+    return result.get('id', None)
+
+
 async def get_graph(article_ids: List[int]) -> models.Graph:
     # make it save to inject into sql query
     article_ids = [i for i in sorted(article_ids) if isinstance(i, int)]

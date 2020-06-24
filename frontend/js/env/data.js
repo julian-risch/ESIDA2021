@@ -328,6 +328,7 @@ const GRAPH_CONFIG = {
 };
 
 const API_SETTINGS = {
+    GRAPH_OVERRIDE_CACHE: false,
     GRAPH_IGNORE_CACHE: false
 };
 

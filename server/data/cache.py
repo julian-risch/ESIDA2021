@@ -48,9 +48,14 @@ async def get_graph(urls: List[str] = None, article_ids: List[int] = None, conf:
                  f'for article_ids: {article_ids} | urls: {urls}')
 
     if not ignore_cache:
+        if override_cache:
+            old_graph_id = await db.get_graph_id(article_ids)
+            if old_graph_id is not None:
+                await db.delete_edges(graph_id=old_graph_id)
         graph_id = await db.store_graph(article_ids, graph)
         graph.graph_id = graph_id
         graph.article_ids = article_ids
+
 
     return graph
 

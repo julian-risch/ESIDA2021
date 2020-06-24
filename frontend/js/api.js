@@ -139,7 +139,9 @@ class Api {
     getGraph(articleIds, conf) {
         if (!conf)
             conf = GRAPH_CONFIG;
-        _api.POST["/api/graph/"](articleIds, null, null, API_SETTINGS.GRAPH_IGNORE_CACHE, conf).then(d => {
+        _api.POST["/api/graph/"](articleIds, null,
+            API_SETTINGS.GRAPH_OVERRIDE_CACHE,
+            API_SETTINGS.GRAPH_IGNORE_CACHE, conf).then(d => {
             emitter.emit(E.GRAPH_RECEIVED, d.graph_id, d.comments, d.id2idx, d.edges);
         }).catch((e) => {
             console.error(e);

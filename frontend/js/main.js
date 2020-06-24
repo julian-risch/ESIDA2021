@@ -42,6 +42,7 @@ if (example !== undefined) {
 
 // override API settings
 API_SETTINGS.GRAPH_IGNORE_CACHE = URI.get_bool('graph_ignore_cache', API_SETTINGS.GRAPH_IGNORE_CACHE);
+API_SETTINGS.GRAPH_OVERRIDE_CACHE = URI.get_bool('graph_override_cache', API_SETTINGS.GRAPH_OVERRIDE_CACHE);
 
 // if data was collected, trigger source fetch events
 if (urls.length > 0) {
