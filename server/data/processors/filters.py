@@ -117,7 +117,7 @@ class OrEdgeFilter(Modifier):
                            and edge.wgts.SIMILARITY)
                        or (edge.wgts.SAME_GROUP and 0 < self.same_group_threshold < edge.wgts.SAME_GROUP
                            and edge.wgts.SAME_GROUP)
-                       or (edge.wgts.TEMPORAL and 0 < self.temporal_threshold < edge.wgts.TEMPORAL
+                       or (edge.wgts.TEMPORAL and 0 < edge.wgts.TEMPORAL < self.temporal_threshold
                            and edge.wgts.TEMPORAL)
                        ]
         return graph
