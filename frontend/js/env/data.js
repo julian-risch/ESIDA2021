@@ -392,6 +392,7 @@ class DataStore {
                 lasso: false
             }
             c.datetime = new Date(c.timestamp);
+            c.comexVotes = 0;
 
             this.comments[c.id] = c;
         });
