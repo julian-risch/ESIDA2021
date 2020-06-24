@@ -26,6 +26,18 @@ class Comments {
         });
         console.log(`Initialising drawing with ${this.splits.length} nodes/splits and ${data.edges.length} edges.`)
 
+        const clusterCounts = this.splits.map(split=>split.cluster).reduce((acc, cid) => {
+            if (!(cid in acc)) acc[cid] = 0
+            acc[cid]++;
+            return acc;
+        }, {});
+
+        const numFakeClusters = 15;
+        this.splits.forEach(split => {
+            if (clusterCounts[split.cluster] < 20)
+                split.cluster = Math.floor(Math.random() * Math.floor(numFakeClusters)) + 4;
+        })
+
         this.edges = data.edges.map(edge => {
             try {
                 return {
@@ -142,6 +154,8 @@ class Comments {
     }
 
     __defaultNodeFill(split) {
+        // FIXME default handling is not ideal at this point.
+        // this should use CONFIG.style() somehow.
         if (data.comments[split.orig_id[0]].activeFilters.highlight) return CONFIG.STYLES.HIGHLIGHT.pos.NODE_FILL;
         if (data.minComExVotes === 0 && data.maxComExVotes === 0) return CONFIG.STYLES.DEFAULT.NODE_FILL;
         const numVotes = CONFIG.STYLES.VOTE_COLOUR_BY_SPLIT ?

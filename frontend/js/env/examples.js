@@ -28,37 +28,47 @@ const EXAMPLE_STORIES = [
             ],
             graph_config: {
                 SameCommentComparator: {
-                    active: false,
+                    active: true,
                     base_weight: 1.0,
                     only_consecutive: true
                 },
                 SameArticleComparator: {
-                    active: false,
+                    active: true,
                     base_weight: 1.0,
                     only_root: true
                 },
                 ReplyToComparator: {
-                    active: false,
+                    active: true,
                     base_weight: 1.0,
                     only_root: true
                 },
                 VotesRanker: {
+                    active: true
+                },
+                SizeRanker: {
                     active: false
+                },
+                PageRanker: {
+                    active: true,
+                    num_iterations: 100,
+                    d: 0.85,
+                    edge_type: 'SAME_ARTICLE',
+                    use_power_mode: true
                 },
                 VotesFilter: {
-                    active: false
+                    active: true
                 },
                 PageRankBottomFilter: {
-                    active: false,
+                    active: true,
                     strict: true,
-                    top_k: 200,
+                    top_k: 500,
                     descending_order: true
                 },
                 TemporalComparator: {
                     active: true,
                     base_weight: 1.0,
                     only_root: true,
-                    max_time: 1000
+                    max_time: 10000
                 },
                 RecencyRanker: {
                     active: true,
@@ -66,11 +76,6 @@ const EXAMPLE_STORIES = [
                 },
                 ReplyToNodeMerger: {
                     active: false,
-                },
-                TemporalEdgeFilter: {
-                    active: true,
-                    threshold: 0.3,
-                    smaller_as: true
                 },
                 BottomTemporalEdgeFilter: {
                     active: false,
@@ -82,9 +87,30 @@ const EXAMPLE_STORIES = [
                     threshold: 0.3,
                     smaller_as: true
                 },
-                TemporalClusterer: {
+                OrEdgeFilter: {
                     active: true,
+                    reply_to_threshold: 0.5,
+                    same_comment_threshold: -0.5,
+                    same_article_threshold: -0.5,
+                    similarity_threshold: -0.5,
+                    same_group_threshold: -0.5,
+                    temporal_threshold: 0.2
+                },
+                MultiEdgeTypeClusterer: {
+                    active: true,
+                    use_reply_to: true,
+                    use_same_comment: false,
+                    use_same_article: false,
+                    use_similarity: false,
+                    use_same_group: false,
+                    use_temporal: true,
                     algorithm: 'GirvanNewman'
+                },
+                GenericSingleEdgeAdder: {
+                    active: true,
+                    base_weight: 0.1,
+                    edge_weight_type: 'TEMPORAL',
+                    node_weight_type: 'RECENCY'
                 }
             }
         }, {
