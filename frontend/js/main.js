@@ -3,7 +3,7 @@ import { emitter, E } from "./env/events.js"
 import { data } from "./env/data.js";
 import { URI } from "./env/uri.js";
 import { EXAMPLE_STORIES } from "./env/examples.js";
-import { GRAPH_CONFIG } from "./env/data.js";
+import { GRAPH_CONFIG, API_SETTINGS } from "./env/data.js";
 
 ELEMENTS.SIDEBAR.addEmptySource();
 
@@ -39,6 +39,9 @@ if (example !== undefined) {
         });
     }
 }
+
+// override API settings
+API_SETTINGS.GRAPH_IGNORE_CACHE = URL.get_bool('graph_ignore_cache', API_SETTINGS.GRAPH_IGNORE_CACHE);
 
 // if data was collected, trigger source fetch events
 if (urls.length > 0) {
