@@ -114,7 +114,7 @@ class TemporalComparator(Comparator):
                 return (x - y).total_seconds()
             return int((y - x).total_seconds())
 
-        weight = time_second_difference(a.timestamp, b.timestamp)
+        time_diff = time_second_difference(a.timestamp, b.timestamp)
 
-        if weight < self.max_time:
-            return (weight / self.max_time) * self.base_weight
+        if time_diff < self.max_time:
+            return (1 - (time_diff / self.max_time)) * self.base_weight
