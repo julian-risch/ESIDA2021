@@ -17,6 +17,7 @@ class Comments {
                     orig_id: [commentId, j],
                     text: data.getCommentText(commentId, j),
                     wgts: split.wgts,
+                    comexVotes: 0,
                     cluster: split.wgts.CLUSTER_ID //|| split.wgts.MERGE_ID
                 });
                 this.lookup[commentId].push(counter);
@@ -42,10 +43,16 @@ class Comments {
             }
         });
 
+        const colors = [CONFIG.STYLES.DEFAULT.NODE_FILL_NEG,
+            CONFIG.STYLES.DEFAULT.NODE_FILL,
+            CONFIG.STYLES.DEFAULT.NODE_FILL_POS];
+        this.nodeColorScale = d3.interpolateRgbBasis(colors);
+
         this.eventlisteners = [
             emitter.on(E.DRAWING_CONFIG_CHANGED, this.onConfigChange.bind(this)),
             emitter.on(E.COMMENT_SELECTED, this.highlightComment.bind(this)),
-            emitter.on(E.FILTERS_UPDATED, this.onFilterUpdate.bind(this))];
+            emitter.on(E.FILTERS_UPDATED, this.onFilterUpdate.bind(this)),
+            emitter.on(E.VOTE_SUBMITTED, this.onVotesSubmitted.bind(this))];
     }
 
     draw(parent) {
@@ -80,13 +87,11 @@ class Comments {
         // defaults:
         let radius = CONFIG.STYLES.DEFAULT.NODE_RADIUS;
         let opacity = CONFIG.STYLES.DEFAULT.NODE_OPACITY;
-        let fill = CONFIG.STYLES.DEFAULT.NODE_FILL;
-
+        let fill = this.__defaultNodeFill.bind(this);
         if (data.activeFilters.highlight) {
             opacity = (d) => CONFIG.style('NODE_OPACITY', 'HIGHLIGHT',
                 data.comments[d.orig_id[0]].activeFilters.highlight);
-            fill = (d) => CONFIG.style('NODE_FILL', 'HIGHLIGHT',
-                data.comments[d.orig_id[0]].activeFilters.highlight);
+            //fill =
         }
 
         if (data.activeFilters.timeRange) {
@@ -134,6 +139,23 @@ class Comments {
             this.LINKS.attr('stroke-opacity', value ? CONFIG.STYLES.DEFAULT.EDGE_OPACITY : 0);
             if (value) this.onTick();
         }
+    }
+
+    __defaultNodeFill(split) {
+        if (data.comments[split.orig_id[0]].activeFilters.highlight) return CONFIG.STYLES.HIGHLIGHT.pos.NODE_FILL;
+        if (data.minComExVotes === 0 && data.maxComExVotes === 0) return CONFIG.STYLES.DEFAULT.NODE_FILL;
+        const numVotes = CONFIG.STYLES.VOTE_COLOUR_BY_SPLIT ?
+            split.comexVotes : data.comments[split.orig_id[0]].comexVotes;
+        return this.nodeColorScale((numVotes + Math.abs(data.minComExVotes)) / (Math.abs(data.minComExVotes) + data.maxComExVotes))
+    }
+
+    onVotesSubmitted() {
+        const voteCounts = CONFIG.STYLES.VOTE_COLOUR_BY_SPLIT ?
+            this.splits.map(s => s.comexVotes) :
+            Object.values(data.comments).map(c => c.comexVotes);
+        data.minComExVotes = Math.min(...voteCounts);
+        data.maxComExVotes = Math.max(...voteCounts);
+        this.onFilterUpdate();
     }
 
     attachSimulation(simulation) {

@@ -32,8 +32,12 @@ const DRAWING_CONFIG = {
         return this.STYLES.DEFAULT[key];
     },
     STYLES: {
+        // set this to false, to vote-count-colouring depends on comment rather then split
+        VOTE_COLOUR_BY_SPLIT: true,
         DEFAULT: {
-            NODE_FILL: 'rgb(31, 119, 180)',
+            NODE_FILL: '#1F77B4',
+            NODE_FILL_POS: '#2E8B57',
+            NODE_FILL_NEG: '#B22222',
             NODE_OPACITY: 0.8,
             NODE_STROKE_WIDTH: 1.5,
             NODE_STROKE: '#fff',

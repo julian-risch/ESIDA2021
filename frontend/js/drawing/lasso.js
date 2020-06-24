@@ -1,11 +1,13 @@
 // heavily inspired by https://github.com/skokenes/d3-lasso/blob/master/src/lasso.js
 
 import { data } from "../env/data.js";
+import { E, emitter } from "../env/events.js";
+import { DRAWING_CONFIG } from "./config.js";
 
 class Lasso {
-    constructor(parent, comments) {
+    constructor(parent, splits) {
         this.PARENT = parent;
-        this.COMMENTS = comments;
+        this.SPLITS = splits;
 
         // create helper elements
         this.ROOT = parent.append('g')
@@ -25,7 +27,7 @@ class Lasso {
             .attr('width', 50)
             .attr('x', 300).attr('y', 300)
             .attr('xlink:href', 'img/thumb.svg#thumb')
-            .style('fill', '#2E8B57')
+            .style('fill', DRAWING_CONFIG.STYLES.DEFAULT.NODE_FILL_POS)
             .style('display', 'none')
             .on('click', this.__getOnClearHandler(1))
             .on('mouseover', () => that.clearLassoBlocked = true)
@@ -37,19 +39,18 @@ class Lasso {
             .attr('transform-origin', '300 300')
             .attr('transform', 'scale(-1,-1) translate(0, -66)')
             .attr('xlink:href', 'img/thumb.svg#thumb')
-            .style('fill', '#B22222')
+            .style('fill', DRAWING_CONFIG.STYLES.DEFAULT.NODE_FILL_NEG)
             .style('display', 'none')
             .on('click', this.__getOnClearHandler(-1))
             .on('mouseover', () => that.clearLassoBlocked = true)
             .on('mouseout', () => that.clearLassoBlocked = false);
-        ;
 
         this.dragHook = d3.drag()
             .on('start', this.__dragStart.bind(this))
             .on('drag', this.__dragMove.bind(this))
             .on('end', this.__dragEnd.bind(this));
 
-        this.selectedComments = [];
+        this.selectedSplits = [];
 
         this.PARENT.select(function () {
             return this.parentNode;
@@ -71,7 +72,7 @@ class Lasso {
         this.CLOSE_CHORD.attr('d', null);
         this.outline = '';
         this.origin = '';
-        this.COMMENTS.nodes().forEach((comment) => {
+        this.SPLITS.nodes().forEach((comment) => {
             const box = comment.getBoundingClientRect();
             comment.__lasso = {
                 possible: false,
@@ -126,17 +127,17 @@ class Lasso {
 
     __dragEnd() {
         // Remove mouseover tagging function
-        this.COMMENTS.on("mouseover.lasso", null);
+        this.SPLITS.on("mouseover.lasso", null);
 
         try {
             const that = this;
-            this.COMMENTS.each(function (comment) {
+            this.SPLITS.each(function (split) {
                 const box = d3.select(this).node().getBoundingClientRect();
                 if (d3.polygonContains(that.drawnCoords, [
                     Math.round(box.left + box.width / 2),
                     Math.round(box.top + box.height / 2)])) {
-                    data.comments[comment.orig_id[0]].activeFilters.lasso = true;
-                    that.selectedComments.push(comment.orig_id[0]);
+                    data.comments[split.orig_id[0]].activeFilters.lasso = true;
+                    that.selectedSplits.push(split);
                 }
             });
             data.activateFilter('lasso');
@@ -166,17 +167,18 @@ class Lasso {
         const that = this;
         return function () {
             if (vote !== undefined) {
-                console.log(`Voting ${vote>0 ? 'up' : 'down'} on ${that.selectedComments.length} comments.`)
-                that.selectedComments.forEach(commentId =>
-                    data.comments[commentId].comexVotes += vote
-                );
+                const commentIds = Array.from(new Set(that.selectedSplits.map(s => s.orig_id[0])));
+                commentIds.forEach(commentId => data.comments[commentId].comexVotes += vote);
+                that.selectedSplits.forEach(split => split.comexVotes += vote);
+                console.log(`Voting ${vote > 0 ? 'up' : 'down'} on ${commentIds.length} comments from ${that.selectedSplits.length} splits.`)
+                emitter.emit(E.VOTE_SUBMITTED);
             } else {
                 // dragend event ALWAYS fires before click
                 // the thumbs set this to true when hovered,
                 // so default dragend behaviour should be blocked here.
                 if (that.clearLassoBlocked) return;
             }
-            that.selectedComments = [];
+            that.selectedSplits = [];
 
             that.hideThumbs();
             that.ROOT.style('display', 'none');

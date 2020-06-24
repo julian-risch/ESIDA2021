@@ -27,8 +27,64 @@ const EXAMPLE_STORIES = [
                 //'https://www.zeit.de/news/2020-01/05/buschfeuer-in-australien-schrecken-nimmt-kein-ende',// no comments
             ],
             graph_config: {
-                MultiEdgeTypeClusterer: {
-                    active: true
+                SameCommentComparator: {
+                    active: false,
+                    base_weight: 1.0,
+                    only_consecutive: true
+                },
+                SameArticleComparator: {
+                    active: false,
+                    base_weight: 1.0,
+                    only_root: true
+                },
+                ReplyToComparator: {
+                    active: false,
+                    base_weight: 1.0,
+                    only_root: true
+                },
+                VotesRanker: {
+                    active: false
+                },
+                VotesFilter: {
+                    active: false
+                },
+                PageRankBottomFilter: {
+                    active: false,
+                    strict: true,
+                    top_k: 200,
+                    descending_order: true
+                },
+                TemporalComparator: {
+                    active: true,
+                    base_weight: 1.0,
+                    only_root: true,
+                    max_time: 1000
+                },
+                RecencyRanker: {
+                    active: true,
+                    use_yongest: false
+                },
+                ReplyToNodeMerger: {
+                    active: false,
+                },
+                TemporalEdgeFilter: {
+                    active: true,
+                    threshold: 0.3,
+                    smaller_as: true
+                },
+                BottomTemporalEdgeFilter: {
+                    active: false,
+                    top_edges: 100,
+                    descending_order: false
+                },
+                TemporalNodeMerger: {
+                    active: false,
+                    threshold: 0.3,
+                    smaller_as: true
+                },
+                TemporalClusterer: {
+                    active: true,
+                    algorithm: 'GirvanNewman'
                 }
             }
         }, {

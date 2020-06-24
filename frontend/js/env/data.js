@@ -370,6 +370,9 @@ class DataStore {
         lasso: false
     }
 
+    minComExVotes = 0;
+    maxComExVotes = 0;
+
     constructor() {
         emitter.on(E.RECEIVED_ARTICLE, this.onArticleReceive.bind(this));
         emitter.on(E.RECEIVED_COMMENTS, this.onCommentsReceive.bind(this));

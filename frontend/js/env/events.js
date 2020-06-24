@@ -74,7 +74,8 @@ const E = {
     COMMENT_SEARCH: 'COMMENT_SEARCH', // DATA: current search query
     // emitted when the DataSource has updated the 'active' field
     FILTERS_UPDATED: 'FILTERS_UPDATED', // DATA: comment object with updated 'active' field
-
+    // emitted when user voted up or down on some comments
+    VOTE_SUBMITTED: 'VOTE_SUBMITTED', // DATA: empty
 };
 Object.freeze(E);
 
