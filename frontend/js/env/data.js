@@ -404,7 +404,7 @@ class DataStore {
         this.searchIndex.addDocuments(Object.values(this.comments));
     }
 
-    clearFilters(filters) {
+    clearFilters(filters, sendUpdate = true) {
         if (!filters) filters = ['highlight', 'timeRange', 'search', 'lasso'];
         if (typeof filters === 'string') filters = [filters]
 
@@ -412,7 +412,8 @@ class DataStore {
         Object.keys(this.comments).forEach(key => {
             filters.forEach(filter => this.comments[key].activeFilters[filter] = false);
         });
-        emitter.emit(E.FILTERS_UPDATED, this.comments);
+        if (sendUpdate)
+            emitter.emit(E.FILTERS_UPDATED, this.comments);
     }
 
     applyFilter(filter, activeIds) {
@@ -420,6 +421,11 @@ class DataStore {
         Object.keys(this.comments).forEach(key => {
             this.comments[key].activeFilters[filter] = resultIds.has(this.comments[key].id)
         });
+        this.activeFilters[filter] = true;
+        emitter.emit(E.FILTERS_UPDATED, this.comments);
+    }
+
+    activateFilter(filter) {
         this.activeFilters[filter] = true;
         emitter.emit(E.FILTERS_UPDATED, this.comments);
     }

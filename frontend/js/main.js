@@ -3,25 +3,17 @@ import { emitter, E } from "./env/events.js"
 import { data } from "./env/data.js";
 import { URI } from "./env/uri.js";
 import { EXAMPLE_STORIES } from "./env/examples.js";
-import { GRAPH_CONFIG } from "./env/data.js";
+import { GRAPH_CONFIG, API_SETTINGS } from "./env/data.js";
 
 ELEMENTS.SIDEBAR.addEmptySource();
 
 // if there is a state stored in URL, get the source URLs/IDs
 // FIXME: before release, swap the following two lines.
-//const urls = URI.get_arr('source', []);
+//let urls = URI.get_arr('source', []);
 let urls = URI.get_arr('source', EXAMPLE_STORIES[6].sources);
 
-// if there is a state stored in URL, update internal default graph config
+// if there is a state stored in URL, update internal GRAPH_CONFIG
 let graph_config = URI.get_arr('graph_config', []);
-
-// alternatively, one can simply select the number of the example by index
-const example = URI.get_int('example', undefined);
-if (example !== undefined) {
-    urls = EXAMPLE_STORIES[example].sources;
-    graph_config = EXAMPLE_STORIES[example].graph_config || [];
-}
-
 if (graph_config.length > 0) {
     console.log('Override graph config from URL: ', graph_config)
     graph_config.forEach(c => {
@@ -30,14 +22,26 @@ if (graph_config.length > 0) {
             GRAPH_CONFIG[conf[0]][cc[0]] = cc[1];
         });
     });
-} else if (Object.keys(graph_config).length > 0) {
-    console.log('Override graph config from example: ', graph_config)
-    Object.entries(graph_config).forEach(c => {
-        Object.entries(c[1]).forEach(cc => {
-            GRAPH_CONFIG[c[0]][cc[0]] = cc[1];
-        });
-    });
 }
+
+// alternatively, one can simply select the number of the example by index
+const example = URI.get_int('example', undefined);
+if (example !== undefined) {
+    urls = EXAMPLE_STORIES[example].sources;
+
+    graph_config = EXAMPLE_STORIES[example].graph_config || {};
+    if (Object.keys(graph_config).length > 0) {
+        console.log('Override graph config from example: ', graph_config)
+        Object.entries(graph_config).forEach(c => {
+            Object.entries(c[1]).forEach(cc => {
+                GRAPH_CONFIG[c[0]][cc[0]] = cc[1];
+            });
+        });
+    }
+}
+
+// override API settings
+API_SETTINGS.GRAPH_IGNORE_CACHE = URI.get_bool('graph_ignore_cache', API_SETTINGS.GRAPH_IGNORE_CACHE);
 
 // if data was collected, trigger source fetch events
 if (urls.length > 0) {
