@@ -1,5 +1,4 @@
 # CIKM2020Demo
-Code for our CIKM 2020 Demo Paper on Comment Exploration
 
 ## Video
 A short video about the paper is on [Youtube](https://www.youtube.com/watch?v=a_ZIdJgOi6k).
