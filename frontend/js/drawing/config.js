@@ -14,11 +14,8 @@ const DRAWING_CONFIG = {
             SAME_COMMENT: 1.,
             TEMPORAL: 1.
         },
-        //CHARGE_STRENGTH: -10,
-        CHARGE_STRENGTH: 50,
-        CHARGE_MAX_DISTANCE: 150,
-        FORCE_Y: .01,
-        FORCE_X: .01
+        CHARGE_STRENGTH:-2,
+        CHARGE_MAX_DISTANCE: 150
     },
     style: function (key, setting, mode) {
         if (setting === undefined)
@@ -87,8 +84,6 @@ class ConfigPanel {
         this.add('reply_to wgt', 'LAYOUT.EDGE_TYPE_WEIGHTS.REPLY_TO', 0, 1, 0.1);
         this.add('same_article wgt', 'LAYOUT.EDGE_TYPE_WEIGHTS.SAME_ARTICLE', 0, 1, 0.1);
         this.add('same_comment wgt', 'LAYOUT.EDGE_TYPE_WEIGHTS.SAME_COMMENT', 0, 1, 0.1);
-        this.add('force_y', 'LAYOUT.FORCE_Y', 0, 1, 0.01);
-        this.add('force_x', 'LAYOUT.FORCE_X', 0, 1, 0.01);
         this.add('charge strength', 'LAYOUT.CHARGE_STRENGTH', -100, 100, 1);
         this.add('charge dist', 'LAYOUT.CHARGE_MAX_DISTANCE', 1, 300, 1);
         this.add('show_links', 'LINKS_VISIBLE');
