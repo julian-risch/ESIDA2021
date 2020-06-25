@@ -1,7 +1,8 @@
 import { DRAWING_CONFIG as CONFIG } from "./config.js";
 import { EDGE_TYPES, EDGE_TYPES_REV } from "../env/data.js";
 import { E, emitter } from "../env/events.js";
-
+import { forceCluster } from "./force-cluster.js";
+import { boxingForce } from "./force-box.js";
 
 class Layout {
     constructor(nodes, edges) {
@@ -62,16 +63,12 @@ class Layout {
          */
 
         this.forces = {
-            /*link: d3.forceLink(this.edges),
-            charge: d3.forceManyBody(),
-            bounds: this.boxingForce(),
-            forceX: d3.forceX(CONFIG.WIDTH / 2),
-            forceY: d3.forceY(CONFIG.HEIGHT / 2)*/
-            center: d3.forceCenter(),//CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2),
+            // link: d3.forceLink(this.edges),
+            bounds: boxingForce(this.nodes),
+            center: d3.forceCenter(),
             collide: d3.forceCollide(),
-            charge: d3.forceManyBody(),
-            cluster: this.cluster(0.0002),
-            //collide: this.collide(0.002)
+            cluster: forceCluster(this.nodes),
+            charge: d3.forceManyBody()
         };
 
         this.simulation = d3.forceSimulation(this.nodes);
@@ -96,24 +93,22 @@ class Layout {
     }
 
     update() {
-        /*
-        this.forces.link
-            .strength(this.linkStrength)
-        //.strength(link => 1 / Math.min(data.nodes[link.source.index].count, data.nodes[link.target.index].count) + Math.sqrt(data.links[link.index].value / 574))
-        // .iterations(1);
-        */
-        this.forces.charge
-            .strength(CONFIG.LAYOUT.CHARGE_STRENGTH)
-            .distanceMax(CONFIG.LAYOUT.CHARGE_MAX_DISTANCE);
-
-       this.forces.collide
-            .radius(CONFIG.STYLES.DEFAULT.NODE_RADIUS )//+ CONFIG.STYLES.DEFAULT.NODE_PADDING)
-            .strength(1.0);
-        this.forces.center.x(CONFIG.WIDTH/2).y(CONFIG.HEIGHT/2)
-        /*
-                        this.forces.forceY.strength(CONFIG.LAYOUT.FORCE_Y);
-                        this.forces.forceX.strength(CONFIG.LAYOUT.FORCE_X);
-                    */
+        this.forces.cluster.iterations(1);
+        if ('charge' in this.forces)
+            this.forces.charge
+                .strength(CONFIG.LAYOUT.CHARGE_STRENGTH)
+        //.distanceMax(CONFIG.LAYOUT.CHARGE_MAX_DISTANCE);
+        if ('collide' in this.forces)
+            this.forces.collide
+                .radius((d) => CONFIG.STYLES.DEFAULT.NODE_RADIUS(d) + CONFIG.STYLES.DEFAULT.NODE_PADDING)
+                .strength(0.5);
+        if ('bounds' in this.forces)
+            this.forces.bounds
+                .width(CONFIG.WIDTH)
+                .height(CONFIG.HEIGHT)
+                .margin(10)
+                .invertDirection(true);
+        this.forces.center.x(CONFIG.WIDTH / 2).y(CONFIG.HEIGHT / 2)
     }
 
     linkStrength(link) {
@@ -140,92 +135,9 @@ class Layout {
                 d.fx = null;
                 d.fy = null;
             })
-            .filter(()=>d3.event.ctrlKey);
+            .filter(() => d3.event.ctrlKey);
     }
 
-    cluster(alpha) {
-
-        // Find the largest node for each cluster.
-        const centroids = this.nodes.reduce((acc, node) => {
-            if (!(node.cluster in acc)) acc[node.cluster] = node;
-            if (acc[node.cluster].wgts.DEGREE_CENTRALITY < node.wgts.DEGREE_CENTRALITY)
-                acc[node.cluster] = node;
-            return acc;
-        }, {});
-
-        console.log(`Found ${Object.keys(centroids).length} centroids (MERGE_ID or CLUSTER_ID) for ${this.nodes.length} nodes.`);
-
-        return () => this.nodes.forEach(node => {
-            const centroid = centroids[node.cluster];
-            if (centroid === node) return;
-
-            const r = CONFIG.STYLES.DEFAULT.NODE_RADIUS(node);
-            let x = node.x - centroid.x;
-            let y = node.y - centroid.y;
-            let l = Math.sqrt(x * x + y * y);
-            if (l !== r) {
-                l = (l - r) / l * alpha;
-                node.vx -= x *= l;
-                node.vy -= y *= l;
-                centroid.vx += x;
-                centroid.vy += y;
-            }
-        });
-    }
-
-    collide(alpha) {
-        const quadTree = d3.quadtree().addAll(this.nodes);
-        const that = this;
-        return () => {
-            this.nodes.forEach(node => {
-                let r = CONFIG.STYLES.DEFAULT.NODE_RADIUS(node);
-                const nx1 = node.x - r;
-                const nx2 = node.x + r;
-                const ny1 = node.y - r;
-                const ny2 = node.y + r;
-                quadTree.visit(function (quad, x1, y1, x2, y2) {
-                    if (quad.point && (quad.point !== node)) {
-                        let x = node.x - quad.point.x;
-                        let y = node.y - quad.point.y;
-                        let l = Math.sqrt(x * x + y * y);
-                        r = CONFIG.STYLES.DEFAULT.NODE_RADIUS(quad.point) +
-                            (node.wgts.CLUSTER_ID !== quad.point.wgts.CLUSTER_ID) * CONFIG.STYLES.DEFAULT.NODE_PADDING;
-                        if (l < r) {
-                            l = (-r) / l * alpha;
-                            node.vx -= x *= l;
-                            node.vy -= y *= l;
-                            quad.point.vx += x;
-                            quad.point.vy += y;
-                        }
-                    }
-                    return x1 > nx2
-                        || x2 < nx1
-                        || y1 > ny2
-                        || y2 < ny1;
-                });
-            });
-        }
-    }
-
-    boxingForce() {
-        return () => {
-            let margin = 10;
-            this.nodes.forEach(node => {
-                // Of the positions exceed the box, set them to the boundary position.
-                // You may want to include your nodes width to not overlap with the box.
-                let newX = Math.max(margin, Math.min(CONFIG.WIDTH - margin, node.x));
-                let newY = Math.max(margin, Math.min(CONFIG.HEIGHT - margin, node.y));
-                if (newX !== node.x) {
-                    node.x = newX;
-                    node.vx = 0;
-                }
-                if (newY !== node.y) {
-                    node.y = newY;
-                    node.vy = 0;
-                }
-            });
-        }
-    }
 
     deconstructor() {
         this.simulation.stop();
@@ -233,5 +145,6 @@ class Layout {
         this.listeners.forEach((listener) => emitter.off(listener));
     }
 }
+
 
 export { Layout };
