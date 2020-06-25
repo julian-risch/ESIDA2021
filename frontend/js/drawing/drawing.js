@@ -37,6 +37,7 @@ class Comments {
             if (clusterCounts[split.cluster] < 20)
                 split.cluster = Math.floor(Math.random() * Math.floor(numFakeClusters)) + 4;
         })
+        //this.splits.forEach(split => split.cluster=1)
 
         this.edges = data.edges.map(edge => {
             try {
