@@ -1,10 +1,11 @@
-# CIKM2020Demo
+# CHIIR2021Demo
 
 ## Video
 A short video about the paper is on [Youtube](https://www.youtube.com/watch?v=a_ZIdJgOi6k).
 
 ## Paper
-Our paper ComEx: Comment Exploration on Online News Platforms is currently under review at the International Conference on Information and Knowledge Management (CIKM):
+Our paper ComEx: Comment Exploration on Online News Platforms is currently under review at the ACM SIGIR Conference on
+Human Information Interaction and Retrieval (CHIIR):
 
     @inproceedings{rischandrepke2020top,
     title = {ComEx: Comment Exploration on Online News Platforms},
