@@ -1,7 +1,13 @@
 # CHIIR2021Demo
 
+## Demo
+A demo can be accessed [here](https://hpi.de/naumann/sites/comex/).
+
 ## Video
 A short video about the paper is on [Youtube](https://www.youtube.com/watch?v=a_ZIdJgOi6k).
+
+## Dataset
+We collected a set of news articles covering the same stories, which is available [here](https://owncloud.hpi.de/s/3z1Bv8AcdXTXqrV).
 
 ## Paper
 Our paper ComEx: Comment Exploration on Online News Platforms is currently under review at the ACM SIGIR Conference on
