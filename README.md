@@ -1,4 +1,4 @@
-# CHIIR2021Demo
+# ESIDA2021
 
 ## Demo
 A demo can be accessed [here](https://hpi.de/naumann/sites/comex/).
@@ -13,11 +13,13 @@ We collected a set of news articles covering the same stories, which is availabl
 Our paper ComEx: Comment Exploration on Online News Platforms is currently under review at the ACM SIGIR Conference on
 Human Information Interaction and Retrieval (CHIIR):
 
-    @inproceedings{rischandrepke2020top,
+    @inproceedings{rischandrepke2021comex,
     title = {ComEx: Comment Exploration on Online News Platforms},
     author = {Risch, Julian and Repke, Tim and Kohlmeyer, Lasse and Krestel, Ralf},
-    booktitle = {under review},
-    year = {2020}
+    booktitle = {Joint Proceedings of the ACM IUI 2021 Workshops co-located with the 26th ACM Conference on Intelligent User Interfaces (IUI)},
+    pages = {1-8},
+    publisher = {CEUR-WS.org},
+    year = {2021}
     }
 
 ## Website
