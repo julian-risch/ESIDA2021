@@ -10,8 +10,7 @@ A short video about the paper is on [Youtube](https://www.youtube.com/watch?v=a_
 We collected a set of news articles covering the same stories, which is available [here](https://owncloud.hpi.de/s/3z1Bv8AcdXTXqrV).
 
 ## Paper
-Our paper ComEx: Comment Exploration on Online News Platforms is currently under review at the ACM SIGIR Conference on
-Human Information Interaction and Retrieval (CHIIR):
+Our paper ComEx: Comment Exploration on Online News Platforms has been accepted by the ESIDA Workshop at the ACM Conference on Intelligent User Interfaces (IUI):
 
     @inproceedings{rischandrepke2021comex,
     title = {ComEx: Comment Exploration on Online News Platforms},
