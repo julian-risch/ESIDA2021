@@ -1,16 +1,6 @@
-# ESIDA2021
+# ComEx: Comment Exploration on Online News Platforms
 
-## Demo
-A demo can be accessed [here](https://hpi.de/naumann/sites/comex/).
-
-## Video
-A short video about the paper is on [Youtube](https://www.youtube.com/watch?v=a_ZIdJgOi6k).
-
-## Dataset
-We collected a set of news articles covering the same stories, which is available [here](https://owncloud.hpi.de/s/3z1Bv8AcdXTXqrV).
-
-## Paper
-Our paper ComEx: Comment Exploration on Online News Platforms has been accepted by the ESIDA Workshop at the ACM Conference on Intelligent User Interfaces (IUI):
+Our [paper ComEx: Comment Exploration on Online News Platforms](https://hpi.de/fileadmin/user_upload/fachgebiete/naumann/people/risch/rischandrepke2021comex.pdf) has been accepted by the ESIDA Workshop at the ACM Conference on Intelligent User Interfaces (IUI):
 
     @inproceedings{rischandrepke2021comex,
     title = {ComEx: Comment Exploration on Online News Platforms},
@@ -20,6 +10,15 @@ Our paper ComEx: Comment Exploration on Online News Platforms has been accepted 
     publisher = {CEUR-WS.org},
     year = {2021}
     }
+    
+## Demo
+A demo can be accessed [here](https://hpi.de/naumann/sites/comex/).
+
+## Video
+A short video about the paper is on [Youtube](https://www.youtube.com/watch?v=a_ZIdJgOi6k).
+
+## Dataset
+We collected a set of news articles covering the same stories, which is available [here](https://owncloud.hpi.de/s/3z1Bv8AcdXTXqrV).
 
 ## Website
 More information can be found on our [website](https://hpi.de/naumann/s/comex).
