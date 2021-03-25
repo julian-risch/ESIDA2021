@@ -29,7 +29,7 @@ pybind11==2.5.0
 pydantic==1.4
 pyrsistent==0.16.0
 Python-EasyConfig==0.1.7
-PyYAML==5.3.1
+PyYAML==5.4
 requests==2.23.0
 Resource==0.2.1
 six==1.14.0
