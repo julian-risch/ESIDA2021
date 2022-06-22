@@ -23,7 +23,7 @@ JsonSir==0.0.2
 keras==2.3.1
 lxml==4.5.0
 murmurhash==1.0.2
-numpy==1.18.3
+numpy==1.22.0
 preshed==3.0.2
 pybind11==2.5.0
 pydantic==1.4
